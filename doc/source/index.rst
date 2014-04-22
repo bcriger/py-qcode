@@ -1,17 +1,30 @@
-.. py-qcode documentation master file, created by
+.. 
+   py-qcode documentation master file, created by
    sphinx-quickstart on Wed Apr 16 16:30:40 2014.
    You can adapt this file completely to your liking, but it should at least
    contain the root `toctree` directive.
 
-Welcome to py-qcode's documentation!
-====================================
+py-qcode: decoding topological error-correcting codes in Python
+===============================================================
 
 Contents:
 
 .. toctree::
    :maxdepth: 2
 
+   simulation
+   lattice
+   code
+   error
 
+Introduction
+============
+
+This library is concerned with simulating the decoding of topological
+quantum error-correcting codes. This is useful for determining their threshold error rates and logical error rates in the regime where useful error correction can be performed. In order to simulate the act of decoding, the following components are necessary:
+
+ + asd
+ + asd  
 
 Indices and tables
 ==================

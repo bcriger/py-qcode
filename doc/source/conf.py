@@ -18,6 +18,8 @@ import sys, os
 # documentation root, use os.path.abspath to make it absolute, like shown here.
 #sys.path.insert(0, os.path.abspath('.'))
 
+sys.path.insert(0, os.path.abspath('../../py-qcode'))
+
 # -- General configuration -----------------------------------------------------
 
 # If your documentation needs a minimal Sphinx version, state it here.
@@ -228,7 +230,7 @@ man_pages = [
 #  dir menu entry, description, category)
 texinfo_documents = [
   ('index', 'py-qcode', u'py-qcode Documentation',
-   u'Ben Criger', 'py-qcode', 'One line description of project.',
+   u'Ben Criger', 'py-qcode', 'Decoding topological quantum error-correcting codes in Python.',
    'Miscellaneous'),
 ]
 
