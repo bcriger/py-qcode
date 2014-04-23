@@ -3,7 +3,6 @@ Simulation
 
 Class Reference
 ---------------
-.. module:: py-qcode
-.. autoclass:: py-qcode.Simulation
+.. autoclass:: py_qcode.Simulation
     :members:
     :undoc-members:

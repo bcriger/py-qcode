@@ -8,7 +8,7 @@
   <head>
     <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
     
-    <title>Simulation &mdash; py_qcode 0.0 documentation</title>
+    <title>Lattices &mdash; py_qcode 0.0 documentation</title>
     
     <link rel="stylesheet" href="_static/default.css" type="text/css" />
     <link rel="stylesheet" href="_static/pygments.css" type="text/css" />
@@ -26,8 +26,8 @@
     <script type="text/javascript" src="_static/underscore.js"></script>
     <script type="text/javascript" src="_static/doctools.js"></script>
     <link rel="top" title="py_qcode 0.0 documentation" href="index.html" />
-    <link rel="next" title="Lattices" href="lattice.html" />
-    <link rel="prev" title="py_qcode: decoding topological error-correcting codes in Python" href="index.html" /> 
+    <link rel="next" title="Error Correcting Codes" href="code.html" />
+    <link rel="prev" title="Simulation" href="simulation.html" /> 
   </head>
   <body>
     <div class="related">
@@ -37,10 +37,10 @@
           <a href="genindex.html" title="General Index"
              accesskey="I">index</a></li>
         <li class="right" >
-          <a href="lattice.html" title="Lattices"
+          <a href="code.html" title="Error Correcting Codes"
              accesskey="N">next</a> |</li>
         <li class="right" >
-          <a href="index.html" title="py_qcode: decoding topological error-correcting codes in Python"
+          <a href="simulation.html" title="Simulation"
              accesskey="P">previous</a> |</li>
         <li><a href="index.html">py_qcode 0.0 documentation</a> &raquo;</li> 
       </ul>
@@ -51,24 +51,40 @@
         <div class="bodywrapper">
           <div class="body">
             
-  <div class="section" id="simulation">
-<h1>Simulation<a class="headerlink" href="#simulation" title="Permalink to this headline">¶</a></h1>
+  <div class="section" id="lattices">
+<h1>Lattices<a class="headerlink" href="#lattices" title="Permalink to this headline">¶</a></h1>
 <div class="section" id="class-reference">
 <h2>Class Reference<a class="headerlink" href="#class-reference" title="Permalink to this headline">¶</a></h2>
 <dl class="class">
-<dt id="py_qcode.Simulation">
-<em class="property">class </em><tt class="descclassname">py_qcode.</tt><tt class="descname">Simulation</tt><big>(</big><em>arg</em><big>)</big><a class="headerlink" href="#py_qcode.Simulation" title="Permalink to this definition">¶</a></dt>
-<dd><p><cite>Simulation</cite> is the top-level class
-for py-qcode, the user is meant to set up, execute and save results
-from these objects.</p>
-<p>Each <cite>Simulation</cite> has the following attributes:
-``</p>
-<dl class="method">
-<dt id="py_qcode.Simulation.run">
-<tt class="descname">run</tt><big>(</big><big>)</big><a class="headerlink" href="#py_qcode.Simulation.run" title="Permalink to this definition">¶</a></dt>
+<dt id="py_qcode.Lattice">
+<em class="property">class </em><tt class="descclassname">py_qcode.</tt><tt class="descname">Lattice</tt><a class="headerlink" href="#py_qcode.Lattice" title="Permalink to this definition">¶</a></dt>
+<dd><p>Wraps a collection of points. Superclass to SquareLattice,
+SquareOctagonLattice, UnionJackLattice, whatever other convenient
+lattices I put in. I have to learn about super/sub-classes before
+I get this going, though.</p>
+<p>Represents a 2D/3D lattice of points with integer 
+co-ordinates on which a stabilizer code can be defined. 
+:param sz_tpl: linear dimensions of the lattice.
+:type sz_tpl: tuple, length 2 or 3, containing integers.
+:param is_3D: indicates whether the lattice is to be two- or three-
+dimensional.
+:type is_3D: bool</p>
+</dd></dl>
+
+<dl class="class">
+<dt id="py_qcode.SquareLattice">
+<em class="property">class </em><tt class="descclassname">py_qcode.</tt><tt class="descname">SquareLattice</tt><big>(</big><em>sz_tpl</em>, <em>is_3D=False</em><big>)</big><a class="headerlink" href="#py_qcode.SquareLattice" title="Permalink to this definition">¶</a></dt>
 <dd></dd></dl>
 
-</dd></dl>
+<dl class="class">
+<dt id="py_qcode.SquareOctagonLattice">
+<em class="property">class </em><tt class="descclassname">py_qcode.</tt><tt class="descname">SquareOctagonLattice</tt><big>(</big><em>sz_tpl</em>, <em>is_3D=False</em><big>)</big><a class="headerlink" href="#py_qcode.SquareOctagonLattice" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="class">
+<dt id="py_qcode.UnionJackLattice">
+<em class="property">class </em><tt class="descclassname">py_qcode.</tt><tt class="descname">UnionJackLattice</tt><big>(</big><em>sz_tpl</em>, <em>is_3D=False</em><big>)</big><a class="headerlink" href="#py_qcode.UnionJackLattice" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
 
 </div>
 </div>
@@ -81,21 +97,21 @@ from these objects.</p>
         <div class="sphinxsidebarwrapper">
   <h3><a href="index.html">Table Of Contents</a></h3>
   <ul>
-<li><a class="reference internal" href="#">Simulation</a><ul>
+<li><a class="reference internal" href="#">Lattices</a><ul>
 <li><a class="reference internal" href="#class-reference">Class Reference</a></li>
 </ul>
 </li>
 </ul>
 
   <h4>Previous topic</h4>
-  <p class="topless"><a href="index.html"
-                        title="previous chapter">py_qcode: decoding topological error-correcting codes in Python</a></p>
+  <p class="topless"><a href="simulation.html"
+                        title="previous chapter">Simulation</a></p>
   <h4>Next topic</h4>
-  <p class="topless"><a href="lattice.html"
-                        title="next chapter">Lattices</a></p>
+  <p class="topless"><a href="code.html"
+                        title="next chapter">Error Correcting Codes</a></p>
   <h3>This Page</h3>
   <ul class="this-page-menu">
-    <li><a href="_sources/simulation.txt"
+    <li><a href="_sources/lattice.txt"
            rel="nofollow">Show Source</a></li>
   </ul>
 <div id="searchbox" style="display: none">
@@ -122,10 +138,10 @@ from these objects.</p>
           <a href="genindex.html" title="General Index"
              >index</a></li>
         <li class="right" >
-          <a href="lattice.html" title="Lattices"
+          <a href="code.html" title="Error Correcting Codes"
              >next</a> |</li>
         <li class="right" >
-          <a href="index.html" title="py_qcode: decoding topological error-correcting codes in Python"
+          <a href="simulation.html" title="Simulation"
              >previous</a> |</li>
         <li><a href="index.html">py_qcode 0.0 documentation</a> &raquo;</li> 
       </ul>

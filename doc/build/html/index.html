@@ -8,7 +8,7 @@
   <head>
     <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
     
-    <title>py-qcode: decoding topological error-correcting codes in Python &mdash; py-qcode 0.0 documentation</title>
+    <title>py_qcode: decoding topological error-correcting codes in Python &mdash; py_qcode 0.0 documentation</title>
     
     <link rel="stylesheet" href="_static/default.css" type="text/css" />
     <link rel="stylesheet" href="_static/pygments.css" type="text/css" />
@@ -25,7 +25,7 @@
     <script type="text/javascript" src="_static/jquery.js"></script>
     <script type="text/javascript" src="_static/underscore.js"></script>
     <script type="text/javascript" src="_static/doctools.js"></script>
-    <link rel="top" title="py-qcode 0.0 documentation" href="#" />
+    <link rel="top" title="py_qcode 0.0 documentation" href="#" />
     <link rel="next" title="Simulation" href="simulation.html" /> 
   </head>
   <body>
@@ -36,12 +36,9 @@
           <a href="genindex.html" title="General Index"
              accesskey="I">index</a></li>
         <li class="right" >
-          <a href="py-modindex.html" title="Python Module Index"
-             >modules</a> |</li>
-        <li class="right" >
           <a href="simulation.html" title="Simulation"
              accesskey="N">next</a> |</li>
-        <li><a href="#">py-qcode 0.0 documentation</a> &raquo;</li> 
+        <li><a href="#">py_qcode 0.0 documentation</a> &raquo;</li> 
       </ul>
     </div>  
 
@@ -51,28 +48,43 @@
           <div class="body">
             
   <div class="section" id="py-qcode-decoding-topological-error-correcting-codes-in-python">
-<h1>py-qcode: decoding topological error-correcting codes in Python<a class="headerlink" href="#py-qcode-decoding-topological-error-correcting-codes-in-python" title="Permalink to this headline">¶</a></h1>
+<h1>py_qcode: decoding topological error-correcting codes in Python<a class="headerlink" href="#py-qcode-decoding-topological-error-correcting-codes-in-python" title="Permalink to this headline">¶</a></h1>
 <p>Contents:</p>
 <div class="toctree-wrapper compound">
 <ul>
 <li class="toctree-l1"><a class="reference internal" href="simulation.html">Simulation</a><ul>
-<li class="toctree-l2"><a class="reference internal" href="simulation.html#module-py-qcode">Class Reference</a></li>
+<li class="toctree-l2"><a class="reference internal" href="simulation.html#class-reference">Class Reference</a></li>
 </ul>
 </li>
-<li class="toctree-l1"><a class="reference internal" href="lattice.html">Lattices</a></li>
-<li class="toctree-l1"><a class="reference internal" href="code.html">Error Correcting Codes</a></li>
-<li class="toctree-l1"><a class="reference internal" href="error.html">Error Models</a></li>
+<li class="toctree-l1"><a class="reference internal" href="lattice.html">Lattices</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="lattice.html#class-reference">Class Reference</a></li>
+</ul>
+</li>
+<li class="toctree-l1"><a class="reference internal" href="code.html">Error Correcting Codes</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="code.html#class-reference">Class Reference</a></li>
+</ul>
+</li>
+<li class="toctree-l1"><a class="reference internal" href="error.html">Error Models</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="error.html#class-reference">Class Reference</a></li>
+</ul>
+</li>
+<li class="toctree-l1"><a class="reference internal" href="decoder.html">Decoders</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="decoder.html#class-reference">Class Reference</a></li>
+</ul>
+</li>
 </ul>
 </div>
 </div>
 <div class="section" id="introduction">
 <h1>Introduction<a class="headerlink" href="#introduction" title="Permalink to this headline">¶</a></h1>
-<p>This library is concerned with simulating the decoding of topological
-quantum error-correcting codes. This is useful for determining their threshold error rates and logical error rates in the regime where useful error correction can be performed. In order to simulate the act of decoding, the following components are necessary:</p>
+<p>This library is concerned with simulating the decoding of topological quantum error-correcting codes. This is useful for determining their threshold error rates and logical error rates in the regime where useful error correction can be performed. In order to simulate the act of decoding, the following components are necessary:</p>
 <blockquote>
 <div><ul class="simple">
-<li>asd</li>
-<li>asd</li>
+<li><strong>Input/Output</strong>: Routines to input necessary values such as the name of the lattice geometry, size, error-correcting code to be used, etc., and save the resulting  output to a file.</li>
+<li><strong>Lattice</strong>: A set of points on which the qubits and stabilizers of the code are defined.</li>
+<li><strong>Error Model</strong>: A set of Gottesman-Knill-compliant operators and probabilities with which they are applied to the qubits in the lattice.</li>
+<li><strong>Error-Correcting Code</strong>: A set of stabilizer generators, along with their support, which produces error syndromes given an error.</li>
+<li><strong>Decoder</strong>: A rule for inferring the original error, given a syndrome.</li>
 </ul>
 </div></blockquote>
 </div>
@@ -93,7 +105,7 @@ quantum error-correcting codes. This is useful for determining their threshold e
         <div class="sphinxsidebarwrapper">
   <h3><a href="#">Table Of Contents</a></h3>
   <ul>
-<li><a class="reference internal" href="#">py-qcode: decoding topological error-correcting codes in Python</a><ul>
+<li><a class="reference internal" href="#">py_qcode: decoding topological error-correcting codes in Python</a><ul>
 </ul>
 </li>
 <li><a class="reference internal" href="#introduction">Introduction</a></li>
@@ -132,12 +144,9 @@ quantum error-correcting codes. This is useful for determining their threshold e
           <a href="genindex.html" title="General Index"
              >index</a></li>
         <li class="right" >
-          <a href="py-modindex.html" title="Python Module Index"
-             >modules</a> |</li>
-        <li class="right" >
           <a href="simulation.html" title="Simulation"
              >next</a> |</li>
-        <li><a href="#">py-qcode 0.0 documentation</a> &raquo;</li> 
+        <li><a href="#">py_qcode 0.0 documentation</a> &raquo;</li> 
       </ul>
     </div>
     <div class="footer">

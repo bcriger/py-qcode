@@ -1,3 +1,5 @@
+__all__ = ['Simulation']
+
 class Simulation():     
     """
     `Simulation` is the top-level class
@@ -10,6 +12,6 @@ class Simulation():
     def __init__(self, arg):
         self.arg = arg
     def run(self):
-    """
+        """
 
-    """    
+        """

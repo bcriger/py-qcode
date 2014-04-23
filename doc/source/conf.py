@@ -1,6 +1,6 @@
 # -*- coding: utf-8 -*-
 #
-# py-qcode documentation build configuration file, created by
+# py_qcode documentation build configuration file, created by
 # sphinx-quickstart on Wed Apr 16 16:30:40 2014.
 #
 # This file is execfile()d with the current directory set to its containing dir.
@@ -12,14 +12,15 @@
 # serve to show the default.
 
 import sys, os
-import py_qcode
 
 # If extensions (or modules to document with autodoc) are in another directory,
 # add these directories to sys.path here. If the directory is relative to the
 # documentation root, use os.path.abspath to make it absolute, like shown here.
 #sys.path.insert(0, os.path.abspath('.'))
 
-sys.path.insert(0, os.path.abspath('../../py-qcode'))
+sys.path.insert(0, os.path.abspath('../../src'))
+
+import py_qcode
 
 # -- General configuration -----------------------------------------------------
 
@@ -43,7 +44,7 @@ source_suffix = '.rst'
 master_doc = 'index'
 
 # General information about the project.
-project = u'py-qcode'
+project = u'py_qcode'
 copyright = u'2014, Ben Criger'
 
 # The version info for the project you're documenting, acts as replacement for
@@ -167,7 +168,7 @@ html_static_path = ['_static']
 #html_file_suffix = None
 
 # Output file base name for HTML help builder.
-htmlhelp_basename = 'py-qcodedoc'
+htmlhelp_basename = 'py_qcodedoc'
 
 
 # -- Options for LaTeX output --------------------------------------------------
@@ -186,7 +187,7 @@ latex_elements = {
 # Grouping the document tree into LaTeX files. List of tuples
 # (source start file, target name, title, author, documentclass [howto/manual]).
 latex_documents = [
-  ('index', 'py-qcode.tex', u'py-qcode Documentation',
+  ('index', 'py_qcode.tex', u'py_qcode Documentation',
    u'Ben Criger', 'manual'),
 ]
 
@@ -216,7 +217,7 @@ latex_documents = [
 # One entry per manual page. List of tuples
 # (source start file, name, description, authors, manual section).
 man_pages = [
-    ('index', 'py-qcode', u'py-qcode Documentation',
+    ('index', 'py_qcode', u'py_qcode Documentation',
      [u'Ben Criger'], 1)
 ]
 
@@ -230,8 +231,8 @@ man_pages = [
 # (source start file, target name, title, author,
 #  dir menu entry, description, category)
 texinfo_documents = [
-  ('index', 'py-qcode', u'py-qcode Documentation',
-   u'Ben Criger', 'py-qcode', 'Decoding topological quantum error-correcting codes in Python.',
+  ('index', 'py_qcode', u'py_qcode Documentation',
+   u'Ben Criger', 'py_qcode', 'Decoding topological quantum error-correcting codes in Python.',
    'Miscellaneous'),
 ]
 
