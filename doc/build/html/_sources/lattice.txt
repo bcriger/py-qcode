@@ -3,6 +3,10 @@ Lattices
 
 Class Reference
 ---------------
+.. autoclass:: py_qcode.Point
+    :members:
+    :undoc-members:
+
 .. autoclass:: py_qcode.Lattice
     :members:
     :undoc-members:

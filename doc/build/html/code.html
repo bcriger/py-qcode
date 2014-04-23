@@ -58,7 +58,21 @@
 <dl class="class">
 <dt id="py_qcode.ErrorCorrectingCode">
 <em class="property">class </em><tt class="descclassname">py_qcode.</tt><tt class="descname">ErrorCorrectingCode</tt><big>(</big><em>arg</em><big>)</big><a class="headerlink" href="#py_qcode.ErrorCorrectingCode" title="Permalink to this definition">¶</a></dt>
-<dd><p>docstring for ErrorCorrectingCode</p>
+<dd><p>An error-correcting code, for the purpose of this module, is a rule
+for taking errors on sets of points, and turning them into
+discrete-valued syndromes which are interpreted by the decoder.
+Normally, we would immediately make the restriction to stabilizer
+codes which return binary-valued syndromes, but we want to make
+room for codes which correct non-Pauli errors, and return fuzzy
+syndromes.</p>
+</dd></dl>
+
+<dl class="class">
+<dt id="py_qcode.StabilizerCode">
+<em class="property">class </em><tt class="descclassname">py_qcode.</tt><tt class="descname">StabilizerCode</tt><big>(</big><em>arg</em><big>)</big><a class="headerlink" href="#py_qcode.StabilizerCode" title="Permalink to this definition">¶</a></dt>
+<dd><p>subclass of
+ErrorCorrectingCode for which syndromes are determined by commutation
+/anti-commutation with a Pauli stabilizer.</p>
 </dd></dl>
 
 </div>
