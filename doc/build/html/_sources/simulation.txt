@@ -1,2 +1,9 @@
 Simulation
 ==========
+
+Class Reference
+---------------
+.. module:: py-qcode
+.. autoclass:: py-qcode.Simulation
+    :members:
+    :undoc-members:
