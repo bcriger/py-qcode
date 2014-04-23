@@ -56,34 +56,75 @@
 <div class="section" id="class-reference">
 <h2>Class Reference<a class="headerlink" href="#class-reference" title="Permalink to this headline">¶</a></h2>
 <dl class="class">
+<dt id="py_qcode.Point">
+<em class="property">class </em><tt class="descclassname">py_qcode.</tt><tt class="descname">Point</tt><big>(</big><em>coords</em>, <em>error=None</em>, <em>syndrome=None</em><big>)</big><a class="headerlink" href="#py_qcode.Point" title="Permalink to this definition">¶</a></dt>
+<dd><p>Represents a point in two or three dimensions. Normally, I&#8217;d use a
+<tt class="docutils literal"><span class="pre">namedtuple</span></tt>, because I&#8217;m not a psychopath, but I want to use
+default arguments without getting too fancy. Each point can also 
+contain a value denoting the error which an 
+<tt class="docutils literal"><span class="pre">ErrorModel</span></tt> has applied to that point, and/or a
+syndrome which results from measurement of an
+<tt class="docutils literal"><span class="pre">ErrorCorrectingCode</span></tt> on the lattice.</p>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><ul class="first last simple">
+<li><strong>coords</strong> (<em>tuple of ints, length 2 or 3</em>) &#8211; co-ordinates of the point in question.</li>
+<li><strong>error</strong> (<em>any</em>) &#8211; A value which denotes an error. An <tt class="docutils literal"><span class="pre">ErrorCorrectingCode</span></tt> must check that this value corresponds to an operator which can be translated into a syndrome.</li>
+<li><strong>syndrome</strong> (<em>any</em>) &#8211; A value which denotes an syndrome. A <tt class="docutils literal"><span class="pre">Decoder</span></tt> must check that this value corresponds to an operator which can be translated into a syndrome.</li>
+</ul>
+</td>
+</tr>
+</tbody>
+</table>
+</dd></dl>
+
+<dl class="class">
 <dt id="py_qcode.Lattice">
-<em class="property">class </em><tt class="descclassname">py_qcode.</tt><tt class="descname">Lattice</tt><a class="headerlink" href="#py_qcode.Lattice" title="Permalink to this definition">¶</a></dt>
-<dd><p>Wraps a collection of points. Superclass to SquareLattice,
-SquareOctagonLattice, UnionJackLattice, whatever other convenient
-lattices I put in. I have to learn about super/sub-classes before
-I get this going, though.</p>
+<em class="property">class </em><tt class="descclassname">py_qcode.</tt><tt class="descname">Lattice</tt><big>(</big><em>sz_tpl</em>, <em>is_3D=False</em>, <em>closed_boundary=True</em><big>)</big><a class="headerlink" href="#py_qcode.Lattice" title="Permalink to this definition">¶</a></dt>
+<dd><p>A collection of points. Superclass to <tt class="docutils literal"><span class="pre">SquareLattice</span></tt>,
+<tt class="docutils literal"><span class="pre">SquareOctagonLattice</span></tt>, <tt class="docutils literal"><span class="pre">UnionJackLattice</span></tt>, whatever other convenient
+lattices I put in.</p>
 <p>Represents a 2D/3D lattice of points with integer 
-co-ordinates on which a stabilizer code can be defined. 
-:param sz_tpl: linear dimensions of the lattice.
-:type sz_tpl: tuple, length 2 or 3, containing integers.
-:param is_3D: indicates whether the lattice is to be two- or three-
-dimensional.
-:type is_3D: bool</p>
+co-ordinates on which a stabilizer code can be defined.</p>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><ul class="first last simple">
+<li><strong>sz_tpl</strong> (<em>tuple, length 2 or 3, containing integers.</em>) &#8211; linear dimensions of the lattice.</li>
+<li><strong>is_3D</strong> (<em>bool</em>) &#8211; indicates whether the lattice is to be two- or three- dimensional.</li>
+<li><strong>closed_boundary</strong> (<em>bool</em>) &#8211; Indicates whether to identify the Nth co-ordinate with the zeroth co-ordinate in every dimension.</li>
+</ul>
+</td>
+</tr>
+</tbody>
+</table>
 </dd></dl>
 
 <dl class="class">
 <dt id="py_qcode.SquareLattice">
-<em class="property">class </em><tt class="descclassname">py_qcode.</tt><tt class="descname">SquareLattice</tt><big>(</big><em>sz_tpl</em>, <em>is_3D=False</em><big>)</big><a class="headerlink" href="#py_qcode.SquareLattice" title="Permalink to this definition">¶</a></dt>
-<dd></dd></dl>
+<em class="property">class </em><tt class="descclassname">py_qcode.</tt><tt class="descname">SquareLattice</tt><big>(</big><em>sz_tpl</em>, <em>is_3D=False</em>, <em>rough_sides=('f'</em>, <em>'b')</em><big>)</big><a class="headerlink" href="#py_qcode.SquareLattice" title="Permalink to this definition">¶</a></dt>
+<dd><p>Represents a lattice in which qubits are placed on the edges.</p>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><strong>rough_sides</strong> (<em>tuple of strings</em>) &#8211; Denotes which, if any, of the sides of the lattice are to have &#8216;rough&#8217; boundary conditions. Values in <tt class="docutils literal"><span class="pre">rough_sides</span></tt> must be drawn from <tt class="docutils literal"><span class="pre">['u',</span> <span class="pre">'d',</span> <span class="pre">'r',</span> <span class="pre">'l',</span> <span class="pre">'f',</span> <span class="pre">'b']</span></tt> (up, down, left, right, front, back).</td>
+</tr>
+</tbody>
+</table>
+</dd></dl>
 
 <dl class="class">
 <dt id="py_qcode.SquareOctagonLattice">
-<em class="property">class </em><tt class="descclassname">py_qcode.</tt><tt class="descname">SquareOctagonLattice</tt><big>(</big><em>sz_tpl</em>, <em>is_3D=False</em><big>)</big><a class="headerlink" href="#py_qcode.SquareOctagonLattice" title="Permalink to this definition">¶</a></dt>
+<em class="property">class </em><tt class="descclassname">py_qcode.</tt><tt class="descname">SquareOctagonLattice</tt><big>(</big><em>sz_tpl</em><big>)</big><a class="headerlink" href="#py_qcode.SquareOctagonLattice" title="Permalink to this definition">¶</a></dt>
 <dd></dd></dl>
 
 <dl class="class">
 <dt id="py_qcode.UnionJackLattice">
-<em class="property">class </em><tt class="descclassname">py_qcode.</tt><tt class="descname">UnionJackLattice</tt><big>(</big><em>sz_tpl</em>, <em>is_3D=False</em><big>)</big><a class="headerlink" href="#py_qcode.UnionJackLattice" title="Permalink to this definition">¶</a></dt>
+<em class="property">class </em><tt class="descclassname">py_qcode.</tt><tt class="descname">UnionJackLattice</tt><big>(</big><em>sz_tpl</em><big>)</big><a class="headerlink" href="#py_qcode.UnionJackLattice" title="Permalink to this definition">¶</a></dt>
 <dd></dd></dl>
 
 </div>
