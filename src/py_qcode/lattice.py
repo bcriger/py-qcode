@@ -4,6 +4,8 @@ Ben Criger
 Shameless plagiarism from Bravyi/Haah
 """
 
+__all__ = ['Point', 'Lattice', 'SquareLattice', 'SquareOctagonLattice', 'UnionJackLattice']
+
 class Point(object):
     r"""
     Represents a point in two or three dimensions. Normally, I'd use a
@@ -18,7 +20,7 @@ class Point(object):
             raise ValueError("Point must contain 2 or 3 co-ordinates,"\
                 " you entered: {0}".format(coords))
         
-        if any([!isinstance(coord,int) for coord in coords]):
+        if not all([isinstance(coord,int) for coord in coords]):
             raise ValueError("Input tuple must be nothin' but ints,"\
                 " you entered: {0}".format(coords))
 
@@ -31,8 +33,13 @@ class Point(object):
         """
         return hash(self.coords)
 
-class SquareLattice:
+class Lattice:
     """
+    Wraps a collection of points. Superclass to SquareLattice,
+    SquareOctagonLattice, UnionJackLattice, whatever other convenient
+    lattices I put in. I have to learn about super/sub-classes before
+    I get this going, though.
+
     Represents a 2D/3D lattice of points with integer 
     co-ordinates on which a stabilizer code can be defined. 
     :param sz_tpl: linear dimensions of the lattice.
@@ -41,6 +48,30 @@ class SquareLattice:
     dimensional.
     :type is_3D: bool
     """
-    def __init__(self, sz_tpl, is_3D = False):
+    def __init__(self):
+        pass
 
+class SquareLattice(Lattice):
+    """
+    """
+    def __init__(self, sz_tpl, is_3D = False):
+        """
+        """
+        pass
+
+class SquareOctagonLattice(Lattice):
+    """
+    """
+    def __init__(self, sz_tpl, is_3D = False):
+        """
+        """
+        pass
+
+class UnionJackLattice(Lattice):
+    """
+    """
+    def __init__(self, sz_tpl, is_3D = False):
+        """
+        """
+        pass
 
