@@ -83,9 +83,7 @@ syndrome which results from measurement of an
 <dl class="class">
 <dt id="py_qcode.Lattice">
 <em class="property">class </em><tt class="descclassname">py_qcode.</tt><tt class="descname">Lattice</tt><big>(</big><em>sz_tpl</em>, <em>is_3D=False</em>, <em>closed_boundary=True</em><big>)</big><a class="headerlink" href="#py_qcode.Lattice" title="Permalink to this definition">¶</a></dt>
-<dd><p>A collection of points. Superclass to <tt class="docutils literal"><span class="pre">SquareLattice</span></tt>,
-<tt class="docutils literal"><span class="pre">SquareOctagonLattice</span></tt>, <tt class="docutils literal"><span class="pre">UnionJackLattice</span></tt>, whatever other convenient
-lattices I put in.</p>
+<dd><p>A collection of points. Superclass to <tt class="docutils literal"><span class="pre">SquareLattice</span></tt>, <tt class="docutils literal"><span class="pre">SquareOctagonLattice</span></tt>, <tt class="docutils literal"><span class="pre">UnionJackLattice</span></tt>, whatever other convenient lattices I put in.</p>
 <p>Represents a 2D/3D lattice of points with integer 
 co-ordinates on which a stabilizer code can be defined.</p>
 <table class="docutils field-list" frame="void" rules="none">
@@ -105,8 +103,8 @@ co-ordinates on which a stabilizer code can be defined.</p>
 
 <dl class="class">
 <dt id="py_qcode.SquareLattice">
-<em class="property">class </em><tt class="descclassname">py_qcode.</tt><tt class="descname">SquareLattice</tt><big>(</big><em>sz_tpl</em>, <em>is_3D=False</em>, <em>rough_sides=('f'</em>, <em>'b')</em><big>)</big><a class="headerlink" href="#py_qcode.SquareLattice" title="Permalink to this definition">¶</a></dt>
-<dd><p>Represents a lattice in which qubits are placed on the edges.</p>
+<em class="property">class </em><tt class="descclassname">py_qcode.</tt><tt class="descname">SquareLattice</tt><big>(</big><em>sz_tpl</em>, <em>is_3D=False</em>, <em>closed_boundary=True</em>, <em>rough_sides=('f'</em>, <em>'b')</em><big>)</big><a class="headerlink" href="#py_qcode.SquareLattice" title="Permalink to this definition">¶</a></dt>
+<dd><p>Represents a lattice in which qubits are placed on the edges of a grid of squares.</p>
 <table class="docutils field-list" frame="void" rules="none">
 <col class="field-name" />
 <col class="field-body" />
@@ -119,8 +117,9 @@ co-ordinates on which a stabilizer code can be defined.</p>
 
 <dl class="class">
 <dt id="py_qcode.SquareOctagonLattice">
-<em class="property">class </em><tt class="descclassname">py_qcode.</tt><tt class="descname">SquareOctagonLattice</tt><big>(</big><em>sz_tpl</em><big>)</big><a class="headerlink" href="#py_qcode.SquareOctagonLattice" title="Permalink to this definition">¶</a></dt>
-<dd></dd></dl>
+<em class="property">class </em><tt class="descclassname">py_qcode.</tt><tt class="descname">SquareOctagonLattice</tt><big>(</big><em>sz_tpl</em>, <em>is_3D=False</em><big>)</big><a class="headerlink" href="#py_qcode.SquareOctagonLattice" title="Permalink to this definition">¶</a></dt>
+<dd><p>Represents a lattice in which qubits are placed on the corners of squares and octagons.</p>
+</dd></dl>
 
 <dl class="class">
 <dt id="py_qcode.UnionJackLattice">
