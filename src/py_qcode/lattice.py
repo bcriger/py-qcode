@@ -43,16 +43,13 @@ class Point(object):
     
     def __hash__(self):
         """
-        A hash function for points is necessary to store
-        :class:`py-qcode.Point`s in sets.
+        A hash function for points is necessary to store :class:`py-qcode.Point`s in sets or dictionaries.
         """
         return hash((self.coords, self.error, self.syndrome))
 
 class Lattice:
     """
-    A collection of points. Superclass to ``SquareLattice``,
-    ``SquareOctagonLattice``, ``UnionJackLattice``, whatever other convenient
-    lattices I put in. 
+    A collection of points. Superclass to ``SquareLattice``, ``SquareOctagonLattice``, ``UnionJackLattice``, whatever other convenient lattices I put in. 
 
     Represents a 2D/3D lattice of points with integer 
     co-ordinates on which a stabilizer code can be defined.
@@ -77,7 +74,7 @@ class Lattice:
 
 class SquareLattice(Lattice):
     """
-    Represents a lattice in which qubits are placed on the edges.
+    Represents a lattice in which qubits are placed on the edges of a grid of squares. 
 
     :param rough_sides: Denotes which, if any, of the sides of the lattice are to have 'rough' boundary conditions. Values in ``rough_sides`` must be drawn from ``['u', 'd', 'r', 'l', 'f', 'b']`` (up, down, left, right, front, back).
 
@@ -96,14 +93,16 @@ class SquareLattice(Lattice):
 
 class SquareOctagonLattice(Lattice):
     """
+    Represents a lattice in which qubits are placed on the corners of squares and octagons. 
     """
-    def __init__(self, sz_tpl):
+    def __init__(self, sz_tpl, is_3D=False, closed_boundary=True):
         """
         """
         pass
 
 class UnionJackLattice(Lattice):
     """
+    Represents a lattice in which qubits are placed on the intersections of the diagonals of squares, as well as their corners. 
     """
     def __init__(self, sz_tpl):
         """
@@ -119,4 +118,7 @@ def check_int_23_tpl(coords):
     if not all([isinstance(coord,int) for coord in coords]):
         raise ValueError("Input tuple must be nothin' but ints,"\
             " you entered: {0}".format(coords))
+    pass
+
+def two_d_square_lattice():
     pass
