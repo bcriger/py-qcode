@@ -26,6 +26,7 @@
     <script type="text/javascript" src="_static/underscore.js"></script>
     <script type="text/javascript" src="_static/doctools.js"></script>
     <link rel="top" title="py_qcode 0.0 documentation" href="index.html" />
+    <link rel="next" title="Decoders" href="decoder.html" />
     <link rel="prev" title="Error Correcting Codes" href="code.html" /> 
   </head>
   <body>
@@ -35,6 +36,9 @@
         <li class="right" style="margin-right: 10px">
           <a href="genindex.html" title="General Index"
              accesskey="I">index</a></li>
+        <li class="right" >
+          <a href="decoder.html" title="Decoders"
+             accesskey="N">next</a> |</li>
         <li class="right" >
           <a href="code.html" title="Error Correcting Codes"
              accesskey="P">previous</a> |</li>
@@ -54,9 +58,29 @@
 <dl class="class">
 <dt id="py_qcode.ErrorModel">
 <em class="property">class </em><tt class="descclassname">py_qcode.</tt><tt class="descname">ErrorModel</tt><big>(</big><em>prob_op_list</em><big>)</big><a class="headerlink" href="#py_qcode.ErrorModel" title="Permalink to this definition">¶</a></dt>
-<dd><p>Wraps a list of tuples corresponding to a discrete probability and 
-an operator. This assumes independent identically-distributed 
-noise, though not necessarily Pauli.</p>
+<dd><p>Wraps a list of tuples corresponding to a discrete probability and an operator. This assumes independent identically-distributed noise, though not necessarily Pauli.</p>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><strong>prob_op_list</strong> (<em>list</em>) &#8211; A list of probabilites and associated operators. The probabilites are floats which must sum to 1 to within <img class="math" src="_images/math/6336cd9b79f2499e10784c0214c316dc2641adf9.png" alt="10^{-12}"/>. The operators are represented by strings which must be drawn from the list of acceptable operators <cite>[&#8216;I&#8217;,&#8217;X&#8217;,&#8217;Y&#8217;,&#8217;Z&#8217;,&#8217;H&#8217;,&#8217;P&#8217;]</cite> Each pair (a probability and its associated operator) is stored in a tuple.</td>
+</tr>
+</tbody>
+</table>
+</dd></dl>
+
+<dl class="class">
+<dt id="py_qcode.DepolarizingModel">
+<em class="property">class </em><tt class="descclassname">py_qcode.</tt><tt class="descname">DepolarizingModel</tt><big>(</big><em>p</em><big>)</big><a class="headerlink" href="#py_qcode.DepolarizingModel" title="Permalink to this definition">¶</a></dt>
+<dd><p>The depolarizing model applies the identity with probability <img class="math" src="_images/math/5fdd66831cbbb8238ab62234975610d1682bbb03.png" alt="1-p"/>, and each of the single qubit Pauli operators <img class="math" src="_images/math/6a47ca0fe7cb276abc022af6ac88ddae1a9d6894.png" alt="X"/>, <img class="math" src="_images/math/ce58e4af225c93d08606c26554caaa5ae32edeba.png" alt="Y"/>, and <img class="math" src="_images/math/3ead47fb9fb4a4c273feee398f72ff2a09702b84.png" alt="Z"/> with probability <img class="math" src="_images/math/bfd74b2d5ba1b054404de56aad787704ec9af3d9.png" alt="\dfrac{p}{3}"/>.</p>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><strong>p</strong> (<em>float</em>) &#8211; A probability, between 0 and 1.</td>
+</tr>
+</tbody>
+</table>
 </dd></dl>
 
 </div>
@@ -79,6 +103,9 @@ noise, though not necessarily Pauli.</p>
   <h4>Previous topic</h4>
   <p class="topless"><a href="code.html"
                         title="previous chapter">Error Correcting Codes</a></p>
+  <h4>Next topic</h4>
+  <p class="topless"><a href="decoder.html"
+                        title="next chapter">Decoders</a></p>
   <h3>This Page</h3>
   <ul class="this-page-menu">
     <li><a href="_sources/error.txt"
@@ -107,6 +134,9 @@ noise, though not necessarily Pauli.</p>
         <li class="right" style="margin-right: 10px">
           <a href="genindex.html" title="General Index"
              >index</a></li>
+        <li class="right" >
+          <a href="decoder.html" title="Decoders"
+             >next</a> |</li>
         <li class="right" >
           <a href="code.html" title="Error Correcting Codes"
              >previous</a> |</li>
