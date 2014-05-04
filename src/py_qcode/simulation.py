@@ -8,10 +8,6 @@ class Simulation():
     for py_qcode, the user is meant to set up, execute and save results
     using these objects.
 
-    :param lattice: A grid of points to contain errors and syndromes. 
-
-    :type lattice: :class:`py_qcode.Lattice`, input
-
     :param error_model: A description of the errors to be applied independently to the qubits of `lattice`.
 
     :type error_model: :class:`py_qcode:ErrorModel`, input 
@@ -37,7 +33,6 @@ class Simulation():
     def __init__(self, lattice, error_model, code, decoder, n_trials):
         
         #Initial Values
-        self.lattice = lattice
         self.error_model = error_model
         self.code = code
         self.decoder = decoder
@@ -51,7 +46,7 @@ class Simulation():
         """
         The main routine in this library, follows the recipe `n_trials` times in series:
 
-        + Apply the error model to the lattice, assigning values to the `error` attributes of the :class:`py_qcode.Point` objects within. 
+        + Apply the error model to the primary lattice, assigning values to the `error` attributes of the :class:`py_qcode.Point` objects within. 
 
         + Obtain the true coset of the error with respect to the :class:`py_qcode.ErrorCorrectingCode` being used.
 
@@ -59,7 +54,7 @@ class Simulation():
 
         + Infer the coset of the error by acting the decoder on the dual lattice. 
 
-        + Record both cosets
+        + Record both cosets. 
         """
         for idx in range(n_trials):
             continue

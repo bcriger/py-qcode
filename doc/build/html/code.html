@@ -65,6 +65,19 @@ Normally, we would immediately make the restriction to stabilizer
 codes which return binary-valued syndromes, but we want to make
 room for codes which correct non-Pauli errors, and return fuzzy
 syndromes.</p>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><ul class="first last simple">
+<li><strong>primal_lattice</strong> (<a class="reference internal" href="lattice.html#py_qcode.Lattice" title="py_qcode.Lattice"><tt class="xref py py-class docutils literal"><span class="pre">py_qcode.Lattice</span></tt></a>) &#8211; The lattice on which the qubits live.</li>
+<li><strong>dual_lattice</strong> (<a class="reference internal" href="lattice.html#py_qcode.Lattice" title="py_qcode.Lattice"><tt class="xref py py-class docutils literal"><span class="pre">py_qcode.Lattice</span></tt></a>) &#8211; The lattice on which the parity checks live.</li>
+<li><strong>parity_check</strong> (<em>function</em>) &#8211; A rule for mapping errors on the primal lattice to measurement results on the dual lattice.</li>
+</ul>
+</td>
+</tr>
+</tbody>
+</table>
 </dd></dl>
 
 <dl class="class">
