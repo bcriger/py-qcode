@@ -22,9 +22,11 @@ class ErrorCorrectingCode():
 
     :type parity_check: function 
     """
-    def __init__(self, arg):
-        super(ErrorCorrectingCode, self).__init__()
-        self.arg = arg
+    def __init__(self, primal_lattice, dual_lattice, parity_check):
+        
+        self.primal_lattice = primal_lattice
+        self.dual_lattice = dual_lattice
+        self.parity_check = parity_check
 
 class StabilizerCode(ErrorCorrectingCode):
     """ 
