@@ -23,7 +23,7 @@ class Point(object):
     
     :param coords: co-ordinates of the point in question.
 
-    :type coords: tuple of ints, length 2 or 3
+    :type coords: tuple of ints
     
     :param error: A value which denotes an error. An ``ErrorCorrectingCode`` must check that this value corresponds to an operator which can be translated into a syndrome.
     
@@ -35,7 +35,7 @@ class Point(object):
     """
     def __init__(self, coords, error = None, syndrome = None):
         
-        check_int_23_tpl(coords)
+        check_int_tpl(coords)
         self.coords = coords
         
         self.error = error
@@ -43,7 +43,7 @@ class Point(object):
     
     def __hash__(self):
         """
-        A hash function for points is necessary to store :class:`py-qcode.Point`s in sets or dictionaries.
+        A hash function for points is necessary to store :class:`py_qcode.Point`s in sets or dictionaries.
         """
         return hash((self.coords, self.error, self.syndrome))
 
@@ -54,11 +54,15 @@ class Lattice:
     Represents a 2D/3D lattice of points with integer 
     co-ordinates on which a stabilizer code can be defined.
 
-    :param sz_tpl: linear dimensions of the lattice.
+    :param points: collection of points on the lattice.
     
-    :type sz_tpl: tuple, length 2 or 3, containing integers.
+    :type points: list of :class:`py_qcode.Point` objects
     
-    :param is_3D: indicates whether the lattice is to be two- or three- dimensional.
+    :param dist: Returns the distance between two points. Note: In order to perform MWPM decoding, only the dual lattice needs a distance function. 
+
+    :type dist: function
+
+    :param is_ft: indicates whether the lattice is to possess an extra dimension for fault-tolerant decoding.
     
     :type is_3D: bool
 
@@ -66,22 +70,30 @@ class Lattice:
 
     :type closed_boundary: bool
     """
-    def __init__(self, sz_tpl, is_3D=False, closed_boundary = True):
-        check_int_23_tpl(sz_tpl)
+    def __init__(self, points, dim, dist=None, is_ft=False, closed_boundary=True):
+        
+        check_int_tpl(sz_tpl)
+        
+        if len(sz_tpl) != dim:
+            raise ValueError("Size tuple must have length equal to"+\
+            " dim. You entered dim = {0}, sz_tpl = {1}".format(
+                dim, sz_tpl))
+        
+
         self.size = sz_tpl
-        self.is_3D = is_3D
+        self.is_ft = is_ft
 
 
 class SquareLattice(Lattice):
     """
-    Represents a lattice in which qubits are placed on the edges of a grid of squares. 
+    Represents a lattice in which qubits are placed on the edges of a grid of squares with size given by `sz_tpl`. 
 
     :param rough_sides: Denotes which, if any, of the sides of the lattice are to have 'rough' boundary conditions. Values in ``rough_sides`` must be drawn from ``['u', 'd', 'r', 'l', 'f', 'b']`` (up, down, left, right, front, back).
 
     :type rough_sides: tuple of strings
     """
-    def __init__(self, sz_tpl, is_3D = False, closed_boundary=True, rough_sides = ('f', 'b')):
-        super(SquareLattice, self).__init__(self, sz_tpl, is_3D,
+    def __init__(self, sz_tpl, dim, is_ft = False, closed_boundary=True, rough_sides = ('f', 'b')):
+        super(SquareLattice, self).__init__(self, sz_tpl, dim, is_ft,
                                             closed_boundary)
         
         if all([side in SIDES for side in rough_sides]):
@@ -90,7 +102,8 @@ class SquareLattice(Lattice):
             raise ValueError(("rough_sides must be in the list {0}." +\
                 "You entered: {1}").format(SIDES, rough_sides))
 
-
+        self.points = map(Point, list(it.product([2*j for j in range(4)], [2*j+1 for j in range(4)])) + list(it.product([2*j+1 for j in range(4)], [2*j for j in range(4)])))
+        
 class SquareOctagonLattice(Lattice):
     """
     Represents a lattice in which qubits are placed on the corners of squares and octagons. 
@@ -110,10 +123,7 @@ class UnionJackLattice(Lattice):
         pass
 
 ## Convenience Functions ##
-def check_int_23_tpl(coords):
-    if len(coords) not in [2, 3]:
-        raise ValueError("Input must contain 2 or 3 co-ordinates,"\
-            " you entered: {0}".format(coords))
+def check_int_tpl(coords):
     
     if not all([isinstance(coord,int) for coord in coords]):
         raise ValueError("Input tuple must be nothin' but ints,"\
