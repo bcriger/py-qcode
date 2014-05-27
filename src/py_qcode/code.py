@@ -1,4 +1,36 @@
-__all__ = ['ErrorCorrectingCode', 'StabilizerCode'] 
+from qecc import Pauli
+
+__all__ = ['ErrorCorrectingCode', 'StabilizerCode', 'ErrorCheck', 'StabilizerCheck']
+
+class ErrorCheck():
+    """
+    This is the primitive operation of measurement for error-correcting codes; it takes a list of errors on a subset of the primal lattice of the code and translates it into a syndrome on the dual lattice.
+
+    :param primal_set: co-ordinates from which the error check will collect syndromes. I'll add input checking so that tuples of co-ordinates can be entered on their own instead of the objects which wrap them.
+
+    :type primal_set: collection of whatever maps to :class:`py_qcode.Point` objects
+
+    :param dual_point: point on the dual lattice to which the syndrome will be written
+
+    :type dual_point: tuple or :class:`py_qcode.Point`
+
+    :param rule: lookup table or other mechanism that maps errors to syndromes.
+
+    :type rule: function
+    """
+    def __init__(self, primal_set, dual_point, rule):
+        self.primal_set = primal_set
+        self.dual_point = dual_point
+        self.rule = rule
+
+class StabilizerCheck(ErrorCheck):
+    """
+
+    """
+    def __init__(self, arg):
+        super(StabilizerCheck).__init__()
+        self.arg = arg
+
 
 class ErrorCorrectingCode():
     """
