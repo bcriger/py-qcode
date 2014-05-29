@@ -25,7 +25,7 @@ class ErrorCheck():
 
 class StabilizerCheck(ErrorCheck):
     """
-
+    subclass of :class:`py_qcode.ErrorCheck`, takes anything that can be cast to a :class:`qecc.Pauli` instead of a rule, and uses commutation to determine the syndrome. 
     """
     def __init__(self, arg):
         super(StabilizerCheck).__init__()
@@ -59,6 +59,7 @@ class ErrorCorrectingCode():
         self.primal_lattice = primal_lattice
         self.dual_lattice = dual_lattice
         self.parity_check = parity_check
+        self.parity_check_list
 
 class StabilizerCode(ErrorCorrectingCode):
     """ 
@@ -70,3 +71,9 @@ class StabilizerCode(ErrorCorrectingCode):
         super(StabilizerCode, self).__init__()
         self.arg = arg
         
+#UTILITY FUNCTIONS
+def commutation_rule(point_set, pauli):
+    """
+    This function determines whether an error on the set of points `point_set` commutes with an input Pauli. It's used to produce anonymous functions for input to :class:`py_qcode.ErrorCheck`'s `.__init__` method when initializing a :class:`py_qcode.StabilizerCheck` instance.
+    """
+    pass
