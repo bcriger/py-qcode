@@ -1,3 +1,5 @@
+from numpy.random import rand
+
 ## ALL ##
 __all__ = ['ErrorModel', 'DepolarizingModel']
 
@@ -17,16 +19,18 @@ class ErrorModel():
         #Sanitize input
         probs, ops = zip(*prob_op_list)
         
-        if 1. - abs(sum(probs)) > 10. ** -12:
+        if abs(1. - sum(probs)) > 10. ** -12:
             raise ValueError('The probabilites of different errors'+\
-                'must sum to 1, the probabilites entered here sum'+\
-                 'to {0}'.format(sum(probs)))
+                ' must sum to 1, the probabilites entered here sum'+\
+                 ' to {0}'.format(sum(probs)))
         if any([op not in ACCEPTABLE_OPERATORS for op in ops]):
             raise ValueError('Received operator outside set of acceptable operators {0}. You entered: {1}'\
                 .format(ACCEPTABLE_OPERATORS, ops))
 
         self.prob_op_list = prob_op_list
 
+    def act_on(lattice):
+        pass
 class DepolarizingModel(ErrorModel):
     """
     The depolarizing model applies the identity with probability :math:`1-p`, and each of the single qubit Pauli operators :math:`X`, :math:`Y`, and :math:`Z` with probability :math:`\dfrac{p}{3}`. 
@@ -40,18 +44,3 @@ class DepolarizingModel(ErrorModel):
                                                  (p / 3., 'X'),
                                                  (p / 3., 'Y'),
                                                  (p / 3., 'Z')])
-#Deprecated:        
-'''
-class BoundingErrorModel():
-    """
-    Wraps a pair of ErrorModel objects, one of which minimally
-    overestimates the fidelity of a 'weird' map (think non-unital,
-    non-Pauli, etc.), while the other minimally underestimates the
-    fidelity.
-    """
-
-    def __init__(self, upper, lower):
-        #Sanitize input
-        self.upper = upper
-        self.lower = lower
-'''

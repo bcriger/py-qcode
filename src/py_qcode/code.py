@@ -4,25 +4,27 @@ __all__ = ['ErrorCorrectingCode', 'StabilizerCode', 'ErrorCheck', 'StabilizerChe
 
 class ErrorCheck():
     """
-    This is the primitive operation of measurement for error-correcting codes; it takes a list of errors on a subset of the primal lattice of the code and translates it into a syndrome on the dual lattice.
+    This is the primitive operation of measurement for error-correcting codes; it takes a list of errors on a subset of the primal lattice of the code and translates it into syndromes on a subset of the dual lattice.
 
-    :param primal_set: co-ordinates from which the error check will collect syndromes. I'll add input checking so that tuples of co-ordinates can be entered on their own instead of the objects which wrap them.
+    :param primal_sets: co-ordinates from which the error check will collect syndromes. I'll add input checking so that tuples of co-ordinates can be entered on their own instead of the objects which wrap them.
 
-    :type primal_set: collection of whatever maps to :class:`py_qcode.Point` objects
+    :type primal_sets: collection of whatever maps to :class:`py_qcode.Point` objects
 
-    :param dual_point: point on the dual lattice to which the syndrome will be written
+    :param dual_points: points on the dual lattice to which the syndrome for this error check will be written
 
-    :type dual_point: tuple or :class:`py_qcode.Point`
+    :type dual_points: set/list of tuples or :class:`py_qcode.Point` objects.
 
     :param rule: lookup table or other mechanism that maps errors to syndromes.
 
-    :type rule: function
+    :type rule: function or dict
     """
-    def __init__(self, primal_set, dual_point, rule):
+    def __init__(self, primal_sets, dual_points, rule):
         self.primal_set = primal_set
         self.dual_point = dual_point
         self.rule = rule
 
+    def evaluate(self):
+        pass
 class StabilizerCheck(ErrorCheck):
     """
     subclass of :class:`py_qcode.ErrorCheck`, takes anything that can be cast to a :class:`qecc.Pauli` instead of a rule, and uses commutation to determine the syndrome. 
