@@ -6,7 +6,7 @@ __all__ = ['ErrorModel', 'DepolarizingModel']
 ## CONSTANTS ##
 ACCEPTABLE_OPERATORS = ['I','X','Y','Z','H','P']
 
-class ErrorModel():
+class ErrorModel(object):
     """
     Wraps a list of tuples corresponding to a discrete probability and an operator. This assumes independent identically-distributed noise, though not necessarily Pauli.
 
@@ -28,9 +28,11 @@ class ErrorModel():
                 .format(ACCEPTABLE_OPERATORS, ops))
 
         self.prob_op_list = prob_op_list
+    
+    def act_on(self, lattice):
+        for point in lattice.points:
+            point.error = action(self.prob_op_list, rand())
 
-    def act_on(lattice):
-        pass
 class DepolarizingModel(ErrorModel):
     """
     The depolarizing model applies the identity with probability :math:`1-p`, and each of the single qubit Pauli operators :math:`X`, :math:`Y`, and :math:`Z` with probability :math:`\dfrac{p}{3}`. 
@@ -44,3 +46,20 @@ class DepolarizingModel(ErrorModel):
                                                  (p / 3., 'X'),
                                                  (p / 3., 'Y'),
                                                  (p / 3., 'Z')])
+
+#Convenience functions
+
+rolling_sum = lambda lst: [sum(lst[:idx+1]) for idx in range(len(lst))]
+
+def action(prob_op_list, sample):
+    """
+    returns the operator from a prob_op_list corresponding to a number between 0 and 1. 
+    """
+    if (sample < 0.) or (sample > 1.):
+        raise ValueError("`sample` must be between 0 and 1, preferably uniform.")
+
+    probs, ops = zip(*prob_op_list)
+    cum_probs = rolling_sum(probs)
+    for idx in range(len(cum_probs)):
+        if sample < cum_probs[idx]:
+            return ops[idx]
