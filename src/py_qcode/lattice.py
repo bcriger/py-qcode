@@ -55,6 +55,9 @@ class Point(object):
             rtrn_str += ", contains syndrome " + str(self.syndrome)
         return rtrn_str
 
+    def len(self):
+        return len(self.coords)
+
 class Lattice(object):
     """
     A collection of points. Superclass to ``SquareLattice``, ``SquareOctagonLattice``, ``UnionJackLattice``, whatever other convenient lattices I put in. 
@@ -88,13 +91,35 @@ class SquareLattice(Lattice):
     """
     Represents a lattice in which qubits are placed on the edges of a grid of squares with size given by `sz_tpl`. 
 
-    :param rough_sides: Denotes which, if any, of the sides of the lattice are to have 'rough' boundary conditions. Values in ``rough_sides`` must be drawn from ``['u', 'd', 'r', 'l', 'f', 'b']`` (up, down, left, right, front, back).
+    :param rough_sides: Denotes which, if any, of the sides of the lattice are to have 'rough' boundary conditions. Values in ``rough_sides`` must be drawn from ``['u', 'd', 'r', 'l', 'f', 'b']`` (up, down, left, right, front, back). Default is `('u','r')`.
 
     :type rough_sides: tuple of strings
     """
-    def __init__(self, sz_tpl, dim, is_ft = False, closed_boundary=True, rough_sides = ('d', 'r')):
-        super(SquareLattice, self).__init__(self, sz_tpl, dim, is_ft,
-                                            closed_boundary)
+    def __init__(self, sz_tpl, is_dual=False, is_ft = False, closed_boundary=True, rough_sides = ('u', 'r')):
+        
+        dim = len(sz_tpl)
+        x_len, y_len = sz_tpl[:2] 
+
+        #TODO Add convenience functions to make these more legible. 
+        if is_dual:
+            points_2d = map(Point, list(it.product([2*j for j in range(x_len)], [2*j for j in range(y_len)])) + list(it.product([2*j+1 for j in range(x_len)], [2*j+1 for j in range(y_len)])))
+            #TODO define correct distance function given these co-ordinates
+            dist=None
+        else:
+            points_2d = map(Point, list(it.product([2*j for j in range(x_len)], [2*j+1 for j in range(y_len)])) + list(it.product([2*j+1 for j in range(x_len)], [2*j for j in range(y_len)])))
+            dist=None
+
+        if is_ft:
+            if len(sz_tpl) != 3:
+                raise ValueError("Square lattices for fault-tolerant simulations must be 3D.")
+            z_len = sz_tpl[2]
+            points = layer(points_2d, z_len)
+        else:
+            if len(sz_tpl) != 2:
+                raise ValueError("Square lattices for non-fault-tolerant simulations must be 2D.")
+            points = points_2d
+
+        super(SquareLattice, self).__init__(points, dim, dist, is_ft)
         
         if all([side in SIDES for side in rough_sides]):
             self.rough_sides = rough_sides
@@ -102,8 +127,6 @@ class SquareLattice(Lattice):
             raise ValueError(("rough_sides must be in the list {0}." +\
                 "You entered: {1}").format(SIDES, rough_sides))
 
-        self.points = map(Point, list(it.product([2*j for j in range(4)], [2*j+1 for j in range(4)])) + list(it.product([2*j+1 for j in range(4)], [2*j for j in range(4)])))
-        
 class SquareOctagonLattice(Lattice):
     """
     Represents a lattice in which qubits are placed on the corners of squares and octagons. 
@@ -133,8 +156,27 @@ class CubicLattice(Lattice):
 
 ## Convenience Functions ##
 def check_int_tpl(coords):
-    
     if not all([isinstance(coord,int) for coord in coords]):
         raise ValueError("Input tuple must be nothin' but ints,"\
             " you entered: {0}".format(coords))
     pass
+
+def promote(point, new_coord):
+    """
+    Adds a new coordinate to a point, preserving the error and syndrome stored therein.
+    """
+    pt_attrs = point.__dict__.values()
+    if type(new_coord) is int:
+        pt_attrs[0] += (new_coord,)
+    else:
+        raise TypeError("New coordinate must be an int.")
+    return Point(*pt_attrs)
+
+def layer(points, new_len):
+    """
+    Naively extends a collection of points into a new dimension by producing `new_len` new copies of the points at integral co-ordinates.
+    """
+    new_pt_lst = []
+    for stratum in range(new_len):
+        new_pt_lst.append(map(lambda pt: promote(pt, stratum), points))
+    return new_pt_lst
