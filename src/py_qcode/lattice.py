@@ -6,7 +6,7 @@ Shameless plagiarism from Bravyi/Haah
 
 import itertools as it
 
-__all__ = ['Point', 'Lattice', 'SquareLattice', 'SquareOctagonLattice', 'UnionJackLattice']
+__all__ = ['Point', 'Lattice', 'SquareLattice2D', 'SquareOctagonLattice2D', 'UnionJackLattice2D']
 
 ##constants##
 SIDES = ['u', 'd', 'r', 'l', 'f', 'b'] #up, down, left, right, front, back
@@ -47,12 +47,19 @@ class Point(object):
         """
         return hash((self.coords, self.error, self.syndrome))
 
-class Lattice:
+    def __repr__(self):
+        rtrn_str = "Point at "+str(self.coords)
+        if self.error is not None:
+            rtrn_str += ", contains error " + str(self.error)
+        if self.syndrome is not None:
+            rtrn_str += ", contains syndrome " + str(self.syndrome)
+        return rtrn_str
+
+class Lattice(object):
     """
     A collection of points. Superclass to ``SquareLattice``, ``SquareOctagonLattice``, ``UnionJackLattice``, whatever other convenient lattices I put in. 
 
-    Represents a 2D/3D lattice of points with integer 
-    co-ordinates on which a stabilizer code can be defined.
+    Represents a arbitrary-dimensional lattice of points with integer co-ordinates on which a stabilizer code can be defined. Note that, although the word "lattice" is used to describe these objects, the only requirement is that its constituent points have co-ordinates. No property of the graph structure is assumed, especially planarity. 
 
     :param points: collection of points on the lattice.
     
@@ -64,25 +71,18 @@ class Lattice:
 
     :param is_ft: indicates whether the lattice is to possess an extra dimension for fault-tolerant decoding.
     
-    :type is_3D: bool
+    :type is_ft: bool
 
     :param closed_boundary: Indicates whether to identify the Nth co-ordinate with the zeroth co-ordinate in every dimension.
 
     :type closed_boundary: bool
     """
-    def __init__(self, points, dim, dist=None, is_ft=False, closed_boundary=True):
+    def __init__(self, points, dim, dist=None, is_ft=False):
         
-        check_int_tpl(sz_tpl)
-        
-        if len(sz_tpl) != dim:
-            raise ValueError("Size tuple must have length equal to"+\
-            " dim. You entered dim = {0}, sz_tpl = {1}".format(
-                dim, sz_tpl))
-        
-
-        self.size = sz_tpl
+        self.points = points
+        self.dim = dim
+        self.dist = dist
         self.is_ft = is_ft
-
 
 class SquareLattice(Lattice):
     """
@@ -92,7 +92,7 @@ class SquareLattice(Lattice):
 
     :type rough_sides: tuple of strings
     """
-    def __init__(self, sz_tpl, dim, is_ft = False, closed_boundary=True, rough_sides = ('f', 'b')):
+    def __init__(self, sz_tpl, dim, is_ft = False, closed_boundary=True, rough_sides = ('d', 'r')):
         super(SquareLattice, self).__init__(self, sz_tpl, dim, is_ft,
                                             closed_boundary)
         
@@ -122,13 +122,19 @@ class UnionJackLattice(Lattice):
         """
         pass
 
+class CubicLattice(Lattice):
+    """
+    Represents a lattice in which qubits are placed on the intersections of the diagonals of squares, as well as their corners. 
+    """
+    def __init__(self, sz_tpl):
+        """
+        """
+        pass
+
 ## Convenience Functions ##
 def check_int_tpl(coords):
     
     if not all([isinstance(coord,int) for coord in coords]):
         raise ValueError("Input tuple must be nothin' but ints,"\
             " you entered: {0}".format(coords))
-    pass
-
-def two_d_square_lattice():
     pass

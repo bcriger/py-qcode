@@ -33,9 +33,13 @@ class Simulation():
     def __init__(self, lattice, error_model, code, decoder, n_trials):
         
         #Initial Values
+        
+        #Defined objects
         self.error_model = error_model
         self.code = code
         self.decoder = decoder
+        
+        #Integer
         self.n_trials = n_trials
         
         #Final Values
