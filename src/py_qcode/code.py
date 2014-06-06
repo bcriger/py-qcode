@@ -1,8 +1,8 @@
-from qecc import Pauli
+from qecc import Pauli, commutes_with
 
 __all__ = ['ErrorCorrectingCode', 'StabilizerCode', 'ErrorCheck', 'StabilizerCheck']
 
-class ErrorCheck():
+class ErrorCheck(object):
     """
     This is the primitive operation of measurement for error-correcting codes; it takes a list of errors on a subset of the primal lattice of the code and translates it into syndromes on a subset of the dual lattice.
 
@@ -19,20 +19,40 @@ class ErrorCheck():
     :type rule: function or dict
     """
     def __init__(self, primal_sets, dual_points, rule):
-        self.primal_set = primal_set
-        self.dual_point = dual_point
+
+        self.primal_sets = primal_sets
+        self.dual_points = dual_points
         self.rule = rule
 
     def evaluate(self):
-        pass
+        for idx, point in enumerate(self.dual_points):
+            error_str = sum([pt.error for pt in self.primal_sets[idx]])
+            if type(self.rule) is dict:
+                try:
+                    point.syndrome = self.rule[error_str]
+                except KeyError:
+                    raise KeyError("There is no entry in the lookup table for the error " + error_str)
+                finally:
+                    pass
+            elif type(self.rule) is function:
+                point.syndrome = self.rule(error_str)
+            else:
+                raise TypeError("Rule used by error check must be a function or dict, you entered a value of type: " + type(self.rule))
+
 class StabilizerCheck(ErrorCheck):
     """
     subclass of :class:`py_qcode.ErrorCheck`, takes anything that can be cast to a :class:`qecc.Pauli` instead of a rule, and uses commutation to determine the syndrome. 
     """
-    def __init__(self, arg):
-        super(StabilizerCheck).__init__()
-        self.arg = arg
-
+    def __init__(self, primal_sets, dual_points, stabilizer):
+        
+        if type(stabilizer) is str:
+            stabilizer = Pauli(stabilizer)
+        
+        #returns 0 if error commutes with stabilizer, 1 if it anti-commutes
+        stab_rule = lambda err_str: 1 - int(commutes_with(stabilizer)(Pauli(err_str)))
+        
+        super(StabilizerCheck).__init__(primal_sets, dual_points, stab_rule)
+        
 
 class ErrorCorrectingCode():
     """
@@ -74,8 +94,5 @@ class StabilizerCode(ErrorCorrectingCode):
         self.arg = arg
         
 #UTILITY FUNCTIONS
-def commutation_rule(point_set, pauli):
-    """
-    This function determines whether an error on the set of points `point_set` commutes with an input Pauli. It's used to produce anonymous functions for input to :class:`py_qcode.ErrorCheck`'s `.__init__` method when initializing a :class:`py_qcode.StabilizerCheck` instance.
-    """
+def toric_code():
     pass
