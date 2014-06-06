@@ -55,7 +55,7 @@ class Point(object):
             rtrn_str += ", contains syndrome " + str(self.syndrome)
         return rtrn_str
 
-    def len(self):
+    def __len__(self):
         return len(self.coords)
 
 class Lattice(object):
@@ -86,6 +86,18 @@ class Lattice(object):
         self.dim = dim
         self.dist = dist
         self.is_ft = is_ft
+
+    def __getitem__(self, key):
+        if len(key) != len(self.points[0]):
+            raise ValueError("key must be length: " + str(len(self.points[0])))
+        for point in self.points:
+            if point.coords == tuple(key):
+                return point
+        raise KeyError("Point not found on lattice.")
+    
+    def __repr__(self):
+        pts = map(lambda pt: repr(pt), self.points)
+        return '[' + ',\n '.join(pts) + ']'
 
 class SquareLattice(Lattice):
     """
@@ -126,6 +138,29 @@ class SquareLattice(Lattice):
         else: 
             raise ValueError(("rough_sides must be in the list {0}." +\
                 "You entered: {1}").format(SIDES, rough_sides))
+    
+    def neighbours(self, location):
+        """
+        Returns a list of points which are one unit of distance away from a given location.
+        Convenience method used to define stars and plaquettes below.
+
+        June 6, 2014: Only supports closed_boundary 
+        """
+        x, y = location
+        x_sz, y_sz = self.sz_tpl
+        
+        left  = x - 1 % (2 * x_sz)
+        right = x + 1 % (2 * x_sz)
+        up    = y + 1 % (2 * y_sz)
+        down  = y - 1 % (2 * y_sz)
+        
+        return (self[right,y],self[x,up],self[left,y],self[x,down])
+
+    def stars(self):
+        return map(self.neighbours, )
+    
+    def plaquettes(self):
+        pass
 
 class SquareOctagonLattice(Lattice):
     """
