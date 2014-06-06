@@ -93,7 +93,7 @@ class Lattice(object):
         for point in self.points:
             if point.coords == tuple(key):
                 return point
-        raise KeyError("Point not found on lattice.")
+        raise KeyError("Point not found on lattice; key: "+ str(key))
     
     def __repr__(self):
         pts = map(lambda pt: repr(pt), self.points)
@@ -114,11 +114,11 @@ class SquareLattice(Lattice):
 
         #TODO Add convenience functions to make these more legible. 
         if is_dual:
-            points_2d = map(Point, list(it.product([2*j for j in range(x_len)], [2*j for j in range(y_len)])) + list(it.product([2*j+1 for j in range(x_len)], [2*j+1 for j in range(y_len)])))
+            points_2d = map(Point, sym_coords(x_len, y_len))
             #TODO define correct distance function given these co-ordinates
             dist=None
         else:
-            points_2d = map(Point, list(it.product([2*j for j in range(x_len)], [2*j+1 for j in range(y_len)])) + list(it.product([2*j+1 for j in range(x_len)], [2*j for j in range(y_len)])))
+            points_2d = map(Point, skew_coords(x_len, y_len))
             dist=None
 
         if is_ft:
@@ -132,6 +132,7 @@ class SquareLattice(Lattice):
             points = points_2d
 
         super(SquareLattice, self).__init__(points, dim, dist, is_ft)
+        self.size = sz_tpl
         
         if all([side in SIDES for side in rough_sides]):
             self.rough_sides = rough_sides
@@ -147,20 +148,20 @@ class SquareLattice(Lattice):
         June 6, 2014: Only supports closed_boundary 
         """
         x, y = location
-        x_sz, y_sz = self.sz_tpl
+        x_sz, y_sz = self.size
         
-        left  = x - 1 % (2 * x_sz)
-        right = x + 1 % (2 * x_sz)
-        up    = y + 1 % (2 * y_sz)
-        down  = y - 1 % (2 * y_sz)
+        left  = (x - 1) % (2 * x_sz)
+        right = (x + 1) % (2 * x_sz)
+        up    = (y + 1) % (2 * y_sz)
+        down  = (y - 1) % (2 * y_sz)
         
         return (self[right,y],self[x,up],self[left,y],self[x,down])
 
     def stars(self):
-        return map(self.neighbours, )
+        return map(self.neighbours, _even_evens(*self.size))
     
     def plaquettes(self):
-        pass
+        return map(self.neighbours, _odd_odds(*self.size))
 
 class SquareOctagonLattice(Lattice):
     """
@@ -169,6 +170,15 @@ class SquareOctagonLattice(Lattice):
     def __init__(self, sz_tpl, is_3D=False, closed_boundary=True):
         """
         """
+        pass
+
+    def squares(self):
+        pass
+
+    def x_octagons(self):
+        pass
+    
+    def z_octagons(self):
         pass
 
 class UnionJackLattice(Lattice):
@@ -215,3 +225,28 @@ def layer(points, new_len):
     for stratum in range(new_len):
         new_pt_lst.append(map(lambda pt: promote(pt, stratum), points))
     return new_pt_lst
+
+_evens = lambda n: range(0, 2*n, 2)
+
+_odds = lambda n: range(1, 2*n+1, 2)
+
+_even_odds = lambda nx, ny: list(it.product(_evens(nx), _odds(ny)))
+
+_odd_evens = lambda nx, ny: list(it.product(_odds(nx), _evens(ny)))
+
+_even_evens = lambda nx, ny: list(it.product(_evens(nx), _evens(ny)))
+
+_odd_odds = lambda nx, ny: list(it.product(_odds(nx), _odds(ny)))
+
+def sym_coords(nx, ny):
+    """
+    Convenience function for square lattice definition, returns all pairs of co-ordinates on an n-by-n lattice which are both even or both odd. 
+    """
+    return  _even_evens(nx, ny) + _odd_odds(nx, ny)
+
+
+def skew_coords(nx, ny):
+    """
+    Convenience function for square lattice definition, returns all pairs of co-ordinates on an n-by-n lattice which are "even-odd" or "odd-even". 
+    """
+    return _even_odds(nx, ny) + _odd_evens(nx, ny)
