@@ -1,6 +1,8 @@
 from qecc import Pauli, commutes_with
+from lattice import _even_evens, _odd_odds 
+from types import FunctionType
 
-__all__ = ['ErrorCorrectingCode', 'StabilizerCode', 'ErrorCheck', 'StabilizerCheck']
+__all__ = ['ErrorCorrectingCode', 'ErrorCheck', 'StabilizerCheck', 'toric_code']
 
 class ErrorCheck(object):
     """
@@ -26,15 +28,15 @@ class ErrorCheck(object):
 
     def evaluate(self):
         for idx, point in enumerate(self.dual_points):
-            error_str = sum([pt.error for pt in self.primal_sets[idx]])
-            if type(self.rule) is dict:
+            error_str = ''.join([pt.error for pt in self.primal_sets[idx]])
+            if isinstance(self.rule, dict):
                 try:
                     point.syndrome = self.rule[error_str]
                 except KeyError:
                     raise KeyError("There is no entry in the lookup table for the error " + error_str)
                 finally:
                     pass
-            elif type(self.rule) is function:
+            elif isinstance(self.rule, FunctionType):
                 point.syndrome = self.rule(error_str)
             else:
                 raise TypeError("Rule used by error check must be a function or dict, you entered a value of type: " + type(self.rule))
@@ -51,48 +53,43 @@ class StabilizerCheck(ErrorCheck):
         #returns 0 if error commutes with stabilizer, 1 if it anti-commutes
         stab_rule = lambda err_str: 1 - int(commutes_with(stabilizer)(Pauli(err_str)))
         
-        super(StabilizerCheck).__init__(primal_sets, dual_points, stab_rule)
+        super(StabilizerCheck, self).__init__(primal_sets, dual_points, stab_rule)
+
+        self.stabilizer = stabilizer
         
 
 class ErrorCorrectingCode():
     """
-    An error-correcting code, for the purpose of this module, is a rule
-    for taking errors on sets of points, and turning them into
-    discrete-valued syndromes which are interpreted by the decoder.
-    Normally, we would immediately make the restriction to stabilizer
-    codes which return binary-valued syndromes, but we want to make
-    room for codes which correct non-Pauli errors, and return fuzzy
-    syndromes.
+    Wraps a bunch of parity checks. 
 
-    :param primal_lattice: The lattice on which the qubits live.
+    :param parity_check_list: A list of :class:`py_qcode.ErrorCheck` objects, which can be a mix of any subclass of :class:`py_qcode.ErrorCheck`.
 
-    :type primal_lattice: :class:`py_qcode.Lattice` 
-    
-    :param dual_lattice: The lattice on which the parity checks live.
-
-    :type dual_lattice: :class:`py_qcode.Lattice`
-
-    :param parity_check: A rule for mapping errors on the primal lattice to measurement results on the dual lattice.
-
-    :type parity_check: function 
+    :type parity_check_list: list  
     """
-    def __init__(self, primal_lattice, dual_lattice, parity_check):
+    def __init__(self, parity_check_list):
         
-        self.primal_lattice = primal_lattice
-        self.dual_lattice = dual_lattice
-        self.parity_check = parity_check
-        self.parity_check_list
+        self.parity_check_list = parity_check_list
 
-class StabilizerCode(ErrorCorrectingCode):
-    """ 
-    subclass of
-    ErrorCorrectingCode for which syndromes are determined by commutation
-    /anti-commutation with a Pauli stabilizer.
-    """
-    def __init__(self, arg):
-        super(StabilizerCode, self).__init__()
-        self.arg = arg
+    def measure(self):
+        """
+        Evaluates all the parity checks.
+        """
+        for check in self.parity_check_list:
+            check.evaluate()
         
 #UTILITY FUNCTIONS
-def toric_code():
-    pass
+def toric_code(primal_grid, dual_grid):
+    """
+    Uses a few convenience functions to produce the toric code on a set of square lattices.
+    """
+    star_coords = _even_evens(*dual_grid.size)    
+    star_duals = [dual_grid[coord] for coord in star_coords]
+    star_primal = [primal_grid.neighbours(coord) for coord in star_coords]
+    star_check = StabilizerCheck(star_primal, star_duals, 'XXXX')
+    
+    plaq_coords = _odd_odds(*dual_grid.size)    
+    plaq_duals = [dual_grid[coord] for coord in plaq_coords]
+    plaq_primal = [primal_grid.neighbours(coord) for coord in plaq_coords]
+    plaq_check = StabilizerCheck(plaq_primal, plaq_duals, 'ZZZZ')
+
+    return ErrorCorrectingCode([star_check, plaq_check])
