@@ -6,7 +6,7 @@ Shameless plagiarism from Bravyi/Haah
 
 import itertools as it
 
-__all__ = ['Point', 'Lattice', 'SquareLattice2D', 'SquareOctagonLattice2D', 'UnionJackLattice2D']
+__all__ = ['Point', 'Lattice', 'SquareLattice', 'SquareOctagonLattice', 'UnionJackLattice']
 
 ##constants##
 SIDES = ['u', 'd', 'r', 'l', 'f', 'b'] #up, down, left, right, front, back
@@ -146,6 +146,9 @@ class SquareLattice(Lattice):
         Convenience method used to define stars and plaquettes below.
 
         June 6, 2014: Only supports closed_boundary 
+
+        TODO: Make this depend on the distance function, so that it can be made
+        a method of Lattice, instead of SquareLattice.
         """
         x, y = location
         x_sz, y_sz = self.size
@@ -175,11 +178,12 @@ class SquareOctagonLattice(Lattice):
     def squares(self):
         pass
 
-    def x_octagons(self):
-        pass
-    
     def z_octagons(self):
         pass
+
+    def x_octagons(self):
+        pass
+
 
 class UnionJackLattice(Lattice):
     """
