@@ -116,10 +116,10 @@ class SquareLattice(Lattice):
         if is_dual:
             points_2d = map(Point, sym_coords(x_len, y_len))
             #TODO define correct distance function given these co-ordinates
-            dist=None
+            dist = lambda coord1, coord2: sum([abs((a - b)) % (2*sz) for a, b, sz in zip(coord1, coord2, sz_tpl)])
         else:
             points_2d = map(Point, skew_coords(x_len, y_len))
-            dist=None
+            dist = None
 
         if is_ft:
             if len(sz_tpl) != 3:
