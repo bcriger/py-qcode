@@ -1,7 +1,7 @@
 from numpy.random import rand
 
 ## ALL ##
-__all__ = ['ErrorModel', 'DepolarizingModel']
+__all__ = ['ErrorModel', 'DepolarizingModel', 'action']
 
 ## CONSTANTS ##
 ACCEPTABLE_OPERATORS = ['I','X','Y','Z','H','P']
@@ -33,21 +33,23 @@ class ErrorModel(object):
         for point in lattice.points:
             point.error = action(self.prob_op_list, rand())
 
-class DepolarizingModel(ErrorModel):
+#Convenience functions
+
+def depolarizing_model(p):
     """
     The depolarizing model applies the identity with probability :math:`1-p`, and each of the single qubit Pauli operators :math:`X`, :math:`Y`, and :math:`Z` with probability :math:`\dfrac{p}{3}`. 
-
-    :param p: A probability, between 0 and 1.
-
-    :type p: float
     """
-    def __init__(self, p):
-        super(DepolarizingModel, self).__init__([(1. - p, 'I'),
-                                                 (p / 3., 'X'),
-                                                 (p / 3., 'Y'),
-                                                 (p / 3., 'Z')])
+    return ErrorModel([(1. - p, 'I'), (p / 3., 'X'), (p / 3., 'Y'), (p / 3., 'Z')])
 
-#Convenience functions
+def iidxz_model(px, pz=None):
+    """
+    The independent identically-distributed X/Z model applies a bit and phase flip to each site, resulting in a reduced probability of Y errors
+    """
+    if pz is None:
+        pz = px
+
+    return ErrorModel([((1. - px) * (1. - pz), 'I'), (px * (1. - pz), 'X'),
+                        ((1. - px) * pz, 'Z'), (px * pz, 'Y')])
 
 rolling_sum = lambda lst: [sum(lst[:idx+1]) for idx in range(len(lst))]
 
