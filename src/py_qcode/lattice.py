@@ -33,26 +33,31 @@ class Point(object):
     
     :type syndrome: any
     """
-    def __init__(self, coords, error = None, syndrome = None):
+    def __init__(self, coords, error = None, syndrome = None, inferred_error=None):
         
         check_int_tpl(coords)
         self.coords = coords
         
         self.error = error
         self.syndrome = syndrome 
-    
+        self.inferred_error = inferred_error
+
     def __hash__(self):
         """
         A hash function for points is necessary to store :class:`py_qcode.Point`s in sets or dictionaries.
         """
-        return hash((self.coords, self.error, self.syndrome))
+        return hash((self.coords, self.error, self.syndrome, self.inferred_error))
 
     def __repr__(self):
         rtrn_str = "Point at "+str(self.coords)
+        
         if self.error is not None:
             rtrn_str += ", contains error " + str(self.error)
         if self.syndrome is not None:
             rtrn_str += ", contains syndrome " + str(self.syndrome)
+        if self.inferred_error is not None:
+            rtrn_str += ", contains inferred error " + str(self.inferred_error)
+        
         return rtrn_str
 
     def __len__(self):

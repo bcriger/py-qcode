@@ -1,7 +1,7 @@
 from numpy.random import rand
 
 ## ALL ##
-__all__ = ['ErrorModel', 'DepolarizingModel', 'action']
+__all__ = ['ErrorModel', 'depolarizing_model', 'iidxz_model', 'action']
 
 ## CONSTANTS ##
 ACCEPTABLE_OPERATORS = ['I','X','Y','Z','H','P']

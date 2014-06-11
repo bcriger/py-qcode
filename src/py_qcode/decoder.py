@@ -2,21 +2,22 @@ __all__ = ['Decoder', 'MWPMDecoder', 'RGBPDecoder', 'BHRGDecoder']
 
 class Decoder():
     """
-    The role of a decoder is to infer an error given a syndrome. The 
-    overall pattern is  
+    The role of a decoder is to infer an error given a syndrome. This 
+    requires the presence of the dual lattice (where the syndromes are
+    stored), the primal lattice (where the real error is stored)
     """
-    def __init__(self, primal_lattice, dual_lattice, algorithm):
+    def __init__(self, algorithm, primal_lattice, dual_lattice):
+        self.algorithm = algorithm
+        self.update_rule = update_rule
         self.primal_lattice = primal_lattice
         self.dual_lattice = dual_lattice
-        self.algorithm = algorithm
 
     def infer(self):
         """
         Uses `self.algorithm` to update the error on the primal_lattice,
         given the syndromes on the dual lattice.
         """
-        #Pseudocode, requires refactor on lattice.py
-        self.primal_lattice.update(self.algorithm(self.dual_lattice),'error')
+        self.algorithm(self.update_rule, self.primal_lattice, self.dual_lattice)
 
 class MWPMDecoder(Decoder):
     """
