@@ -1,3 +1,5 @@
+import networkx as nx
+
 __all__ = ['Decoder', 'MWPMDecoder', 'RGBPDecoder', 'BHRGDecoder']
 
 class Decoder():
@@ -8,7 +10,6 @@ class Decoder():
     """
     def __init__(self, algorithm, primal_lattice, dual_lattice):
         self.algorithm = algorithm
-        self.update_rule = update_rule
         self.primal_lattice = primal_lattice
         self.dual_lattice = dual_lattice
 
@@ -17,14 +18,32 @@ class Decoder():
         Uses `self.algorithm` to update the error on the primal_lattice,
         given the syndromes on the dual lattice.
         """
-        self.algorithm(self.update_rule, self.primal_lattice, self.dual_lattice)
+        self.algorithm(self.primal_lattice, self.dual_lattice)
 
 class MWPMDecoder(Decoder):
     """
-    Decoder based on minimum-weight perfect matching using the blossom algorithm. 
+    Decoder based on minimum-weight perfect matching using the blossom algorithm,
+    implemented in networkx.  
     """
-    def __init__(self, arg):
-        self.arg = arg
+    def __init__(self, primal_lattice, dual_lattice):
+        
+        def matching_alg(primal_lattice, dual_lattice):
+            """
+            There are two steps to this algorithm. First, we solve the
+            matching problem on the dual lattice, identifying pairs of
+            points with minimum-weight error chains between them. Then,
+            we use a simple rule to produce an error chain from the
+            matching.
+
+            This decoder is only implemented with toric codes in mind.
+            It treats X and Z errors as completely independent.
+            """
+            
+            #First, construct a pair of graphs given syndrome data:
+            x_graph = nx.Graph(); z_graph = nx.Graph()
+
+
+        super(MWPMDecoder, self).__init__(matching_alg, primal_lattice, dual_lattice)
 
 class RGBPDecoder(Decoder):
     """

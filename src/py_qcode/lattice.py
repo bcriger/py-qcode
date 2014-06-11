@@ -117,11 +117,11 @@ class SquareLattice(Lattice):
         dim = len(sz_tpl)
         x_len, y_len = sz_tpl[:2] 
 
-        #TODO Add convenience functions to make these more legible. 
         if is_dual:
             points_2d = map(Point, sym_coords(x_len, y_len))
-            #TODO define correct distance function given these co-ordinates
-            dist = lambda coord1, coord2: sum([abs((a - b)) % (2*sz) for a, b, sz in zip(coord1, coord2, sz_tpl)])
+            dist = lambda coord1, coord2: sum([abs(a - b) % (2 * sz) 
+                                                for a, b, sz in 
+                                                zip(coord1, coord2, sz_tpl)])
         else:
             points_2d = map(Point, skew_coords(x_len, y_len))
             dist = None
@@ -138,6 +138,7 @@ class SquareLattice(Lattice):
 
         super(SquareLattice, self).__init__(points, dim, dist, is_ft)
         self.size = sz_tpl
+        self.is_dual = is_dual
         
         if all([side in SIDES for side in rough_sides]):
             self.rough_sides = rough_sides
