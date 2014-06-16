@@ -1,6 +1,6 @@
 import networkx as nx
 
-__all__ = ['Decoder', 'MWPMDecoder', 'RGBPDecoder', 'BHRGDecoder']
+__all__ = ['Decoder', 'mwpm_decoder', 'RGBPDecoder', 'BHRGDecoder']
 
 class Decoder():
     """
@@ -20,34 +20,52 @@ class Decoder():
         """
         self.algorithm(self.primal_lattice, self.dual_lattice)
 
-class MWPMDecoder(Decoder):
+def mwpm_decoder(primal_lattice, dual_lattice):
     """
     Decoder based on minimum-weight perfect matching using the blossom algorithm,
     implemented in networkx.  
     """
-    def __init__(self, primal_lattice, dual_lattice):
+    def matching_alg(primal_lattice, dual_lattice):
+        """
+        There are two steps to this algorithm. First, we solve the
+        matching problem on the dual lattice, identifying pairs of
+        points with minimum-weight error chains between them. Then,
+        we use a simple rule to produce an error chain from the
+        matching.
+
+        This decoder is only implemented with toric codes in mind.
+        It treats X and Z errors as completely independent.
+        """
         
-        def matching_alg(primal_lattice, dual_lattice):
-            """
-            There are two steps to this algorithm. First, we solve the
-            matching problem on the dual lattice, identifying pairs of
-            points with minimum-weight error chains between them. Then,
-            we use a simple rule to produce an error chain from the
-            matching.
+        #First, construct a pair of graphs given syndrome data:
+        x_graph = nx.Graph(); z_graph = nx.Graph()
+        #For all points on the dual lattice, add a vertex to the
+        #appropriate graph and weighted edges connecting it to 
+        #every prior vertex.
+        
+        for point in dual_lattice.points:
+            if any([ltr in point.syndrome for ltr in 'xX']):
+                x_graph.add_node(point.coords)
+            if any([ltr in point.syndrome for ltr in 'zZ']):
+                z_graph.add_node(point.coords)
+        
+        for g in [x_graph, z_graph]:
+            for node in g.nodes():
+                other_nodes = g.nodes()
+                other_nodes.remove(node)
+                for other_node in other_nodes:
+                    edge_tuple = (node, other_node,
+                                    -dual_lattice.dist(node,other_node))
+                    g.add_weighted_edges_from([edge_tuple])
 
-            This decoder is only implemented with toric codes in mind.
-            It treats X and Z errors as completely independent.
+        x_mate_dict, z_mate_dict = \
+        map(nx.max_weighted_matching, (x_graph, z_graph))
 
-            TODO: Put some kind of flag to denote X and Z errors. 
-            Change syndromes from {0,1} to a larger set. 
-            """
-            
-            #First, construct a pair of graphs given syndrome data:
-            x_graph = nx.Graph(); z_graph = nx.Graph()
-            
+        #Produce error chains according to 'up-and-to-the-right'
+        #formula:
 
 
-        super(MWPMDecoder, self).__init__(matching_alg, primal_lattice, dual_lattice)
+    return Decoder(matching_alg, primal_lattice, dual_lattice)
 
 class RGBPDecoder(Decoder):
     """
