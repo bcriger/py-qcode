@@ -31,7 +31,10 @@ class ErrorCheck(object):
             error_str = ''.join([pt.error for pt in self.primal_sets[idx]])
             if isinstance(self.rule, dict):
                 try:
-                    point.syndrome = self.rule[error_str]
+                    if point.syndrome is None:
+                        point.syndrome = self.rule[error_str]
+                    else:
+                        point.syndrome += self.rule[error_str]
                 except KeyError:
                     raise KeyError("There is no entry in the lookup table for the error " + error_str)
                 finally:
@@ -45,13 +48,28 @@ class StabilizerCheck(ErrorCheck):
     """
     subclass of :class:`py_qcode.ErrorCheck`, takes anything that can be cast to a :class:`qecc.Pauli` instead of a rule, and uses commutation to determine the syndrome. 
     """
-    def __init__(self, primal_sets, dual_points, stabilizer):
+    def __init__(self, primal_sets, dual_points, stabilizer, indy_css=False):
         
         if type(stabilizer) is str:
             stabilizer = Pauli(stabilizer)
         
         #returns 0 if error commutes with stabilizer, 1 if it anti-commutes
-        stab_rule = lambda err_str: 1 - int(commutes_with(stabilizer)(Pauli(err_str)))
+        if indy_css == False:
+            stab_rule = lambda err_str: 1 - int(commutes_with(stabilizer)(Pauli(err_str)))
+        else:
+            #Returns the appropriate letter, X or Z
+            def stab_rule(err_str):
+                err_pauli = Pauli(err_str)
+                if all([ltr in 'xX' for ltr in stabilizer.op]):
+                    syn_str = 'Z'    
+                elif all([ltr in 'zZ' for ltr in stabilizer.op]):
+                    syn_str = 'X'
+                else:
+                    raise ValueError("CSS Stabilizers must be all-X or all-Z; you entered: {0}".format(stabilizer))
+
+                if not(commutes_with(stabilizer)(err_pauli)):
+                        return syn_str
+
         
         super(StabilizerCheck, self).__init__(primal_sets, dual_points, stab_rule)
 
@@ -85,11 +103,11 @@ def toric_code(primal_grid, dual_grid):
     star_coords = _even_evens(*dual_grid.size)    
     star_duals = [dual_grid[coord] for coord in star_coords]
     star_primal = [primal_grid.neighbours(coord) for coord in star_coords]
-    star_check = StabilizerCheck(star_primal, star_duals, 'XXXX')
+    star_check = StabilizerCheck(star_primal, star_duals, 'XXXX', indy_css=True)
     
     plaq_coords = _odd_odds(*dual_grid.size)    
     plaq_duals = [dual_grid[coord] for coord in plaq_coords]
     plaq_primal = [primal_grid.neighbours(coord) for coord in plaq_coords]
-    plaq_check = StabilizerCheck(plaq_primal, plaq_duals, 'ZZZZ')
+    plaq_check = StabilizerCheck(plaq_primal, plaq_duals, 'ZZZZ', indy_css=True)
 
     return ErrorCorrectingCode([star_check, plaq_check])
