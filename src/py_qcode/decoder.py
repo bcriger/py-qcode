@@ -37,10 +37,14 @@ class MWPMDecoder(Decoder):
 
             This decoder is only implemented with toric codes in mind.
             It treats X and Z errors as completely independent.
+
+            TODO: Put some kind of flag to denote X and Z errors. 
+            Change syndromes from {0,1} to a larger set. 
             """
             
             #First, construct a pair of graphs given syndrome data:
             x_graph = nx.Graph(); z_graph = nx.Graph()
+            
 
 
         super(MWPMDecoder, self).__init__(matching_alg, primal_lattice, dual_lattice)
