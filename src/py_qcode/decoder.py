@@ -61,9 +61,12 @@ def mwpm_decoder(primal_lattice, dual_lattice):
         x_mate_dict, z_mate_dict = \
         map(nx.max_weighted_matching, (x_graph, z_graph))
 
-        #Produce error chains according to 'up-and-to-the-right'
-        #formula:
-
+        #Produce error chains according to min-length path between
+        #mated points
+        for pair in x_mate_dict.items():
+            coord_set = min_length_path(*pair, dual_lattice.dist)
+            pass #what happens if error chains cross? check if threshold is low.
+        pass #This function is secretly a subroutine
 
     return Decoder(matching_alg, primal_lattice, dual_lattice)
 
@@ -80,3 +83,23 @@ class BHRGDecoder(Decoder):
     """
     def __init__(self, arg):
         self.arg = arg
+
+#Convenience Fuctions
+
+def min_length_path(start, end, sz_tpl, closed_boundary=True):
+    """
+    Finds the shortest path between two points on a union-jack lattice
+    ('squares' inscribed with 45-degree-rotated 'squares'), given the
+    start point, the end point and a flag to indicate whether the 
+    underlying lattice is closed. 
+
+    The basic idea is to use the union of disjoint straight paths 
+    between 'corner' sites on the dual lattice. This minimizes
+    total path length while minimizing the number of diagonal moves, 
+    and (hopefully) the complexity of the code.
+    """
+    #Determine corner sites:
+    
+
+    pass
+
