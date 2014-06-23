@@ -1,10 +1,12 @@
 from numpy.random import rand
+from qecc import Pauli
 
 ## ALL ##
-__all__ = ['ErrorModel', 'depolarizing_model', 'iidxz_model', 'action']
+__all__ = ['ErrorModel', 'PauliErrorModel', 'depolarizing_model', 'iidxz_model']
 
 ## CONSTANTS ##
-ACCEPTABLE_OPERATORS = ['I','X','Y','Z','H','P']
+PAULIS = ['I','X','Y','Z']
+ACCEPTABLE_OPERATORS = PAULIS + ['H','P']
 
 class ErrorModel(object):
     """
@@ -31,7 +33,25 @@ class ErrorModel(object):
     
     def act_on(self, lattice):
         for point in lattice.points:
-            point.error = action(self.prob_op_list, rand())
+            point.error = _action(self.prob_op_list, rand())
+
+class PauliErrorModel(ErrorModel):
+    def __init__(self, prob_op_list):
+
+        for prob_op in prob_op_list:
+            if prob_op[1] not in PAULIS:
+                raise ValueError('Received operator {0} outside of Pauli set {1}'\
+                    .format(prob_op[1], PAULIS))
+
+        super(PauliErrorModel, self).__init__(prob_op_list)
+
+    def act_on(self, lattice):
+        for point in lattice.points:
+            new_pauli = Pauli(_action(self.prob_op_list, rand()))
+            if point.error is None:
+                point.error = new_pauli
+            else:
+                point.error *= new_pauli
 
 #Convenience functions
 
@@ -39,7 +59,7 @@ def depolarizing_model(p):
     """
     The depolarizing model applies the identity with probability :math:`1-p`, and each of the single qubit Pauli operators :math:`X`, :math:`Y`, and :math:`Z` with probability :math:`\dfrac{p}{3}`. 
     """
-    return ErrorModel([(1. - p, 'I'), (p / 3., 'X'), (p / 3., 'Y'), (p / 3., 'Z')])
+    return PauliErrorModel([(1. - p, 'I'), (p / 3., 'X'), (p / 3., 'Y'), (p / 3., 'Z')])
 
 def iidxz_model(px, pz=None):
     """
@@ -48,12 +68,12 @@ def iidxz_model(px, pz=None):
     if pz is None:
         pz = px
 
-    return ErrorModel([((1. - px) * (1. - pz), 'I'), (px * (1. - pz), 'X'),
+    return PauliErrorModel([((1. - px) * (1. - pz), 'I'), (px * (1. - pz), 'X'),
                         ((1. - px) * pz, 'Z'), (px * pz, 'Y')])
 
 rolling_sum = lambda lst: [sum(lst[:idx+1]) for idx in range(len(lst))]
 
-def action(prob_op_list, sample):
+def _action(prob_op_list, sample):
     """
     returns the operator from a prob_op_list corresponding to a number between 0 and 1. 
     """
