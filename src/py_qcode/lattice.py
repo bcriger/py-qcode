@@ -154,7 +154,7 @@ class SquareLattice(Lattice):
         June 6, 2014: Only supports closed_boundary 
 
         TODO: Make this depend on the distance function, so that it can be made
-        a method of Lattice, instead of SquareLattice.
+        a method of Lattice, overridden by SquareLattice.
         """
         x, y = location
         x_sz, y_sz = self.size
@@ -171,6 +171,62 @@ class SquareLattice(Lattice):
     
     def plaquettes(self):
         return map(self.neighbours, _odd_odds(*self.size))
+
+    def min_distance_path(self, dual_start, dual_end):
+        """
+        Returns a canonical minimum distance path on the _primal_ lattice 
+        between two points of the _dual_ lattice. This is based on cutting
+        as few corners as possible on the minimum-size bounding box. The 
+        final path is the union of minimum distance paths between start, 
+        corners, and end.
+        """
+        n_d = len(dual_end)
+        
+        corners = []
+        points_on_path = []
+        
+        for idx in range(n_d):
+            #Includes all points but end:
+            corners.append(dual_start[ : n_d - idx] + dual_end[ n_d - idx : ])
+        
+        for idx in range(n_d):
+            points_on_path += self._min_between(corners[idx], corners[idx + 1])
+
+        return points_on_path
+        
+    def _min_between(self, dual_start, dual_end):
+        """
+        Assuming that two points differ by one co-ordinate only, 
+        produces the minimum-length path between the two points.
+        This path is straight, iterating over only one co-ordinate.
+        """
+        for idx, coord in enumerate(dual_start):
+            
+            #First index which differs ought to be only
+            #index which differs:
+            if dual_end != coord:
+                special_idx = idx
+                break
+
+            #sort (dual_start, dual_end) using different element as key
+            dual_start, dual_end = sorted((dual_start, dual_end),
+                                            key=lambda lst: lst[special_idx])
+
+            #coordinates "between" start and end on primal lattice
+            betweens_forward = range(dual_start[special_idx] + 1,
+                                        dual_end[special_idx], 2)
+            
+            #coordinates that "loop around" the boundary of the lattice
+            betweens_backward = range(0, dual_start[special_idx], 2) +\
+            range(dual_end[special_idx]+1, 2*self.size[special_idx], 2)
+            
+            if len(betweens_forward) < len(betweens_backward):
+                betweens = betweens_forward
+            else:
+                betweens = betweens_backward
+
+            return betweens
+
 
 class SquareOctagonLattice(Lattice):
     """
