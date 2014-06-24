@@ -64,7 +64,7 @@ def mwpm_decoder(primal_lattice, dual_lattice):
         #Produce error chains according to min-length path between
         #mated points
         for pair in x_mate_dict.items():
-            coord_set = min_length_path(*pair, dual_lattice.dist)
+            #coord_set = min_length_path(*pair, dual_lattice.dist)
             pass #what happens if error chains cross? check if threshold is low.
         pass #This function is secretly a subroutine
 
