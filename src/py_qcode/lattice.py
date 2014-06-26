@@ -217,13 +217,19 @@ class SquareLattice(Lattice):
                                         dual_end[special_idx], 2)
             
             #coordinates that "loop around" the boundary of the lattice
-            betweens_backward = range(0, dual_start[special_idx], 2) +\
-            range(dual_end[special_idx]+1, 2*self.size[special_idx], 2)
+            betweens_backward = range(0, dual_start[special_idx], 2) + \
+            range(dual_end[special_idx] + 1, 2 * self.size[special_idx], 2)
             
             if len(betweens_forward) < len(betweens_backward):
                 betweens = betweens_forward
             else:
                 betweens = betweens_backward
+
+            betweens = map(lambda elem: 
+                            dual_start[:special_idx] + \
+                            [elem] + \
+                            dual_start[special_idx + 1:],
+                            betweens)
 
             return betweens
 

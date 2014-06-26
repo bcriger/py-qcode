@@ -28,7 +28,7 @@ class ErrorCheck(object):
 
     def evaluate(self):
         for idx, point in enumerate(self.dual_points):
-            error_str = ''.join([pt.error for pt in self.primal_sets[idx]])
+            error_str = _sum([pt.error for pt in self.primal_sets[idx]])
             if isinstance(self.rule, dict):
                 try:
                     if point.syndrome is None:
@@ -68,12 +68,21 @@ class StabilizerCheck(ErrorCheck):
                     raise ValueError("CSS Stabilizers must be all-X or all-Z; you entered: {0}".format(stabilizer))
 
                 if not(commutes_with(stabilizer)(err_pauli)):
-                        return syn_str
+                    return syn_str
 
-        
         super(StabilizerCheck, self).__init__(primal_sets, dual_points, stab_rule)
 
         self.stabilizer = stabilizer
+        
+    def evaluate(self):
+        #Use error on first point to typecheck
+        test_error = self.primal_sets[0][0].error
+        if type(test_error) is str:
+            super(StabilizerCheck, self).evaluate()
+        elif type(test_error) is Pauli:
+            for idx, point in enumerate(self.dual_points):
+                multi_bit_error = reduce([pt.error for pt in self.primal_sets[idx]])
+                point.syndrome = self.rule(error_str)
         
 
 class ErrorCorrectingCode():
@@ -111,3 +120,5 @@ def toric_code(primal_grid, dual_grid):
     plaq_check = StabilizerCheck(plaq_primal, plaq_duals, 'ZZZZ', indy_css=True)
 
     return ErrorCorrectingCode([star_check, plaq_check])
+
+_sum = lambda iterable: reduce(lambda a, b: a + b, iterable)
