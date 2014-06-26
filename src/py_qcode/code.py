@@ -59,7 +59,12 @@ class StabilizerCheck(ErrorCheck):
         else:
             #Returns the appropriate letter, X or Z
             def stab_rule(err_str):
-                err_pauli = Pauli(err_str)
+                if type(err_str) is str:
+                    err_pauli = Pauli(err_str)
+                elif type(err_str) is Pauli:
+                    err_pauli = err_str #Not legible, but works
+                else:
+                    raise TypeError("Input type to stabilizer rule not understood.")
                 if all([ltr in 'xX' for ltr in stabilizer.op]):
                     syn_str = 'Z'    
                 elif all([ltr in 'zZ' for ltr in stabilizer.op]):
@@ -81,8 +86,9 @@ class StabilizerCheck(ErrorCheck):
             super(StabilizerCheck, self).evaluate()
         elif type(test_error) is Pauli:
             for idx, point in enumerate(self.dual_points):
-                multi_bit_error = reduce([pt.error for pt in self.primal_sets[idx]])
-                point.syndrome = self.rule(error_str)
+                multi_bit_error = reduce(lambda p1, p2: p1.tens(p2),
+                            [pt.error for pt in self.primal_sets[idx]])
+                point.syndrome = self.rule(multi_bit_error)
         
 
 class ErrorCorrectingCode():
