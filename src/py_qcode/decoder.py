@@ -1,4 +1,5 @@
 import networkx as nx
+from qecc import X, Z
 
 __all__ = ['Decoder', 'mwpm_decoder', 'RGBPDecoder', 'BHRGDecoder']
 
@@ -44,10 +45,11 @@ def mwpm_decoder(primal_lattice, dual_lattice):
         #every prior vertex.
         
         for point in dual_lattice.points:
-            if any([ltr in point.syndrome for ltr in 'xX']):
-                x_graph.add_node(point.coords)
-            if any([ltr in point.syndrome for ltr in 'zZ']):
-                z_graph.add_node(point.coords)
+            if point.syndrome:
+                if any([ltr in point.syndrome for ltr in 'xX']):
+                    x_graph.add_node(point.coords)
+                if any([ltr in point.syndrome for ltr in 'zZ']):
+                    z_graph.add_node(point.coords)
         
         for g in [x_graph, z_graph]:
             for node in g.nodes():
@@ -59,13 +61,20 @@ def mwpm_decoder(primal_lattice, dual_lattice):
                     g.add_weighted_edges_from([edge_tuple])
 
         x_mate_dict, z_mate_dict = \
-        map(nx.max_weighted_matching, (x_graph, z_graph))
+        map(nx.max_weight_matching, (x_graph, z_graph))
 
         #Produce error chains according to min-length path between
         #mated points
         for pair in x_mate_dict.items():
-            #coord_set = min_length_path(*pair, dual_lattice.dist)
-            pass #what happens if error chains cross? check if threshold is low.
+            coord_set = primal_lattice.min_length_path(*pair, dual_lattice.dist)
+            for coord in coord_set:
+                primal_lattice[coord].error *= Pauli('X')
+
+        for pair in z_mate_dict.items():
+            coord_set = primal_lattice.min_length_path(*pair, dual_lattice.dist)
+            for coord in coord_set:
+                primal_lattice[coord].error *= Pauli('Z')
+
         pass #This function is secretly a subroutine
 
     return Decoder(matching_alg, primal_lattice, dual_lattice)
