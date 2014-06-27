@@ -190,14 +190,21 @@ class SquareLattice(Lattice):
 
         #make one corner for every co-ordinate that is different:
         corners.append(dual_start)
-        for idx in range(1,n_d-1):
+        for idx in range(n_d - 1):
             if dual_start[idx] != dual_end[idx]:
-                corners.append(dual_start[ : n_d - idx] + dual_end[ n_d - idx : ])
+                corners.append(dual_start[ : idx + 1] + dual_end[ idx + 1 : ])
         corners.append(dual_end)
-        
-        #print "corners: " + str(corners)
 
-        for idx in range(n_d-1):
+        #print "corners before removal: " + str(corners)
+
+        #Patches on patches
+        for idx, corner in enumerate(corners):
+            if corner in corners[idx + 1 : ]:
+                corners.remove(corner)
+        
+        #print "corners after: " + str(corners)
+
+        for idx in range(len(corners) - 1):
             new_points = self._min_between(corners[idx], corners[idx + 1])
             #print new_points
             points_on_path += new_points
