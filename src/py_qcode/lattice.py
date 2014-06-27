@@ -185,12 +185,22 @@ class SquareLattice(Lattice):
         corners = []
         points_on_path = []
         
-        for idx in range(n_d):
-            #Includes all points but end:
-            corners.append(dual_start[ : n_d - idx] + dual_end[ n_d - idx : ])
+        #print "dual_start: " + str(dual_start)
+        #print "dual_end: " + str(dual_end)
+
+        #make one corner for every co-ordinate that is different:
+        corners.append(dual_start)
+        for idx in range(1,n_d-1):
+            if dual_start[idx] != dual_end[idx]:
+                corners.append(dual_start[ : n_d - idx] + dual_end[ n_d - idx : ])
+        corners.append(dual_end)
         
-        for idx in range(n_d):
-            points_on_path += self._min_between(corners[idx], corners[idx + 1])
+        #print "corners: " + str(corners)
+
+        for idx in range(n_d-1):
+            new_points = self._min_between(corners[idx], corners[idx + 1])
+            #print new_points
+            points_on_path += new_points
 
         return points_on_path
         
@@ -201,37 +211,36 @@ class SquareLattice(Lattice):
         This path is straight, iterating over only one co-ordinate.
         """
         for idx, coord in enumerate(dual_start):
-            
             #First index which differs ought to be only
             #index which differs:
-            if dual_end != coord:
+            if dual_end[idx] != coord:
                 special_idx = idx
                 break
 
-            #sort (dual_start, dual_end) using different element as key
-            dual_start, dual_end = sorted((dual_start, dual_end),
-                                            key=lambda lst: lst[special_idx])
+        #sort (dual_start, dual_end) using different element as key
+        dual_start, dual_end = sorted((dual_start, dual_end),
+                                        key=lambda lst: lst[special_idx])
 
-            #coordinates "between" start and end on primal lattice
-            betweens_forward = range(dual_start[special_idx] + 1,
-                                        dual_end[special_idx], 2)
-            
-            #coordinates that "loop around" the boundary of the lattice
-            betweens_backward = range(0, dual_start[special_idx], 2) + \
-            range(dual_end[special_idx] + 1, 2 * self.size[special_idx], 2)
-            
-            if len(betweens_forward) < len(betweens_backward):
-                betweens = betweens_forward
-            else:
-                betweens = betweens_backward
+        #coordinates "between" start and end on primal lattice
+        betweens_forward = range(dual_start[special_idx] + 1,
+                                    dual_end[special_idx], 2)
+        
+        #coordinates that "loop around" the boundary of the lattice
+        betweens_backward = range(dual_start[special_idx]-1, -1, -2) + \
+        range(dual_end[special_idx] + 1, 2 * self.size[special_idx], 2)
+        
+        if len(betweens_forward) < len(betweens_backward):
+            betweens = betweens_forward
+        else:
+            betweens = betweens_backward
 
-            betweens = map(lambda elem: 
-                            dual_start[:special_idx] + \
-                            [elem] + \
-                            dual_start[special_idx + 1:],
-                            betweens)
+        betweens = map(lambda elem: 
+                        dual_start[:special_idx] + \
+                        (elem,) + \
+                        dual_start[special_idx + 1:],
+                        betweens)
 
-            return betweens
+        return betweens
 
 
 class SquareOctagonLattice(Lattice):
