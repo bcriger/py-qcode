@@ -45,7 +45,7 @@ def mwpm_decoder(primal_lattice, dual_lattice):
         #every prior vertex.
         
         for point in dual_lattice.points:
-            if point.syndrome:
+            if point.syndrome: #exists
                 if any([ltr in point.syndrome for ltr in 'xX']):
                     x_graph.add_node(point.coords)
                 if any([ltr in point.syndrome for ltr in 'zZ']):
@@ -57,8 +57,9 @@ def mwpm_decoder(primal_lattice, dual_lattice):
                 other_nodes.remove(node)
                 for other_node in other_nodes:
                     edge_tuple = (node, other_node,
-                                    -dual_lattice.dist(node,other_node))
+                        -dual_lattice.dist(node,other_node))
                     g.add_weighted_edges_from([edge_tuple])
+            print list(g.adjacency_iter())
 
         x_mate_dict, z_mate_dict = \
         map(nx.max_weight_matching, (x_graph, z_graph))
@@ -66,14 +67,14 @@ def mwpm_decoder(primal_lattice, dual_lattice):
         #Produce error chains according to min-length path between
         #mated points
         for pair in x_mate_dict.items():
-            coord_set = primal_lattice.min_length_path(*pair, dual_lattice.dist)
+            coord_set = primal_lattice.min_distance_path(*pair)
             for coord in coord_set:
-                primal_lattice[coord].error *= Pauli('X')
+                primal_lattice[coord].error *= X
 
         for pair in z_mate_dict.items():
-            coord_set = primal_lattice.min_length_path(*pair, dual_lattice.dist)
+            coord_set = primal_lattice.min_distance_path(*pair)
             for coord in coord_set:
-                primal_lattice[coord].error *= Pauli('Z')
+                primal_lattice[coord].error *= Z
 
         pass #This function is secretly a subroutine
 
