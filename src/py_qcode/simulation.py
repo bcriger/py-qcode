@@ -30,7 +30,7 @@ class Simulation():
 
     :param inferred_coset: The coset assigned by the error-correcting code during the simulation. 
     """
-    def __init__(self, lattice, error_model, code, decoder, n_trials):
+    def __init__(self, lattice, dual_lattice, error_model, code, decoder, n_trials):
         
         #Initial Values
         

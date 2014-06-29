@@ -119,7 +119,8 @@ class SquareLattice(Lattice):
 
         if is_dual:
             points_2d = map(Point, sym_coords(x_len, y_len))
-            dist = lambda coord1, coord2: sum([abs(a - b) % (2 * sz) 
+            dist = lambda coord1, coord2: sum([min([abs(a - b) % (2 * sz),
+                                                    (2 * sz - abs(a - b)) % (2 * sz)]) 
                                                 for a, b, sz in 
                                                 zip(coord1, coord2, sz_tpl)])
         else:
