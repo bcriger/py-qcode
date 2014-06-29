@@ -51,6 +51,7 @@ def mwpm_decoder(primal_lattice, dual_lattice):
                 if any([ltr in point.syndrome for ltr in 'zZ']):
                     z_graph.add_node(point.coords)
 
+        #set an additive constant large enough for all weights to be positive:
         size_constant = 2 * len(primal_lattice.size) * max(primal_lattice.size)
 
         for g in [x_graph, z_graph]:
@@ -68,10 +69,13 @@ def mwpm_decoder(primal_lattice, dual_lattice):
         x_mate_tuples = x_mate_dict.items()
         z_mate_tuples = z_mate_dict.items()
 
+        #NetworkX assumes directional graph, includes reversed edges.
+        #This will "correct errors twice", leaving stray errors on the
+        #lattice.
         for tpl_lst in [x_mate_tuples, z_mate_tuples]:
-            for tpl in tpl_lst:
-                if tuple(reversed(tpl)) in tpl_lst:
-                    tpl_lst.remove(tpl)
+                for tpl in tpl_lst:
+                    if tuple(reversed(tpl)) in tpl_lst:
+                        tpl_lst.remove(tuple(reversed(tpl)))
 
         #Produce error chains according to min-length path between
         #mated points
@@ -100,21 +104,3 @@ class BHRGDecoder(Decoder):
         self.arg = arg
 
 #Convenience Fuctions
-
-def min_length_path(start, end, sz_tpl, closed_boundary=True):
-    """
-    Finds the shortest path between two points on a union-jack lattice
-    ('squares' inscribed with 45-degree-rotated 'squares'), given the
-    start point, the end point and a flag to indicate whether the 
-    underlying lattice is closed. 
-
-    The basic idea is to use the union of disjoint straight paths 
-    between 'corner' sites on the dual lattice. This minimizes
-    total path length while minimizing the number of diagonal moves, 
-    and (hopefully) the complexity of the code.
-    """
-    #Determine corner sites:
-    
-
-    pass
-
