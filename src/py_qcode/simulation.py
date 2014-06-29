@@ -35,6 +35,8 @@ class Simulation():
         #Initial Values
         
         #Defined objects
+        self.lattice = lattice
+        self.dual_lattice = dual_lattice
         self.error_model = error_model
         self.code = code
         self.decoder = decoder
@@ -43,8 +45,7 @@ class Simulation():
         self.n_trials = n_trials
         
         #Final Values
-        self.true_coset = None
-        self.inferred_coset = None
+        self.logical_error = None
 
     def run(self):
         """
@@ -61,7 +62,9 @@ class Simulation():
         + Record both cosets. 
         """
         for idx in range(n_trials):
-            continue
+            self.error_model.act_on(self.lattice)
+            self.code.measure()
+            self.decoder.infer()
         pass
     
     def save(self):
