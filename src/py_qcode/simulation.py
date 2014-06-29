@@ -1,4 +1,5 @@
 import cPickle as pkl
+from collections import Iterable
 
 __all__ = ['Simulation']
 
@@ -30,10 +31,9 @@ class Simulation():
 
     :param inferred_coset: The coset assigned by the error-correcting code during the simulation. 
     """
-    def __init__(self, lattice, dual_lattice, error_model, code, decoder, n_trials):
-        
-        #Initial Values
-        
+    def __init__(self, lattice, dual_lattice, error_model, code, 
+                                decoder, logical_operators, n_trials):
+
         #Defined objects
         self.lattice = lattice
         self.dual_lattice = dual_lattice
@@ -41,6 +41,11 @@ class Simulation():
         self.code = code
         self.decoder = decoder
         
+        if not isinstance(logical_operators, Iterable):
+            self.logical_operators = [logical_operators]
+        else:
+            self.logical_operators = logical_operators
+
         #Integer
         self.n_trials = n_trials
         
@@ -61,14 +66,28 @@ class Simulation():
 
         + Record both cosets. 
         """
+        self.logical_error = []
         for idx in range(n_trials):
             self.error_model.act_on(self.lattice)
             self.code.measure()
             self.decoder.infer()
-        pass
+
+            #Error checking, if the resulting Pauli is not in the 
+            #normalizer, chuck an error:
+            self.code.measure()
+            for point in self.dual_lattice.points:
+                if point.syndrome is not None:
+                    raise ValueError('Product of "inferred error"'+\
+                        ' with actual error anticommutes with some'+\
+                        ' stabilizers.')
+
+            for operator in logical_operators:
+                self.logical_error.append(operator.test())
     
-    def save(self):
-        pass
+    def save(self, filename):
+        with open(filename,'w') as phil:
+            pkl.dump({'log_op_anticoms':self.logical_error}, phil)
+
 #Convenience Functions
 def sim_from_file(filename):
     """
@@ -82,4 +101,18 @@ def sim_from_file(filename):
 
     + save the results to a file of the same name as the input, with a different extension.  
     """
-    pass
+    with open(filename,'r') as phil:
+        sim_dict = pkl.load(phil)
+    sim = Simulation(**sim_dict)
+    sim.run()
+
+    split_name = filename.split('.')
+    try:
+        file_prefix, file_ext = split_name
+    except ValueError:
+        raise ValueError('Filenames are assumed to be of the form'+\
+        ' "prefix.ext".')
+
+    output_name = '.'.join([file_prefix, 'out'])
+
+    sim.save(output_name)
