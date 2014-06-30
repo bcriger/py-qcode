@@ -5,8 +5,8 @@ from qecc import Pauli
 __all__ = ['ErrorModel', 'PauliErrorModel', 'depolarizing_model', 'iidxz_model']
 
 ## CONSTANTS ##
-PAULIS = ['I','X','Y','Z']
-ACCEPTABLE_OPERATORS = PAULIS + ['H','P']
+PAULIS = ['I', 'X', 'Y', 'Z']
+ACCEPTABLE_OPERATORS = PAULIS + ['H', 'P']
 
 class ErrorModel(object):
     """
@@ -16,7 +16,7 @@ class ErrorModel(object):
 
     :type prob_op_list: list
     """
-
+    #Magic Methods
     def __init__(self, prob_op_list):
         #Sanitize input
         probs, ops = zip(*prob_op_list)
@@ -31,6 +31,12 @@ class ErrorModel(object):
 
         self.prob_op_list = prob_op_list
     
+    def __repr__(self):
+        return ', '.join(['{1} with probability {0}'.format(
+                *prob_op)
+                for prob_op in self.prob_op_list])
+
+    #Other Methods
     def act_on(self, lattice):
         for point in lattice.points:
             point.error = _action(self.prob_op_list, rand())

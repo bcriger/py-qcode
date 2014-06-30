@@ -85,12 +85,14 @@ class Lattice(object):
 
     :type closed_boundary: bool
     """
-    def __init__(self, points, dim, dist=None, is_ft=False):
+    def __init__(self, points, dim, dist=None, is_ft=False, size = None, is_dual = False):
         
         self.points = points
         self.dim = dim
         self.dist = dist
         self.is_ft = is_ft
+        self.size = size
+        self.is_dual = is_dual
 
     def __getitem__(self, key):
         if len(key) != len(self.points[0]):

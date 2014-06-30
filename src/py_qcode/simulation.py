@@ -31,6 +31,7 @@ class Simulation():
 
     :param inferred_coset: The coset assigned by the error-correcting code during the simulation. 
     """
+    #Magic Methods
     def __init__(self, lattice, dual_lattice, error_model, code, 
                                 decoder, logical_operators, n_trials):
 
@@ -67,7 +68,7 @@ class Simulation():
         + Record both cosets. 
         """
         self.logical_error = []
-        for idx in range(n_trials):
+        for idx in range(self.n_trials):
             self.error_model.act_on(self.lattice)
             self.code.measure()
             self.decoder.infer()
@@ -81,38 +82,25 @@ class Simulation():
                         ' with actual error anticommutes with some'+\
                         ' stabilizers.')
 
-            for operator in logical_operators:
-                self.logical_error.append(operator.test())
+            for operator in self.logical_operators:
+                com_relation_list = []
+                com_relation_list.append(operator.test(self.lattice))
+            self.logical_error.append(com_relation_list)
     
     def save(self, filename):
+        
+        big_dict =  {}
+        big_dict['lattice_class'] = \
+            str(self.lattice.__class__).split('.')[-1][:-2]
+        big_dict['lattice_size'] = self.lattice.size
+        big_dict['dual_lattice_class'] = \
+            str(self.dual_lattice.__class__).split('.')[-1][:-2]
+        big_dict['dual_lattice_size'] = self.dual_lattice.size
+        big_dict['error_model'] = repr(self.error_model)
+        big_dict['code'] = self.code.name
+        big_dict['decoder'] = self.decoder.name
+        big_dict['n_trials'] = self.n_trials
+        big_dict['logical_errors'] = self.logical_error
+        
         with open(filename,'w') as phil:
-            pkl.dump({'log_op_anticoms':self.logical_error}, phil)
-
-#Convenience Functions
-def sim_from_file(filename):
-    """
-    The purpose of this function is to:
-
-    + open a file containing a pickled dictionary of input values to a simulation,
-
-    + initialize the objects which the corresponding `py_qcode.Simulation` takes as input,
-    
-    + run the simulation, and 
-
-    + save the results to a file of the same name as the input, with a different extension.  
-    """
-    with open(filename,'r') as phil:
-        sim_dict = pkl.load(phil)
-    sim = Simulation(**sim_dict)
-    sim.run()
-
-    split_name = filename.split('.')
-    try:
-        file_prefix, file_ext = split_name
-    except ValueError:
-        raise ValueError('Filenames are assumed to be of the form'+\
-        ' "prefix.ext".')
-
-    output_name = '.'.join([file_prefix, 'out'])
-
-    sim.save(output_name)
+            pkl.dump(big_dict, phil)

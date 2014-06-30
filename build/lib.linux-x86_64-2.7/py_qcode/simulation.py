@@ -87,32 +87,3 @@ class Simulation():
     def save(self, filename):
         with open(filename,'w') as phil:
             pkl.dump({'log_op_anticoms':self.logical_error}, phil)
-
-#Convenience Functions
-def sim_from_file(filename):
-    """
-    The purpose of this function is to:
-
-    + open a file containing a pickled dictionary of input values to a simulation,
-
-    + initialize the objects which the corresponding `py_qcode.Simulation` takes as input,
-    
-    + run the simulation, and 
-
-    + save the results to a file of the same name as the input, with a different extension.  
-    """
-    with open(filename,'r') as phil:
-        sim_dict = pkl.load(phil)
-    sim = Simulation(**sim_dict)
-    sim.run()
-
-    split_name = filename.split('.')
-    try:
-        file_prefix, file_ext = split_name
-    except ValueError:
-        raise ValueError('Filenames are assumed to be of the form'+\
-        ' "prefix.ext".')
-
-    output_name = '.'.join([file_prefix, 'out'])
-
-    sim.save(output_name)
