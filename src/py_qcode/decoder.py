@@ -9,10 +9,11 @@ class Decoder():
     requires the presence of the dual lattice (where the syndromes are
     stored), the primal lattice (where the real error is stored)
     """
-    def __init__(self, algorithm, primal_lattice, dual_lattice):
+    def __init__(self, algorithm, primal_lattice, dual_lattice, name='Un-named'):
         self.algorithm = algorithm
         self.primal_lattice = primal_lattice
         self.dual_lattice = dual_lattice
+        self.name = name
 
     def infer(self):
         """
@@ -74,8 +75,9 @@ def mwpm_decoder(primal_lattice, dual_lattice):
         #lattice.
         for tpl_lst in [x_mate_tuples, z_mate_tuples]:
                 for tpl in tpl_lst:
-                    if tuple(reversed(tpl)) in tpl_lst:
-                        tpl_lst.remove(tuple(reversed(tpl)))
+                    rvrs = tuple(reversed(tpl))
+                    if rvrs in tpl_lst:
+                        tpl_lst.remove(rvrs)
 
         #Produce error chains according to min-length path between
         #mated points
@@ -87,7 +89,7 @@ def mwpm_decoder(primal_lattice, dual_lattice):
 
         pass #This function is secretly a subroutine
 
-    return Decoder(matching_alg, primal_lattice, dual_lattice)
+    return Decoder(matching_alg, primal_lattice, dual_lattice, name='Minimum-Weight Matching')
 
 class RGBPDecoder(Decoder):
     """
