@@ -69,6 +69,11 @@ class Simulation():
         """
         self.logical_error = []
         for idx in range(self.n_trials):
+            #Clean up results from previous simulation
+            self.lattice.clear()
+            self.dual_lattice.clear()
+
+            #The bulk of the work
             self.error_model.act_on(self.lattice)
             self.code.measure()
             self.decoder.infer()
@@ -82,8 +87,8 @@ class Simulation():
                         ' with actual error anticommutes with some'+\
                         ' stabilizers.')
 
+            com_relation_list = []
             for operator in self.logical_operators:
-                com_relation_list = []
                 com_relation_list.append(operator.test(self.lattice))
             self.logical_error.append(com_relation_list)
     
