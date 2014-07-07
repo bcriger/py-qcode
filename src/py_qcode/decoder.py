@@ -1,5 +1,6 @@
 import networkx as nx
 from qecc import X, Z
+from graph_tool.all import Graph, max_cardinality_matching
 
 __all__ = ['Decoder', 'mwpm_decoder', 'RGBPDecoder', 'BHRGDecoder']
 
@@ -27,6 +28,49 @@ def mwpm_decoder(primal_lattice, dual_lattice):
     Decoder based on minimum-weight perfect matching using the blossom algorithm,
     implemented in networkx.  
     """
+    def _new_matching_alg(primal_lattice, dual_lattice):
+        """
+        This subroutine tests graph_tool against NetworkX. Otherwise, it does
+        the same thing as matching_alg below.
+        """
+        x_graph = Graph(directed=False)
+        z_graph = Graph(directed=False)
+        
+        x_vertex_coords = x_graph.new_vertex_property("vector<int>")
+        z_vertex_coords = z_graph.new_vertex_property("vector<int>")
+        
+        x_dists = x_graph.new_edge_property("int")
+        z_dists = z_graph.new_edge_property("int")
+
+    
+        for point in dual_lattice.points:
+            if point.syndrome: #exists
+                if any([ltr in point.syndrome for ltr in 'xX']):
+                    x_vrts = x_graph.vertices()
+                    x_1 = x_graph.add_vertex()
+                    x_v_coords[x_1] = point.coords
+                    for x_2 in x_vrts:
+                        #add an edge with the distance in there
+                        x_ed = x_graph.add_edge(x_1, x_2)
+                        coord_tpl = x_v_coords[x_1], x_v_coords[x_2]
+                        x_dists[x_ed] = dual_lattice.dist(*coord_tpl)
+                if any([ltr in point.syndrome for ltr in 'zZ']):
+                    z_vrts = z_graph.vertices()
+                    z_1 = z_graph.add_vertex()
+                    z_v_coords[z_1] = point.coords
+                    for z_2 in z_vrts:
+                        #add an edge with the distance in there
+                        z_ed = z_graph.add_edge(z_1, z_2)
+                        coord_tpl = z_v_coords[z_1], z_v_coords[z_2]
+                        z_dists[z_ed] = dual_lattice.dist(*coord_tpl)
+
+        x_match = max_cardinality_matching(x_graph, weight=x_dists, heuristic=True)
+        z_match = max_cardinality_matching(z_graph, weight=z_dists, heuristic=True)
+
+        #BEGIN HERE NEXT TIME -- DO PATHS
+        
+        pass #SECRET SUBROUTIIIIIIIIINE
+
     def matching_alg(primal_lattice, dual_lattice):
         """
         There are two steps to this algorithm. First, we solve the

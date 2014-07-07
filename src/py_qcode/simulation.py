@@ -93,8 +93,7 @@ class Simulation():
             self.logical_error.append(com_relation_list)
     
     def save(self, filename):
-        
-        big_dict =  {}
+        big_dict = {}
         big_dict['lattice_class'] = \
             str(self.lattice.__class__).split('.')[-1][:-2]
         big_dict['lattice_size'] = self.lattice.size
