@@ -23,6 +23,8 @@ def sim_from_file(filename):
 
     + save the results to a file of the same name as the input, with a different extension.  
     """
+    #Obsolete, scavenging code for pickle-independent implementation
+    #(you can't pickle functions).
     with open(filename,'r') as phil:
         sim_dict = pkl.load(phil)
     sim = Simulation(**sim_dict)
@@ -63,5 +65,6 @@ def square_toric_code_sim(size, error_rate, n_trials, filename):
     
     sim_dict = dict(zip(sim_keys, sim_values))
 
-    with open(filename, 'w') as phil:
-        pkl.dump(sim_dict, phil)
+    sim = Simulation(**sim_dict)
+    sim.run()
+    sim.save(filename + '.sim')
