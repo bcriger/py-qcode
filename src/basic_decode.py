@@ -2,9 +2,13 @@ import py_qcode as pq
 import networkx as nx
 from qecc import X, Z, I
 
-test_lattice = pq.SquareLattice((4,4))
-test_dual_lattice = pq.SquareLattice((4,4), is_dual=True)
-test_model = pq.depolarizing_model(0.15)
+#size=(4,4)
+#size=(40,40)
+size=(64,64)
+
+test_lattice = pq.SquareLattice(size)
+test_dual_lattice = pq.SquareLattice(size, is_dual=True)
+test_model = pq.depolarizing_model(0.05)
 test_code = pq.toric_code(test_lattice, test_dual_lattice)
 test_decoder = pq.mwpm_decoder(test_lattice, test_dual_lattice)
 test_logical_ops = pq.toric_log_ops(test_lattice.size)

@@ -15,7 +15,7 @@ class LogicalOperator():
     
     def test(self, lattice):
         test_pauli = reduce(lambda a, b: a.tens(b), 
-                        [lattice[coord].error for coord in coord_list])
+                        [lattice[coord].error for coord in self.coord_list])
         return self.name, com(test_pauli, self.pauli)
 
 def toric_log_ops(sz_tpl):

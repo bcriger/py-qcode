@@ -99,9 +99,10 @@ class ErrorCorrectingCode():
 
     :type parity_check_list: list  
     """
-    def __init__(self, parity_check_list):
+    def __init__(self, parity_check_list, name='Un-named'):
         
         self.parity_check_list = parity_check_list
+        self.name = name
 
     def measure(self):
         """
@@ -125,6 +126,6 @@ def toric_code(primal_grid, dual_grid):
     plaq_primal = [primal_grid.neighbours(coord) for coord in plaq_coords]
     plaq_check = StabilizerCheck(plaq_primal, plaq_duals, 'ZZZZ', indy_css=True)
 
-    return ErrorCorrectingCode([star_check, plaq_check])
+    return ErrorCorrectingCode([star_check, plaq_check], name="Toric Code")
 
 _sum = lambda iterable: reduce(lambda a, b: a + b, iterable)

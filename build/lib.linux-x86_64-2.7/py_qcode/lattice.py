@@ -33,6 +33,7 @@ class Point(object):
     
     :type syndrome: any
     """
+    #Magic Methods
     def __init__(self, coords, error = None, syndrome = None, inferred_error=None):
         
         check_int_tpl(coords)
@@ -63,6 +64,11 @@ class Point(object):
     def __len__(self):
         return len(self.coords)
 
+    #Pragmatism!
+    def clear(self):
+        self.syndrome = None
+        self.error = None
+
 class Lattice(object):
     """
     A collection of points. Superclass to ``SquareLattice``, ``SquareOctagonLattice``, ``UnionJackLattice``, whatever other convenient lattices I put in. 
@@ -85,12 +91,15 @@ class Lattice(object):
 
     :type closed_boundary: bool
     """
-    def __init__(self, points, dim, dist=None, is_ft=False):
+    #Magic Methods
+    def __init__(self, points, dim, dist=None, is_ft=False, size = None, is_dual = False):
         
         self.points = points
         self.dim = dim
         self.dist = dist
         self.is_ft = is_ft
+        self.size = size
+        self.is_dual = is_dual
 
     def __getitem__(self, key):
         if len(key) != len(self.points[0]):
@@ -103,6 +112,11 @@ class Lattice(object):
     def __repr__(self):
         pts = map(lambda pt: repr(pt), self.points)
         return '[' + ',\n '.join(pts) + ']'
+
+    #Muggle Methods
+    def clear(self):
+        for point in self.points:
+            point.clear()
 
 class SquareLattice(Lattice):
     """

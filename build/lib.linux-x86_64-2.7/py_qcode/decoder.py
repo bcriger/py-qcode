@@ -1,5 +1,6 @@
 import networkx as nx
 from qecc import X, Z
+from graph_tool.all import Graph, max_cardinality_matching
 
 __all__ = ['Decoder', 'mwpm_decoder', 'RGBPDecoder', 'BHRGDecoder']
 
@@ -9,10 +10,11 @@ class Decoder():
     requires the presence of the dual lattice (where the syndromes are
     stored), the primal lattice (where the real error is stored)
     """
-    def __init__(self, algorithm, primal_lattice, dual_lattice):
+    def __init__(self, algorithm, primal_lattice, dual_lattice, name='Un-named'):
         self.algorithm = algorithm
         self.primal_lattice = primal_lattice
         self.dual_lattice = dual_lattice
+        self.name = name
 
     def infer(self):
         """
@@ -26,6 +28,65 @@ def mwpm_decoder(primal_lattice, dual_lattice):
     Decoder based on minimum-weight perfect matching using the blossom algorithm,
     implemented in networkx.  
     """
+    def _new_matching_alg(primal_lattice, dual_lattice):
+        """
+        This subroutine tests graph_tool against NetworkX. Otherwise, it does
+        the same thing as matching_alg below.
+        """
+        x_graph = Graph(directed=False)
+        z_graph = Graph(directed=False)
+        
+        x_vertex_coords = x_graph.new_vertex_property("vector<int>")
+        z_vertex_coords = z_graph.new_vertex_property("vector<int>")
+        
+        x_dists = x_graph.new_edge_property("int")
+        z_dists = z_graph.new_edge_property("int")
+
+        for point in dual_lattice.points:
+            if point.syndrome: #exists
+                
+                if any([ltr in point.syndrome for ltr in 'xX']):
+                    x_vrts = x_graph.vertices()
+                    x_1 = x_graph.add_vertex()
+                    x_v_coords[x_1] = point.coords
+                    for x_2 in x_vrts:
+                        #add an edge with the distance in there
+                        x_ed = x_graph.add_edge(x_1, x_2)
+                        coord_tpl = x_v_coords[x_1], x_v_coords[x_2]
+                        x_dists[x_ed] = dual_lattice.dist(*coord_tpl)
+                
+                if any([ltr in point.syndrome for ltr in 'zZ']):
+                    z_vrts = z_graph.vertices()
+                    z_1 = z_graph.add_vertex()
+                    z_v_coords[z_1] = point.coords
+                    for z_2 in z_vrts:
+                        #add an edge with the distance in there
+                        z_ed = z_graph.add_edge(z_1, z_2)
+                        coord_tpl = z_v_coords[z_1], z_v_coords[z_2]
+                        z_dists[z_ed] = dual_lattice.dist(*coord_tpl)
+
+        x_match = max_cardinality_matching(x_graph, weight=x_dists, heuristic=True)
+        z_match = max_cardinality_matching(z_graph, weight=z_dists, heuristic=True)
+
+        #Create Tuples of beginning/end points for pathfinding:
+        x_mate_tuples = [
+                    (x_v_coords[e.source()], x_v_coords[e.target()])
+                    for e in x_graph.edges() if x_match[e]
+                    ]
+
+        z_mate_tuples = [
+                    (z_v_coords[e.source()], z_v_coords[e.target()])
+                    for e in z_graph.edges() if z_match[e]
+                    ]
+
+        for pauli, tpl_lst in zip([X,Z],[x_mate_tuples, z_mate_tuples]):
+            for pair in tpl_lst:    
+                coord_set = primal_lattice.min_distance_path(*pair)
+                for coord in coord_set:
+                    primal_lattice[coord].error *= pauli
+        
+        pass #SECRET SUBROUTINE
+
     def matching_alg(primal_lattice, dual_lattice):
         """
         There are two steps to this algorithm. First, we solve the
@@ -74,8 +135,9 @@ def mwpm_decoder(primal_lattice, dual_lattice):
         #lattice.
         for tpl_lst in [x_mate_tuples, z_mate_tuples]:
                 for tpl in tpl_lst:
-                    if tuple(reversed(tpl)) in tpl_lst:
-                        tpl_lst.remove(tuple(reversed(tpl)))
+                    rvrs = tuple(reversed(tpl))
+                    if rvrs in tpl_lst:
+                        tpl_lst.remove(rvrs)
 
         #Produce error chains according to min-length path between
         #mated points
@@ -87,7 +149,7 @@ def mwpm_decoder(primal_lattice, dual_lattice):
 
         pass #This function is secretly a subroutine
 
-    return Decoder(matching_alg, primal_lattice, dual_lattice)
+    return Decoder(_new_matching_alg, primal_lattice, dual_lattice, name='Minimum-Weight Matching')
 
 class RGBPDecoder(Decoder):
     """

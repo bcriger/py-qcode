@@ -31,6 +31,7 @@ class Simulation():
 
     :param inferred_coset: The coset assigned by the error-correcting code during the simulation. 
     """
+    #Magic Methods
     def __init__(self, lattice, dual_lattice, error_model, code, 
                                 decoder, logical_operators, n_trials):
 
@@ -67,7 +68,12 @@ class Simulation():
         + Record both cosets. 
         """
         self.logical_error = []
-        for idx in range(n_trials):
+        for idx in range(self.n_trials):
+            #Clean up results from previous simulation
+            self.lattice.clear()
+            self.dual_lattice.clear()
+
+            #The bulk of the work
             self.error_model.act_on(self.lattice)
             self.code.measure()
             self.decoder.infer()
@@ -81,9 +87,24 @@ class Simulation():
                         ' with actual error anticommutes with some'+\
                         ' stabilizers.')
 
-            for operator in logical_operators:
-                self.logical_error.append(operator.test())
+            com_relation_list = []
+            for operator in self.logical_operators:
+                com_relation_list.append(operator.test(self.lattice))
+            self.logical_error.append(com_relation_list)
     
     def save(self, filename):
+        big_dict = {}
+        big_dict['lattice_class'] = \
+            str(self.lattice.__class__).split('.')[-1][:-2]
+        big_dict['lattice_size'] = self.lattice.size
+        big_dict['dual_lattice_class'] = \
+            str(self.dual_lattice.__class__).split('.')[-1][:-2]
+        big_dict['dual_lattice_size'] = self.dual_lattice.size
+        big_dict['error_model'] = repr(self.error_model)
+        big_dict['code'] = self.code.name
+        big_dict['decoder'] = self.decoder.name
+        big_dict['n_trials'] = self.n_trials
+        big_dict['logical_errors'] = self.logical_error
+        
         with open(filename,'w') as phil:
-            pkl.dump({'log_op_anticoms':self.logical_error}, phil)
+            pkl.dump(big_dict, phil)
