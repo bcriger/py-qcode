@@ -1,6 +1,7 @@
 import networkx as nx
 from qecc import X, Z
-from graph_tool.all import Graph, max_cardinality_matching
+from graph_tool import Graph
+from graph_tool.topology import max_cardinality_matching
 
 __all__ = ['Decoder', 'mwpm_decoder', 'RGBPDecoder', 'BHRGDecoder']
 
@@ -36,8 +37,8 @@ def mwpm_decoder(primal_lattice, dual_lattice):
         x_graph = Graph(directed=False)
         z_graph = Graph(directed=False)
         
-        x_vertex_coords = x_graph.new_vertex_property("vector<int>")
-        z_vertex_coords = z_graph.new_vertex_property("vector<int>")
+        x_v_coords = x_graph.new_vertex_property("vector<int>")
+        z_v_coords = z_graph.new_vertex_property("vector<int>")
         
         x_dists = x_graph.new_edge_property("int")
         z_dists = z_graph.new_edge_property("int")
@@ -48,7 +49,7 @@ def mwpm_decoder(primal_lattice, dual_lattice):
                 if any([ltr in point.syndrome for ltr in 'xX']):
                     x_vrts = x_graph.vertices()
                     x_1 = x_graph.add_vertex()
-                    x_v_coords[x_1] = point.coords
+                    x_v_coords[x_1] = point.coords #test
                     for x_2 in x_vrts:
                         #add an edge with the distance in there
                         x_ed = x_graph.add_edge(x_1, x_2)
@@ -58,7 +59,7 @@ def mwpm_decoder(primal_lattice, dual_lattice):
                 if any([ltr in point.syndrome for ltr in 'zZ']):
                     z_vrts = z_graph.vertices()
                     z_1 = z_graph.add_vertex()
-                    z_v_coords[z_1] = point.coords
+                    z_v_coords[z_1] = point.coords #test
                     for z_2 in z_vrts:
                         #add an edge with the distance in there
                         z_ed = z_graph.add_edge(z_1, z_2)
@@ -70,12 +71,12 @@ def mwpm_decoder(primal_lattice, dual_lattice):
 
         #Create Tuples of beginning/end points for pathfinding:
         x_mate_tuples = [
-                    (x_v_coords[e.source()], x_v_coords[e.target()])
+                    map(lambda v: tuple(x_v_coords[v]), [e.source(), e.target()])
                     for e in x_graph.edges() if x_match[e]
                     ]
 
         z_mate_tuples = [
-                    (z_v_coords[e.source()], z_v_coords[e.target()])
+                    map(lambda v: tuple(z_v_coords[v]), [e.source(), e.target()])
                     for e in z_graph.edges() if z_match[e]
                     ]
 
