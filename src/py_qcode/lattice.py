@@ -126,7 +126,7 @@ class SquareLattice(Lattice):
 
     :type rough_sides: tuple of strings
     """
-    def __init__(self, sz_tpl, is_dual=False, is_ft = False, closed_boundary=True, rough_sides = ('u', 'r')):
+    def __init__(self, sz_tpl, is_dual = False, is_ft = False, closed_boundary = True, rough_sides = ('u', 'r')):
         
         dim = len(sz_tpl)
         x_len, y_len = sz_tpl[:2] 
@@ -267,12 +267,32 @@ class SquareLattice(Lattice):
 
 class SquareOctagonLattice(Lattice):
     """
-    Represents a lattice in which qubits are placed on the corners of squares and octagons. 
+    Represents a lattice in which qubits are placed on the corners of 
+    squares/octagons. This lattice results from allowing each point on 
+    the edge of a SquareLattice (TM) to expand into a square. Begins by
+    creating a square grid of points according to a size tuple, 
+    identically to SquareLattice, with each coordinate passed through 
+    an affine map. Each point in this lattice is then 'graduated' to a
+    square consiting of nearest neighbours.  
     """
-    def __init__(self, sz_tpl, is_3D=False, closed_boundary=True):
-        """
-        """
-        pass
+    def __init__(self, sz_tpl, is_dual = False, is_ft = False, closed_boundary = True, rough_sides = ('u', 'r')):
+        
+        try:
+            x_len, y_len = sz_tpl
+        except ValueError:
+            raise ValueError("Only 2D is supported for now!")
+
+        #We apply this affine map in order to ensure that the leftmost 
+        #(bottom) column (row) of points is at co-ordinate 0:
+        sq_cntrs = map(lambda tpl: map(lambda elem: 3 * elem + 1, tpl),
+                                        skew_coords(x_len, y_len))
+
+        squoct_coords = []
+        for coord_pair in sq_cntrs:
+            x, y = coord_pair
+            squoct_coords.extend([(x - 1, y - 1), (x - 1, y + 1),
+                                  (x + 1, y - 1), (x + 1, x + 1)])
+
 
     def squares(self):
         pass
@@ -302,12 +322,14 @@ class CubicLattice(Lattice):
         """
         pass
 
+
 ## Convenience Functions ##
 def check_int_tpl(coords):
     if not all([isinstance(coord,int) for coord in coords]):
         raise ValueError("Input tuple must be nothin' but ints,"\
             " you entered: {0}".format(coords))
     pass
+
 
 def promote(point, new_coord):
     """
@@ -319,6 +341,7 @@ def promote(point, new_coord):
     else:
         raise TypeError("New coordinate must be an int.")
     return Point(*pt_attrs)
+
 
 def layer(points, new_len):
     """
@@ -345,7 +368,7 @@ def sym_coords(nx, ny):
     """
     Convenience function for square lattice definition, returns all pairs of co-ordinates on an n-by-n lattice which are both even or both odd. 
     """
-    return  _even_evens(nx, ny) + _odd_odds(nx, ny)
+    return _even_evens(nx, ny) + _odd_odds(nx, ny)
 
 
 def skew_coords(nx, ny):
@@ -353,3 +376,26 @@ def skew_coords(nx, ny):
     Convenience function for square lattice definition, returns all pairs of co-ordinates on an n-by-n lattice which are "even-odd" or "odd-even". 
     """
     return _even_odds(nx, ny) + _odd_evens(nx, ny)
+
+_squoct_affine_map = lambda tpl_lst: map(lambda tpl: map(lambda elem: 3 * elem + 1, tpl), tpl_lst)
+
+def squoct_square_centers(nx, ny):
+    return _squoct_affine_map(skew_coords(nx, ny))
+
+def squoct_x_oct_centers(nx, ny):
+    return _squoct_affine_map(_even_evens(nx, ny))
+
+def squoct_z_oct_centers(nx, ny):
+    return _squoct_affine_map(_odd_odds(nx, ny))
+
+def _square_neighbourhood(pt):
+    x, y = pt
+    return [(x - 1, y - 1), (x - 1, y + 1),
+            (x + 1, y - 1), (x + 1, y + 2)]
+
+def _oct_neighbourhood(pt):
+    x, y = pt
+    return [(x - 2, y - 1), (x - 2, y + 1),
+            (x - 1, y - 2), (x + 1, y - 2),
+            (x + 1, y + 2), (x - 1, y + 2),
+            (x + 2, y - 1), (x + 2, y + 1)]
