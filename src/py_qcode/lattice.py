@@ -297,8 +297,15 @@ class SquareOctagonLattice(Lattice):
         
         #max coordinate value is derived by a change of co-ordinates, 
         #adding 1 to account for neighbourhoods
+        
         self.size = x_len, y_len
-        self.total_size = sq2oct(x_len) + 1, sq2oct(y_len) + 1
+        max_x, max_y = 2 * x_len - 1, 2 * y_len - 1
+        
+        #total_size is the values to mod by for the boundary conditions
+        #Largest center co-ordinate + 1 (for the neighbour) + 1
+        #(for the boundary)
+        
+        self.total_size = sq2oct(max_x) + 2, sq2oct(max_x) + 2
     
     def squares(self):
         nx, ny = self.size
@@ -360,10 +367,41 @@ class UnionJackLattice(Lattice):
     """
     Gives the dual lattice to the SquareOctagonLattice above. 
     """
-    def __init__(self, sz_tpl):
-        """
-        """
-        pass
+    def __init__(self, sz_tpl, is_dual = False, is_ft = False, closed_boundary = True, rough_sides = ('u', 'r')):
+        dim = len(sz_tpl)
+        
+        try:
+            x_len, y_len = sz_tpl
+        except ValueError:
+            raise ValueError("Only 2D is supported for now!")
+
+        point_list = _squoct_affine_map(all_coords(x_len, y_len))
+        points = map(Point, point_list)
+
+        def dist(pt1, pt2):
+            """
+            This function is complicated because the number of errors 
+            required to produce a chain from one point to another is 
+            not proportional to any actual distance; it has to ensure
+            that octagons on the path are satisfied. To determine the 
+            weight of a prospective error, we begin by isolating an
+            easy case, then we relate the more difficult cases back to
+            it.
+            """
+            return 
+
+        super(UnionJackLattice, self).__init__(points, dim, dist, is_ft)
+        
+        #max coordinate value is derived by a change of co-ordinates, 
+        #adding 1 to account for neighbourhoods
+        self.size = x_len, y_len
+
+        max_x, max_y = 2 * x_len - 1, 2 * y_len - 1
+        
+        #total_size is the values to mod by for the boundary conditions
+        #Largest center co-ordinate + 1 (for the boundary)
+        
+        self.total_size = sq2oct(max_x) + 1, sq2oct(max_x) + 1
 
 class CubicLattice(Lattice):
     """
@@ -404,9 +442,9 @@ def layer(points, new_len):
         new_pt_lst.append(map(lambda pt: promote(pt, stratum), points))
     return new_pt_lst
 
-_evens = lambda n: range(0, 2*n, 2)
+_evens = lambda n: range(0, 2 * n, 2)
 
-_odds = lambda n: range(1, 2*n+1, 2)
+_odds = lambda n: range(1, 2 * n + 1, 2)
 
 _even_odds = lambda nx, ny: list(it.product(_evens(nx), _odds(ny)))
 
@@ -429,6 +467,12 @@ def skew_coords(nx, ny):
     """
     return _even_odds(nx, ny) + _odd_evens(nx, ny)
 
+def all_coords(nx, ny):
+    """
+    Returns all points on a square lattice, used to determine the dual lattice of the SquareOctagonLattice.
+    """
+    return sym_coords(nx, ny) + skew_coords(nx, ny)
+
 def sq2oct(coord):
     """
     Takes a coordinate from the initial square lattice and produces a 
@@ -442,3 +486,18 @@ def _squoct_affine_map(tpl_lst):
     coordinate change. 
     """
     return map(lambda tpl: map(sq2oct, tpl), tpl_lst)
+
+def straight_octagon_dist(x1, x2):
+    """
+    Input two numbers which are raw one-d coordinates of octagons 
+    whose other coordinates are identical. The function outputs the 
+    weight of an error chain joining the two octagons.
+    """
+    diff = abs(x2 - x1)
+    return diff / 3 #Correcting for affine map
+
+def octagon_octagon_dist(coord1, coord2):
+    """
+    maps straight_octagon_dist to pairs of 2-D coordinates
+    """
+    return sum(map(lambda tpl: straight_octagon_dist(*tpl), zip(coord1, coord2)))
