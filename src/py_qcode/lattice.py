@@ -276,7 +276,8 @@ class SquareOctagonLattice(Lattice):
     square consiting of nearest neighbours.  
     """
     def __init__(self, sz_tpl, is_dual = False, is_ft = False, closed_boundary = True, rough_sides = ('u', 'r')):
-        
+        dim = len(sz_tpl)
+
         try:
             x_len, y_len = sz_tpl
         except ValueError:
@@ -284,29 +285,80 @@ class SquareOctagonLattice(Lattice):
 
         #We apply this affine map in order to ensure that the leftmost 
         #(bottom) column (row) of points is at co-ordinate 0:
-        sq_cntrs = map(lambda tpl: map(lambda elem: 3 * elem + 1, tpl),
-                                        skew_coords(x_len, y_len))
+        sq_cntrs = squoct_square_centers(x_len, y_len)
 
         squoct_coords = []
         for coord_pair in sq_cntrs:
             x, y = coord_pair
-            squoct_coords.extend([(x - 1, y - 1), (x - 1, y + 1),
-                                  (x + 1, y - 1), (x + 1, x + 1)])
+            squoct_coords.extend(_square_neighbourhood(x, y))
 
-
+        points = map(Point, squoct_coords)
+        super(SquareOctagonLattice, self).__init__(points, dim, dist, is_ft)
+        
+        #max coordinate value is derived by a change of co-ordinates, 
+        #adding 1 to account for neighbourhoods
+        self.size = x_len, y_len
+        self.total_size = sq2oct(x_len) + 1, sq2oct(y_len) + 1
+    
     def squares(self):
-        pass
+        nx, ny = self.size
+        square_centers = _squoct_affine_map(skew_coords(nx, ny))
+        point_list = []
+        
+        s_x, s_y = self.total_size
+        for pt in square_centers:
+            x, y = pt
+            
+            left, right = (x - 1) % s_x, (x + 1) % s_x
+            down, up    = (y - 1) % s_y, (y + 1) % s_y
+            
+            point_list.append([self[(left, down)],  self[(left, up)],
+                    self[(right, down)], self[(right, up)]])
+        
+        return point_list
 
     def z_octagons(self):
-        pass
+        nx, ny = self.size
+        squoct_z_oct_centers = _squoct_affine_map(_odd_odds(nx, ny))
+        s_x, s_y = self.total_size
+        point_list = []
+        for pt in squoct_z_oct_centers:
+            x, y = pt
+            
+            xm2, xm1, xp1, xp2 = map(lambda x: x % s_x,
+                                [(x - 2), (x - 1), (x + 1), (x + 2)])
+            
+            ym2, ym1, yp1, yp2 = map(lambda y: y % s_y,
+                                [(y - 2), (y - 1), (y + 1), (y + 2)])
+            
+            point_list.append([(xm2, ym1), (xm2, yp1), (xm1, ym2),
+                                (xp1, ym2), (xp1, yp2), (xm1, yp2),
+                                (xp2, ym1), (xp2, yp1)])
+        return point_list
 
     def x_octagons(self):
-        pass
-
+        #TODO: Un-copy this code, invoke a private function.
+        nx, ny = self.size
+        squoct_x_oct_centers = _squoct_affine_map(_even_evens(nx, ny))
+        s_x, s_y = self.total_size
+        point_list = []
+        for pt in squoct_x_oct_centers:
+            x, y = pt
+            
+            xm2, xm1, xp1, xp2 = map(lambda x: x % s_x,
+                                [(x - 2), (x - 1), (x + 1), (x + 2)])
+            
+            ym2, ym1, yp1, yp2 = map(lambda y: y % s_y,
+                                [(y - 2), (y - 1), (y + 1), (y + 2)])
+            
+            point_list.append([(xm2, ym1), (xm2, yp1), (xm1, ym2),
+                                (xp1, ym2), (xp1, yp2), (xm1, yp2),
+                                (xp2, ym1), (xp2, yp1)])
+        return point_list
 
 class UnionJackLattice(Lattice):
     """
-    Represents a lattice in which qubits are placed on the intersections of the diagonals of squares, as well as their corners. 
+    Gives the dual lattice to the SquareOctagonLattice above. 
     """
     def __init__(self, sz_tpl):
         """
@@ -377,25 +429,16 @@ def skew_coords(nx, ny):
     """
     return _even_odds(nx, ny) + _odd_evens(nx, ny)
 
-_squoct_affine_map = lambda tpl_lst: map(lambda tpl: map(lambda elem: 3 * elem + 1, tpl), tpl_lst)
+def sq2oct(coord):
+    """
+    Takes a coordinate from the initial square lattice and produces a 
+    new coordinate such that square neighbourhoods don't collide.
+    """
+    return 3 * coord + 1
 
-def squoct_square_centers(nx, ny):
-    return _squoct_affine_map(skew_coords(nx, ny))
-
-def squoct_x_oct_centers(nx, ny):
-    return _squoct_affine_map(_even_evens(nx, ny))
-
-def squoct_z_oct_centers(nx, ny):
-    return _squoct_affine_map(_odd_odds(nx, ny))
-
-def _square_neighbourhood(pt):
-    x, y = pt
-    return [(x - 1, y - 1), (x - 1, y + 1),
-            (x + 1, y - 1), (x + 1, y + 2)]
-
-def _oct_neighbourhood(pt):
-    x, y = pt
-    return [(x - 2, y - 1), (x - 2, y + 1),
-            (x - 1, y - 2), (x + 1, y - 2),
-            (x + 1, y + 2), (x - 1, y + 2),
-            (x + 2, y - 1), (x + 2, y + 1)]
+def _squoct_affine_map(tpl_lst):
+    """
+    Maps sq2oct onto all elements in a list of tuples. Used in the big
+    coordinate change. 
+    """
+    return map(lambda tpl: map(sq2oct, tpl), tpl_lst)
