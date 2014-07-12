@@ -133,7 +133,7 @@ class SquareLattice(Lattice):
 
         if is_dual:
             points_2d = map(Point, sym_coords(x_len, y_len))
-            dist = lambda coord1, coord2: sum([min([abs(a - b) % (2 * sz),
+            dist = lambda coord1, coord2, synd_type: sum([min([abs(a - b) % (2 * sz),
                                                     (2 * sz - abs(a - b)) % (2 * sz)]) 
                                                 for a, b, sz in 
                                                 zip(coord1, coord2, sz_tpl)])
@@ -378,7 +378,7 @@ class UnionJackLattice(Lattice):
         point_list = _squoct_affine_map(all_coords(x_len, y_len))
         points = map(Point, point_list)
 
-        def dist(pt1, pt2):
+        def dist(pt1, pt2, synd_type):
             """
             This function is complicated because the number of errors 
             required to produce a chain from one point to another is 
@@ -388,7 +388,27 @@ class UnionJackLattice(Lattice):
             easy case, then we relate the more difficult cases back to
             it.
             """
-            return 
+            
+            #Return appropriate distance given co-ordinate types
+            if is_sq_cent(pt1):
+                if is_sq_cent(pt2):
+                    return square_square_dist(pt1, pt2, synd_type,
+                                                sz_tpl)
+                else:
+                    return square_octagon_dist(pt1, pt2, synd_type,
+                                                sz_tpl)
+            else:
+                if is_sq_cent(pt2):
+                    return square_octagon_dist(pt2, pt1, synd_type,
+                                                sz_tpl)
+                else:
+                    return octagon_octagon_dist(pt1, pt2, synd_type,
+                                                sz_tpl)
+            
+            raise ValueError("Co-ordinates {0} could not be"+\
+                " identified as square or octagon centers."\
+                .format([pt1, pt2]))
+
 
         super(UnionJackLattice, self).__init__(points, dim, dist, is_ft)
         
@@ -480,6 +500,28 @@ def sq2oct(coord):
     """
     return 3 * coord + 1
 
+def oct2sq(coord):
+    """
+    Is the inverse of sq2oct. This function can only be called on 
+    points in the dual of the SquareOctagonLattice, so it throws an 
+    error if it is fed other co-ordinates.
+    """
+    if (coord - 1) % 3 == 0:
+        return (coord - 1)/3
+    else:
+        raise ValueError('Invalid co-ordinate: {0}'.format(coord))
+
+def is_sq_cent(coord):
+    """
+    Squares are defined on the skew_coords of the virtual square 
+    lattice. With this in mind, we invert the affine map from earlier,
+    and sum the coordinates to determine if the result is odd.
+    """
+    return bool(sum(oct2sq(coord))%2)
+
+#If it's not an square center, it's an octagon center.
+is_oct_cent = lambda coord: not(is_sq_cent(coord))
+
 def _squoct_affine_map(tpl_lst):
     """
     Maps sq2oct onto all elements in a list of tuples. Used in the big
@@ -487,17 +529,86 @@ def _squoct_affine_map(tpl_lst):
     """
     return map(lambda tpl: map(sq2oct, tpl), tpl_lst)
 
-def straight_octagon_dist(x1, x2):
+def straight_octagon_dist(x1, x2, sz):
     """
     Input two numbers which are raw one-d coordinates of octagons 
     whose other coordinates are identical. The function outputs the 
     weight of an error chain joining the two octagons.
     """
     diff = abs(x2 - x1)
-    return diff / 3 #Correcting for affine map
+    log_op_weight = 2 * sz #virtual lattice size
+    return min([diff / 3, (log_op_weight - diff) / 3]) #Correcting for affine map
 
-def octagon_octagon_dist(coord1, coord2):
+def octagon_octagon_dist(coord1, coord2, sz_tpl):
     """
-    maps straight_octagon_dist to pairs of 2-D coordinates
+    maps straight_octagon_dist to pairs of n-D coordinates, providing
+    a consistent distance between any two octagons.
     """
-    return sum(map(lambda tpl: straight_octagon_dist(*tpl), zip(coord1, coord2)))
+    return sum(map(lambda tpl: straight_octagon_dist(*tpl),
+                    zip(coord1, coord2, sz_tpl)))
+
+def square_octagon_dist(sq_coord, oct_coord, synd_type, sz_tpl):
+    """
+    This function finds the number of errors necessary to form a chain
+    between a square and an octagon, given the syndrome type (which
+    determines the appropriate neighbouring octagons) and the 
+    coordinates of the two points in question.
+
+    It does this by minimization over the two cases, each corresponding
+    to a neighbouring octagon.
+    """
+
+    test_octagons = appropriate_neighbours(sq_coord)
+    return min(map(lambda o_c: 
+        octagon_octagon_dist(o_c, oct_coord, sz_tpl), 
+        test_octagons))
+
+def square_square_dist(coord1, coord2, synd_type, sz_tpl):
+    """
+    This function finds the number of errors necessary to form a chain
+    between two squares, given the syndrome type (which
+    determines the appropriate neighbouring octagons) and the 
+    coordinates of the two points in question.
+
+    It does this by minimization over four cases, each corresponding
+    to a pair of neighbouring octagons.
+    """
+    #Non-descriptive variable names for the octagons we're going to use
+    ao1, ao2 = test_octagons(coord1)
+    bo1, bo2 = test_octagons(coord2)
+    return min(map(lambda se: octagon_octagon_dist(*se, sz_tpl), 
+        [(ao1, bo1), (ao1, bo2), (ao2, bo1), (ao2, bo2)]))
+
+def appropriate_neighbours(sq_coord, synd_type, sz_tpl):
+    """
+    If the square is in an even row on the virtual square lattice, 
+    then the 'X'-stabilizer neighbours are to the left and right, with
+    the 'Z'-stabilizer neighbours up and down. For squares on odd rows
+    of the virtual square lattice, the opposite is true.
+    """
+    #Make sure the syndrome makes sense
+    if synd_type not in 'xXzZ':
+        raise ValueError('Weird syndrome type on '\
+                        +'SquareOctagonLattice: {0}'.format(synd_type))
+
+    synd_type = synd_type.upper()
+    
+    x, y = oct2sq(sq_coord)
+    sz_x, sz_y = sz_tpl
+    sz_x *= 2; sz_y *= 2 #Value to mod by on virtual lattice.
+    
+    #use Y-value and synd_type to determine neighbours
+    y_even = bool(y % 2)
+
+    if y_even:
+        if synd_type = 'X':
+            virtual_neighbourhood = [(x, (y - 1) % sz_y),(x, (y + 1) % sz_y)]
+        else:
+            virtual_neighbourhood = [((x + 1) % sz_x, y),((x - 1) % sz_x, y)]
+    else:
+        if synd_type = 'X':
+            virtual_neighbourhood = [((x + 1) % sz_x, y),((x - 1) % sz_x, y)]
+        else:
+            virtual_neighbourhood = [(x, (y - 1) % sz_y),(x, (y + 1) % sz_y)]
+
+    return _squoct_affine_map(virtual_neighbourhood)
