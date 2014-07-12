@@ -363,6 +363,11 @@ class SquareOctagonLattice(Lattice):
                                 (xp2, ym1), (xp2, yp1)])
         return point_list
 
+    def min_distance_path(self, dual_start, dual_end):
+        """
+        Given two 
+        """
+
 class UnionJackLattice(Lattice):
     """
     Gives the dual lattice to the SquareOctagonLattice above. 
@@ -612,3 +617,37 @@ def appropriate_neighbours(sq_coord, synd_type, sz_tpl):
             virtual_neighbourhood = [(x, (y - 1) % sz_y),(x, (y + 1) % sz_y)]
 
     return _squoct_affine_map(virtual_neighbourhood)
+
+def straight_octagon_path(oct_1, oct_2, sz_tpl):
+    """
+    Input two octagon centers and the size tuple, and the shortest path
+    between them is returned.
+    """
+
+
+def octagon_octagon_path(oct_1, oct_2, sz_tpl):
+    """
+    Finds a path between octagons which are not necessarily on a 
+    gridline.
+    """
+    #Find the corner octagon
+    corner_oct = None
+    pass
+
+def square_octagon_path(sq_coord, oct_coord, synd_type, sz_tpl):
+    """
+    Finds the appropriate nearest-neighbour path using the 
+    appropriate_neighbours function, returning the path instead of the
+    distance. 
+    """
+    square_neighbours = appropriate_neighbours(sq_coord)
+    pass
+
+def square_square_path(coord1, coord2, synd_type, sz_tpl):
+    """
+    Same as the square_square_dist above, but returns the path.
+    """
+    #Non-descriptive variable names for the octagons we're going to use
+    ao1, ao2 = test_octagons(coord1)
+    bo1, bo2 = test_octagons(coord2)
+    
