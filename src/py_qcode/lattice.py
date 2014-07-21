@@ -5,8 +5,10 @@ Shameless plagiarism from Bravyi/Haah
 """
 
 import itertools as it
+from numpy import linspace
 
 __all__ = ['Point', 'Lattice', 'SquareLattice', 'SquareOctagonLattice', 'UnionJackLattice']
+__all__.extend(['skew_coords', '_squoct_affine_map', 'straight_octagon_dist'])
 
 ##constants##
 SIDES = ['u', 'd', 'r', 'l', 'f', 'b'] #up, down, left, right, front, back
@@ -179,7 +181,7 @@ class SquareLattice(Lattice):
         up    = (y + 1) % (2 * y_sz)
         down  = (y - 1) % (2 * y_sz)
         
-        return (self[right,y],self[x,up],self[left,y],self[x,down])
+        return (self[right, y], self[x, up], self[left, y], self[x, down])
 
     def stars(self):
         return map(self.neighbours, _even_evens(*self.size))
@@ -248,7 +250,7 @@ class SquareLattice(Lattice):
                                     dual_end[special_idx], 2)
         
         #coordinates that "loop around" the boundary of the lattice
-        betweens_backward = range(dual_start[special_idx]-1, -1, -2) + \
+        betweens_backward = range(dual_start[special_idx] - 1, -1, -2) + \
         range(dual_end[special_idx] + 1, 2 * self.size[special_idx], 2)
         
         if len(betweens_forward) < len(betweens_backward):
@@ -285,27 +287,38 @@ class SquareOctagonLattice(Lattice):
 
         #We apply this affine map in order to ensure that the leftmost 
         #(bottom) column (row) of points is at co-ordinate 0:
-        sq_cntrs = squoct_square_centers(x_len, y_len)
+        sq_cntrs = _squoct_affine_map(skew_coords(x_len, y_len))
 
-        squoct_coords = []
-        for coord_pair in sq_cntrs:
-            x, y = coord_pair
-            squoct_coords.extend(_square_neighbourhood(x, y))
-
-        points = map(Point, squoct_coords)
-        super(SquareOctagonLattice, self).__init__(points, dim, dist, is_ft)
-        
-        #max coordinate value is derived by a change of co-ordinates, 
-        #adding 1 to account for neighbourhoods
-        
-        self.size = x_len, y_len
+        #Calculate values to mod by, store for later after super-init
         max_x, max_y = 2 * x_len - 1, 2 * y_len - 1
         
         #total_size is the values to mod by for the boundary conditions
         #Largest center co-ordinate + 1 (for the neighbour) + 1
         #(for the boundary)
         
-        self.total_size = sq2oct(max_x) + 2, sq2oct(max_x) + 2
+        total_size = sq2oct(max_x) + 2, sq2oct(max_y) + 2
+        x_mod, y_mod = total_size
+
+        squoct_coords = []
+        for coord_pair in sq_cntrs:
+            x, y = coord_pair
+            left, right = (x - 1) % x_mod, (x + 1) % x_mod
+            down, up    = (y - 1) % y_mod, (y + 1) % y_mod
+            squoct_coords.extend([(left, down),  (left, up),
+                    (right, down), (right, up)])
+
+        points = map(Point, squoct_coords)
+
+        dist = None #Primal lattices don't need distance functions for now
+
+        super(SquareOctagonLattice, self).__init__(points, dim, dist, is_ft)
+        
+        #max coordinate value is derived by a change of co-ordinates, 
+        #adding 1 to account for neighbourhoods
+        
+        self.size = x_len, y_len
+        
+        self.total_size = total_size
     
     def squares(self):
         nx, ny = self.size
@@ -338,9 +351,9 @@ class SquareOctagonLattice(Lattice):
             ym2, ym1, yp1, yp2 = map(lambda y: y % s_y,
                                 [(y - 2), (y - 1), (y + 1), (y + 2)])
             
-            point_list.append([(xm2, ym1), (xm2, yp1), (xm1, ym2),
+            point_list.append(map(self.__getitem__, [(xm2, ym1), (xm2, yp1), (xm1, ym2),
                                 (xp1, ym2), (xp1, yp2), (xm1, yp2),
-                                (xp2, ym1), (xp2, yp1)])
+                                (xp2, ym1), (xp2, yp1)]))
         return point_list
 
     def x_octagons(self):
@@ -358,9 +371,9 @@ class SquareOctagonLattice(Lattice):
             ym2, ym1, yp1, yp2 = map(lambda y: y % s_y,
                                 [(y - 2), (y - 1), (y + 1), (y + 2)])
             
-            point_list.append([(xm2, ym1), (xm2, yp1), (xm1, ym2),
+            point_list.append(map(self.__getitem__, [(xm2, ym1), (xm2, yp1), (xm1, ym2),
                                 (xp1, ym2), (xp1, yp2), (xm1, yp2),
-                                (xp2, ym1), (xp2, yp1)])
+                                (xp2, ym1), (xp2, yp1)]))
         return point_list
 
     def min_distance_path(self, dual_start, dual_end):
@@ -383,6 +396,11 @@ class UnionJackLattice(Lattice):
         point_list = _squoct_affine_map(all_coords(x_len, y_len))
         points = map(Point, point_list)
 
+        #max coordinate value is derived by a change of co-ordinates, 
+        #adding 1 to account for neighbourhoods
+        max_x, max_y = 2 * x_len - 1, 2 * y_len - 1
+        total_size = sq2oct(max_x) + 2, sq2oct(max_y) + 2
+        
         def dist(pt1, pt2, synd_type):
             """
             This function is complicated because the number of errors 
@@ -398,17 +416,16 @@ class UnionJackLattice(Lattice):
             if is_sq_cent(pt1):
                 if is_sq_cent(pt2):
                     return square_square_dist(pt1, pt2, synd_type,
-                                                sz_tpl)
+                                                total_size)
                 else:
                     return square_octagon_dist(pt1, pt2, synd_type,
-                                                sz_tpl)
+                                                total_size)
             else:
                 if is_sq_cent(pt2):
                     return square_octagon_dist(pt2, pt1, synd_type,
-                                                sz_tpl)
+                                                total_size)
                 else:
-                    return octagon_octagon_dist(pt1, pt2, synd_type,
-                                                sz_tpl)
+                    return octagon_octagon_dist(pt1, pt2, total_size)
             
             raise ValueError("Co-ordinates {0} could not be"+\
                 " identified as square or octagon centers."\
@@ -417,16 +434,14 @@ class UnionJackLattice(Lattice):
 
         super(UnionJackLattice, self).__init__(points, dim, dist, is_ft)
         
-        #max coordinate value is derived by a change of co-ordinates, 
-        #adding 1 to account for neighbourhoods
         self.size = x_len, y_len
 
-        max_x, max_y = 2 * x_len - 1, 2 * y_len - 1
+        
         
         #total_size is the values to mod by for the boundary conditions
         #Largest center co-ordinate + 1 (for the boundary)
         
-        self.total_size = sq2oct(max_x) + 1, sq2oct(max_x) + 1
+        self.total_size = total_size
 
 class CubicLattice(Lattice):
     """
@@ -522,7 +537,7 @@ def is_sq_cent(coord):
     lattice. With this in mind, we invert the affine map from earlier,
     and sum the coordinates to determine if the result is odd.
     """
-    return bool(sum(oct2sq(coord))%2)
+    return bool(sum(map(oct2sq, coord))%2)
 
 #If it's not an square center, it's an octagon center.
 is_oct_cent = lambda coord: not(is_sq_cent(coord))
@@ -541,8 +556,9 @@ def straight_octagon_dist(x1, x2, sz):
     weight of an error chain joining the two octagons.
     """
     diff = abs(x2 - x1)
-    log_op_weight = 2 * sz #virtual lattice size
-    return min([diff / 3, (log_op_weight - diff) / 3]) #Correcting for affine map
+    diff /= 3
+    log_op_weight = sz / 3 #virtual lattice size
+    return min([diff, abs(log_op_weight - diff)]) 
 
 def octagon_octagon_dist(coord1, coord2, sz_tpl):
     """
@@ -563,10 +579,12 @@ def square_octagon_dist(sq_coord, oct_coord, synd_type, sz_tpl):
     to a neighbouring octagon.
     """
 
-    test_octagons = appropriate_neighbours(sq_coord)
-    return min(map(lambda o_c: 
+    test_octagons = appropriate_neighbours(sq_coord, synd_type, sz_tpl)
+    neighbour_dist = min(map(lambda o_c: 
         octagon_octagon_dist(o_c, oct_coord, sz_tpl), 
         test_octagons))
+
+    return neighbour_dist + 1 #1-qubit op to step from oct to square.
 
 def square_square_dist(coord1, coord2, synd_type, sz_tpl):
     """
@@ -578,11 +596,15 @@ def square_square_dist(coord1, coord2, synd_type, sz_tpl):
     It does this by minimization over four cases, each corresponding
     to a pair of neighbouring octagons.
     """
+    
+    #print synd_type
+    
     #Non-descriptive variable names for the octagons we're going to use
-    ao1, ao2 = test_octagons(coord1)
-    bo1, bo2 = test_octagons(coord2)
-    return min(map(lambda se: octagon_octagon_dist(*se, sz_tpl), 
+    ao1, ao2 = appropriate_neighbours(coord1, synd_type, sz_tpl)
+    bo1, bo2 = appropriate_neighbours(coord2, synd_type, sz_tpl)
+    neighbour_dist = min(map(lambda se: octagon_octagon_dist(se[0], se[1], sz_tpl), 
         [(ao1, bo1), (ao1, bo2), (ao2, bo1), (ao2, bo2)]))
+    return neighbour_dist + 2 #2 oct-to-square steps necessary.
 
 def appropriate_neighbours(sq_coord, synd_type, sz_tpl):
     """
@@ -592,13 +614,13 @@ def appropriate_neighbours(sq_coord, synd_type, sz_tpl):
     of the virtual square lattice, the opposite is true.
     """
     #Make sure the syndrome makes sense
-    if synd_type not in 'xXzZ':
+    if not (synd_type in 'xXzZ'):
         raise ValueError('Weird syndrome type on '\
                         +'SquareOctagonLattice: {0}'.format(synd_type))
 
     synd_type = synd_type.upper()
     
-    x, y = oct2sq(sq_coord)
+    x, y = map(oct2sq, sq_coord)
     sz_x, sz_y = sz_tpl
     sz_x *= 2; sz_y *= 2 #Value to mod by on virtual lattice.
     
@@ -606,23 +628,32 @@ def appropriate_neighbours(sq_coord, synd_type, sz_tpl):
     y_even = bool(y % 2)
 
     if y_even:
-        if synd_type = 'X':
+        if synd_type == 'X':
             virtual_neighbourhood = [(x, (y - 1) % sz_y),(x, (y + 1) % sz_y)]
         else:
             virtual_neighbourhood = [((x + 1) % sz_x, y),((x - 1) % sz_x, y)]
     else:
-        if synd_type = 'X':
+        if synd_type == 'X':
             virtual_neighbourhood = [((x + 1) % sz_x, y),((x - 1) % sz_x, y)]
         else:
             virtual_neighbourhood = [(x, (y - 1) % sz_y),(x, (y + 1) % sz_y)]
 
     return _squoct_affine_map(virtual_neighbourhood)
 
-def straight_octagon_path(oct_1, oct_2, sz_tpl):
+def straight_octagon_path(coord_1, coord_2, sz):
     """
-    Input two octagon centers and the size tuple, and the shortest path
-    between them is returned.
+    This gives the 1-D list of coordinates on which to place an error
+    in order to traverse the space between two octagonal checks of the
+    same type.
     """
+    frwrd = [num for num in range(coord_1, coord_2+1)
+                    if not(all([num % 2, num % 3]))]
+    rvrs = [num for num in range(coord_1)
+                    if not(all([num % 2, num % 3]))] + \
+                    [num for num in range(coord_2+1, sz)
+                    if not(all([num % 2, num % 3]))]
+    #START HERE, verify the above
+    pass
 
 
 def octagon_octagon_path(oct_1, oct_2, sz_tpl):
@@ -640,7 +671,7 @@ def square_octagon_path(sq_coord, oct_coord, synd_type, sz_tpl):
     appropriate_neighbours function, returning the path instead of the
     distance. 
     """
-    square_neighbours = appropriate_neighbours(sq_coord)
+    square_neighbours = appropriate_neighbours(sq_coord, synd_type, sz_tpl)
     pass
 
 def square_square_path(coord1, coord2, synd_type, sz_tpl):
@@ -650,4 +681,4 @@ def square_square_path(coord1, coord2, synd_type, sz_tpl):
     #Non-descriptive variable names for the octagons we're going to use
     ao1, ao2 = test_octagons(coord1)
     bo1, bo2 = test_octagons(coord2)
-    
+    pass
