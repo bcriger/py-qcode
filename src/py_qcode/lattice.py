@@ -4,11 +4,16 @@ Ben Criger
 Shameless plagiarism from Bravyi/Haah
 """
 
-import itertools as it
-from numpy import linspace
+from itertools import product
 
-__all__ = ['Point', 'Lattice', 'SquareLattice', 'SquareOctagonLattice', 'UnionJackLattice']
-__all__.extend(['skew_coords', '_squoct_affine_map', 'straight_octagon_dist'])
+__all__ = ['Point', 'Lattice', 'SquareLattice', 'SquareOctagonLattice',
+             'UnionJackLattice']
+
+__all__.extend(['skew_coords', '_squoct_affine_map', 'straight_octagon_dist', 
+                'straight_octagon_path', 'octagon_octagon_path',
+                'octagon_octagon_dist', 'square_octagon_dist', 
+                'square_octagon_path', 'square_square_dist',
+                'square_square_path'])
 
 ##constants##
 SIDES = ['u', 'd', 'r', 'l', 'f', 'b'] #up, down, left, right, front, back
@@ -486,13 +491,13 @@ _evens = lambda n: range(0, 2 * n, 2)
 
 _odds = lambda n: range(1, 2 * n + 1, 2)
 
-_even_odds = lambda nx, ny: list(it.product(_evens(nx), _odds(ny)))
+_even_odds = lambda nx, ny: list(product(_evens(nx), _odds(ny)))
 
-_odd_evens = lambda nx, ny: list(it.product(_odds(nx), _evens(ny)))
+_odd_evens = lambda nx, ny: list(product(_odds(nx), _evens(ny)))
 
-_even_evens = lambda nx, ny: list(it.product(_evens(nx), _evens(ny)))
+_even_evens = lambda nx, ny: list(product(_evens(nx), _evens(ny)))
 
-_odd_odds = lambda nx, ny: list(it.product(_odds(nx), _odds(ny)))
+_odd_odds = lambda nx, ny: list(product(_odds(nx), _odds(ny)))
 
 def sym_coords(nx, ny):
     """
@@ -640,21 +645,22 @@ def appropriate_neighbours(sq_coord, synd_type, sz_tpl):
 
     return _squoct_affine_map(virtual_neighbourhood)
 
-def straight_octagon_path(coord_1, coord_2, sz):
+def straight_octagon_path(c_1, c_2, sz):
     """
     This gives the 1-D list of coordinates on which to place an error
     in order to traverse the space between two octagonal checks of the
     same type.
     """
-    frwrd = [num for num in range(coord_1, coord_2+1)
-                    if not(all([num % 2, num % 3]))]
-    rvrs = [num for num in range(coord_1)
-                    if not(all([num % 2, num % 3]))] + \
-                    [num for num in range(coord_2+1, sz)
-                    if not(all([num % 2, num % 3]))]
-    #START HERE, verify the above
-    pass
+    #July 22, 2014: I'm on a sorting kick today.
+    c_1, c_2 = sorted([c_1, c_2])
 
+    frwrd = sorted(range(c_1 + 2, c_2, 6) + range(c_1 + 4, c_2, 6))
+    rvrs = sorted(range(0, c_1, 6) + range(2, c_1, 6) +
+                    range(c_2 + 2, sz, 6) + range(c_2 + 4, sz, 6))
+    
+    path_list = [frwrd, rvrs]
+    path_list.sort(key=len)
+    return path_list[0]
 
 def octagon_octagon_path(oct_1, oct_2, sz_tpl):
     """
@@ -662,23 +668,51 @@ def octagon_octagon_path(oct_1, oct_2, sz_tpl):
     gridline.
     """
     #Find the corner octagon
-    corner_oct = None
-    pass
+    corner_oct = oct_2[0], oct_1[1]
+    #Paths in 1D
+    x_path = straight_octagon_path(oct_1[0], corner_oct[0], sz_tpl[0])
+    y_path = straight_octagon_path(corner_oct[1], oct_2[1], sz_tpl[1])
+    #Promote paths by appending corner co-ords to all points
+    x_path = [(num, oct_1[1] + 1) for num in x_path]
+    y_path = [(oct_2[0] + 1, num) for num in y_path]
 
-def square_octagon_path(sq_coord, oct_coord, synd_type, sz_tpl):
+    return x_path + y_path
+
+def square_octagon_path(sq_1, oct_2, synd_type, sz_tpl):
     """
     Finds the appropriate nearest-neighbour path using the 
     appropriate_neighbours function, returning the path instead of the
     distance. 
     """
     square_neighbours = appropriate_neighbours(sq_coord, synd_type, sz_tpl)
-    pass
+    
+    #Determine which neighbour to use by whichever is closer to oct_2
+    oct_1 = min(square_neighbours, 
+        key = lambda o_1: octagon_octagon_dist(o_1, oct_2, sz_tpl))
 
-def square_square_path(coord1, coord2, synd_type, sz_tpl):
+    #Determine which extra point to add to join the square to the oct
+    delta = (oct_1[j] - sq_1[j] for j in range(len(sz_tpl)))
+    intersection = (sq_1[j] + delta[j] / 3 for j in range(len(delta)))
+
+    return octagon_octagon_path(oct_1, oct_2, sz_tpl).append(intersection)
+
+def square_square_path(sq_1, sq_2, synd_type, sz_tpl):
     """
     Same as the square_square_dist above, but returns the path.
     """
     #Non-descriptive variable names for the octagons we're going to use
-    ao1, ao2 = test_octagons(coord1)
-    bo1, bo2 = test_octagons(coord2)
-    pass
+    neighb_1 = appropriate_neighbours(sq_1, synd_type, sz_tpl)
+    neighb_2 = appropriate_neighbours(sq_2, synd_type, sz_tpl)
+    
+    oct_1, oct_2 = min(product(neighb_1, neighb_2), key = lambda o_tpl:\
+                       octagon_octagon_dist(o_tpl[0], o_tpl[1], sz_tpl))
+    
+    delta_1 = (oct_1[j] - sq_1[j] for j in range(len(sz_tpl)))
+    intersection_1 = (sq_1[j] + delta_1[j] / 3 for j in range(len(delta)))
+    
+    delta_2 = (oct_2[j] - sq_2[j] for j in range(len(sz_tpl)))
+    intersection_2 = (sq_2[j] + delta_2[j] / 3 for j in range(len(delta)))
+
+    oct_path = octagon_octagon_path(oct_1, oct_2, sz_tpl)
+    
+    return [intersection_1].extend(oct_path).append(intersection_2)
