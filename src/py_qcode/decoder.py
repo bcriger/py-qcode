@@ -56,14 +56,14 @@ def mwpm_decoder(primal_lattice, dual_lattice):
         #set an additive constant large enough for all weights to be positive:
         size_constant = 2 * len(primal_lattice.size) * max(primal_lattice.size)
 
-        for g in [x_graph, z_graph]:
+        for g, synd_type in zip([x_graph, z_graph], ['X','Z']):
             for node in g.nodes():
                 other_nodes = g.nodes()
                 other_nodes.remove(node)
                 for other_node in other_nodes:
                     #Negative weights are no good for networkx
                     edge_tuple = (node, other_node,
-                        size_constant - dual_lattice.dist(node,other_node))
+                        size_constant - dual_lattice.dist(node, other_node, synd_type))
                     g.add_weighted_edges_from([edge_tuple])
 
         x_mate_dict, z_mate_dict = \
@@ -84,8 +84,9 @@ def mwpm_decoder(primal_lattice, dual_lattice):
         #mated points
         for pauli, tpl_lst in zip([X,Z],[x_mate_tuples, z_mate_tuples]):
             for pair in tpl_lst:    
-                coord_set = primal_lattice.min_distance_path(*pair)
+                coord_set = primal_lattice.min_distance_path(*pair, synd_type=str(pauli.op))
                 for coord in coord_set:
+                    #print coord
                     primal_lattice[coord].error *= pauli   
 
         pass #This function is secretly a subroutine
