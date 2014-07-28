@@ -2,6 +2,29 @@ import py_qcode as pq
 import networkx as nx
 from qecc import X, Z, I
 
+def error_print(lattice):
+    printnone = True
+    for point in test_lattice.points:
+        if not(point.error.op == 'I'):
+            print point
+            printnone = False
+
+    if printnone:
+        print "No Errors"
+
+    pass
+
+def syndrome_print(lattice):
+    printnone = True
+    for point in lattice.points:
+        if point.syndrome:
+            print point
+            printnone = False
+
+    if printnone:
+        print "No Syndromes"
+        pass
+
 #size=(4,4)
 #size=(40,40)
 size=(2,2)
@@ -23,44 +46,20 @@ test_decoder = pq.mwpm_decoder(test_lattice, test_dual_lattice)
 test_logical_ops = pq.squoct_log_ops(test_lattice.total_size)
 
 test_model.act_on(test_lattice)
-
 print "Real Errors: \n============"
-for point in test_lattice.points:
-    if not(point.error == I):
-        print point
+error_print(test_lattice)
 
 test_code.measure()
-
 print "Syndromes: \n=========="
-for point in test_dual_lattice.points:
-    if point.syndrome:
-        print point
-
-#print "--------------------"
+syndrome_print(test_dual_lattice)
 
 test_decoder.infer()
+print "Error After Decoding:\n====================="
+error_print(test_lattice)
 
 test_code.measure()
-
-print "Syndromes After Decoding: \n=========="
-printnone = True
-for point in test_dual_lattice.points:
-    if point.syndrome:
-        print point
-        printnone = False
-
-if printnone:
-    print "None"
-
-print "Error After Decoding:\n====================="
-printnone = True
-for point in test_lattice.points:
-    if not(point.error.op == 'I'):
-        print point
-        printnone = False
-
-if printnone:
-    print "None"
+print "Syndromes After Decoding:\n========================="
+syndrome_print(test_lattice)
 
 print "Logical Operators:\n=================="
 for op in test_logical_ops:
