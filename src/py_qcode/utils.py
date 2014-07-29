@@ -1,11 +1,11 @@
 import cPickle as pkl
 
 from simulation import Simulation
-from lattice import SquareLattice
+from lattice import SquareLattice, SquareOctagonLattice, UnionJackLattice
 from error import depolarizing_model
 from decoder import mwpm_decoder
-from code import toric_code
-from logical_operators import toric_log_ops
+from code import toric_code, square_octagon_code
+from logical_operators import toric_log_ops, squoct_log_ops
 
 import cPickle as pkl
 
@@ -14,7 +14,7 @@ __all__ = ['sim_from_file', 'square_toric_code_sim', 'error_print',
 
 def error_print(lattice):
     printnone = True
-    for point in test_lattice.points:
+    for point in lattice.points:
         if not(point.error.op == 'I'):
             print point
             printnone = False
@@ -33,7 +33,7 @@ def syndrome_print(lattice):
 
     if printnone:
         print "No Syndromes"
-        pass
+    pass
 
 def sim_from_file(filename):
     """
@@ -99,11 +99,11 @@ def squoct_sim(size, error_rate, n_trials, filename):
     """
     
     sim_lattice = SquareOctagonLattice((size,size))
-    sim_dual_lattice = SquareOctagonLattice((size,size), is_dual=True)
+    sim_dual_lattice = UnionJackLattice((size,size), is_dual=True)
     sim_model = depolarizing_model(error_rate)
     sim_code = square_octagon_code(sim_lattice, sim_dual_lattice)
     sim_decoder = mwpm_decoder(sim_lattice, sim_dual_lattice)
-    sim_log_ops = squoct_log_ops(sim_lattice.size)
+    sim_log_ops = squoct_log_ops(sim_lattice.total_size)
 
     sim_keys = ['lattice', 'dual_lattice', 'error_model', 'code', 
                             'decoder', 'logical_operators', 'n_trials']

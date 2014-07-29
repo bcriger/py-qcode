@@ -1,5 +1,6 @@
 import cPickle as pkl
 from collections import Iterable
+from utils import syndrome_print
 
 __all__ = ['Simulation']
 
@@ -80,15 +81,21 @@ class Simulation():
 
             #Error checking, if the resulting Pauli is not in the 
             #normalizer, chuck an error:
+            
+            self.dual_lattice.clear()
+            #syndrome_print(self.dual_lattice)
             self.code.measure()
+            #syndrome_print(self.dual_lattice)
+            
             for point in self.dual_lattice.points:
-                if point.syndrome is not None:
+                if point.syndrome:
                     raise ValueError('Product of "inferred error"'+\
                         ' with actual error anticommutes with some'+\
                         ' stabilizers.')
 
             com_relation_list = []
             for operator in self.logical_operators:
+                #print operator
                 com_relation_list.append(operator.test(self.lattice))
             self.logical_error.append(com_relation_list)
     

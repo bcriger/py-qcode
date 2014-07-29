@@ -12,6 +12,10 @@ class LogicalOperator():
         self.name = name
         self.pauli = pauli
         self.coord_list = coord_list
+
+    def __repr__(self):
+        return 'Operator {0}: {1} on coordinates {2}'.format(
+            self.name, self.pauli, self.coord_list)
     
     def test(self, lattice):
         test_pauli = reduce(lambda a, b: a.tens(b), 
