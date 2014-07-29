@@ -9,7 +9,8 @@ from logical_operators import toric_log_ops
 
 import cPickle as pkl
 
-__all__ = ['sim_from_file', 'square_toric_code_sim', 'error_print', 'syndrome_print']
+__all__ = ['sim_from_file', 'square_toric_code_sim', 'error_print',
+             'syndrome_print', 'squoct_sim']
 
 def error_print(lattice):
     printnone = True
