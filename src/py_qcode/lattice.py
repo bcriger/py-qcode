@@ -672,8 +672,8 @@ def straight_octagon_path(c_1, c_2, sz):
     frwrd = sorted(range(c_1 + 2, c_2, 6) + range(c_1 + 4, c_2, 6))
     
     #first qubit in row/col might not be @ 0:
-    start = 0 if oct2sq(c_1) % 2 else 2 
-    rvrs = sorted(range(start, c_1, 6) + range(2, c_1, 6) +
+    start = 0 if oct2sq(c_1) % 2 else 3 
+    rvrs = sorted(range(start, c_1, 6) + range(start + 2, c_1, 6) +
                     range(c_2 + 2, sz, 6) + range(c_2 + 4, sz, 6))
     
     path_list = [frwrd, rvrs]

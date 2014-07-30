@@ -9,11 +9,13 @@ from itertools import product
 __all__ = ['Point', 'Lattice', 'SquareLattice', 'SquareOctagonLattice',
              'UnionJackLattice']
 
+"""
 __all__.extend(['skew_coords', '_squoct_affine_map', 'straight_octagon_dist', 
                 'straight_octagon_path', 'octagon_octagon_path',
                 'octagon_octagon_dist', 'square_octagon_dist', 
                 'square_octagon_path', 'square_square_dist',
                 'square_square_path', 'appropriate_neighbours'])
+"""
 
 ##constants##
 SIDES = ['u', 'd', 'r', 'l', 'f', 'b'] #up, down, left, right, front, back
@@ -194,7 +196,7 @@ class SquareLattice(Lattice):
     def plaquettes(self):
         return map(self.neighbours, _odd_odds(*self.size))
 
-    def min_distance_path(self, dual_start, dual_end):
+    def min_distance_path(self, dual_start, dual_end, synd_type=None):
         """
         Returns a canonical minimum distance path on the _primal_ lattice 
         between two points of the _dual_ lattice. This is based on cutting
@@ -381,16 +383,36 @@ class SquareOctagonLattice(Lattice):
                                 (xp2, ym1), (xp2, yp1)]))
         return point_list
 
-    def min_distance_path(self, dual_start, dual_end):
+    def min_distance_path(self, dual_start, dual_end, synd_type):
         """
-        Given two 
+        Returns a canonical minimum distance path on the _primal_ 
+        lattice between two points of the _dual_ lattice. This is based
+        on finding the path between neighbouring octagons of whatever 
+        dual coordinates are fed in, and testing to see which sets of 
+        neighbours are optimal. 
         """
+        total_size = self.total_size
+        if is_sq_cent(dual_start):
+            if is_sq_cent(dual_end):
+                path = square_square_path(dual_start, dual_end, synd_type,
+                                            total_size)
+            else:
+                path = square_octagon_path(dual_start, dual_end, synd_type,
+                                            total_size)
+        else:
+            if is_sq_cent(dual_end):
+                path = square_octagon_path(dual_end, dual_start, synd_type,
+                                            total_size)
+            else:
+                path = octagon_octagon_path(dual_start, dual_end, total_size)
+
+        return path
 
 class UnionJackLattice(Lattice):
     """
     Gives the dual lattice to the SquareOctagonLattice above. 
     """
-    def __init__(self, sz_tpl, is_dual = False, is_ft = False, closed_boundary = True, rough_sides = ('u', 'r')):
+    def __init__(self, sz_tpl, is_dual = True, is_ft = False, closed_boundary = True, rough_sides = ('u', 'r')):
         dim = len(sz_tpl)
         
         try:
@@ -440,12 +462,6 @@ class UnionJackLattice(Lattice):
         super(UnionJackLattice, self).__init__(points, dim, dist, is_ft)
         
         self.size = x_len, y_len
-
-        
-        
-        #total_size is the values to mod by for the boundary conditions
-        #Largest center co-ordinate + 1 (for the boundary)
-        
         self.total_size = total_size
 
 class CubicLattice(Lattice):
@@ -491,13 +507,13 @@ _evens = lambda n: range(0, 2 * n, 2)
 
 _odds = lambda n: range(1, 2 * n + 1, 2)
 
-_even_odds = lambda nx, ny: list(product(_evens(nx), _odds(ny)))
+_even_odds = lambda nx, ny: map(tuple, list(product(_evens(nx), _odds(ny))))
 
-_odd_evens = lambda nx, ny: list(product(_odds(nx), _evens(ny)))
+_odd_evens = lambda nx, ny: map(tuple, list(product(_odds(nx), _evens(ny))))
 
-_even_evens = lambda nx, ny: list(product(_evens(nx), _evens(ny)))
+_even_evens = lambda nx, ny: map(tuple, list(product(_evens(nx), _evens(ny))))
 
-_odd_odds = lambda nx, ny: list(product(_odds(nx), _odds(ny)))
+_odd_odds = lambda nx, ny: map(tuple, list(product(_odds(nx), _odds(ny))))
 
 def sym_coords(nx, ny):
     """
@@ -552,7 +568,7 @@ def _squoct_affine_map(tpl_lst):
     Maps sq2oct onto all elements in a list of tuples. Used in the big
     coordinate change. 
     """
-    return map(lambda tpl: map(sq2oct, tpl), tpl_lst)
+    return map(lambda tpl: tuple(map(sq2oct, tpl)), tpl_lst)
 
 def straight_octagon_dist(x1, x2, sz):
     """
@@ -565,15 +581,15 @@ def straight_octagon_dist(x1, x2, sz):
     log_op_weight = sz / 3 #virtual lattice size
     return min([diff, abs(log_op_weight - diff)]) 
 
-def octagon_octagon_dist(coord1, coord2, sz_tpl):
+def octagon_octagon_dist(coord1, coord2, total_size):
     """
     maps straight_octagon_dist to pairs of n-D coordinates, providing
     a consistent distance between any two octagons.
     """
     return sum(map(lambda tpl: straight_octagon_dist(*tpl),
-                    zip(coord1, coord2, sz_tpl)))
+                    zip(coord1, coord2, total_size)))
 
-def square_octagon_dist(sq_coord, oct_coord, synd_type, sz_tpl):
+def square_octagon_dist(sq_coord, oct_coord, synd_type, total_size):
     """
     This function finds the number of errors necessary to form a chain
     between a square and an octagon, given the syndrome type (which
@@ -584,14 +600,14 @@ def square_octagon_dist(sq_coord, oct_coord, synd_type, sz_tpl):
     to a neighbouring octagon.
     """
 
-    test_octagons = appropriate_neighbours(sq_coord, synd_type, sz_tpl)
+    test_octagons = appropriate_neighbours(sq_coord, synd_type, total_size)
     neighbour_dist = min(map(lambda o_c: 
-        octagon_octagon_dist(o_c, oct_coord, sz_tpl), 
+        octagon_octagon_dist(o_c, oct_coord, total_size), 
         test_octagons))
 
     return neighbour_dist + 1 #1-qubit op to step from oct to square.
 
-def square_square_dist(coord1, coord2, synd_type, sz_tpl):
+def square_square_dist(coord1, coord2, synd_type, total_size):
     """
     This function finds the number of errors necessary to form a chain
     between two squares, given the syndrome type (which
@@ -605,13 +621,13 @@ def square_square_dist(coord1, coord2, synd_type, sz_tpl):
     #print synd_type
     
     #Non-descriptive variable names for the octagons we're going to use
-    ao1, ao2 = appropriate_neighbours(coord1, synd_type, sz_tpl)
-    bo1, bo2 = appropriate_neighbours(coord2, synd_type, sz_tpl)
-    neighbour_dist = min(map(lambda se: octagon_octagon_dist(se[0], se[1], sz_tpl), 
+    ao1, ao2 = appropriate_neighbours(coord1, synd_type, total_size)
+    bo1, bo2 = appropriate_neighbours(coord2, synd_type, total_size)
+    neighbour_dist = min(map(lambda se: octagon_octagon_dist(se[0], se[1], total_size), 
         [(ao1, bo1), (ao1, bo2), (ao2, bo1), (ao2, bo2)]))
     return neighbour_dist + 2 #2 oct-to-square steps necessary.
 
-def appropriate_neighbours(sq_coord, synd_type, sz_tpl):
+def appropriate_neighbours(sq_coord, synd_type, total_size):
     """
     If the square is in an even row on the virtual square lattice, 
     then the 'X'-stabilizer neighbours are to the left and right, with
@@ -626,7 +642,7 @@ def appropriate_neighbours(sq_coord, synd_type, sz_tpl):
     synd_type = synd_type.upper()
     
     x, y = map(oct2sq, sq_coord)
-    sz_x, sz_y = sz_tpl[0] / 3, sz_tpl[1] / 3 #size of virtual lattice.
+    sz_x, sz_y = total_size[0] / 3, total_size[1] / 3 #size of virtual lattice.
     
     #use Y-value and synd_type to determine neighbours
     y_even = not(bool(y % 2))
@@ -664,7 +680,7 @@ def straight_octagon_path(c_1, c_2, sz):
     path_list.sort(key=len)
     return path_list[0]
 
-def octagon_octagon_path(oct_1, oct_2, sz_tpl):
+def octagon_octagon_path(oct_1, oct_2, total_size):
     """
     Finds a path between octagons which are not necessarily on a 
     gridline.
@@ -672,15 +688,15 @@ def octagon_octagon_path(oct_1, oct_2, sz_tpl):
     #Find the corner octagon
     corner_oct = oct_2[0], oct_1[1]
     #Paths in 1D
-    x_path = straight_octagon_path(oct_1[0], corner_oct[0], sz_tpl[0])
-    y_path = straight_octagon_path(corner_oct[1], oct_2[1], sz_tpl[1])
+    x_path = straight_octagon_path(oct_1[0], corner_oct[0], total_size[0])
+    y_path = straight_octagon_path(corner_oct[1], oct_2[1], total_size[1])
     #Promote paths by appending corner co-ords to all points
     x_path = [(num, oct_1[1] + 1) for num in x_path]
     y_path = [(oct_2[0] + 1, num) for num in y_path]
 
     return x_path + y_path
 
-def sq_oct_shift(sq_c, oct_c):
+def sq_oct_shift(sq_c, oct_c, total_size):
     """
     Takes the centers of a square and an adjacent octagon as arguments.
 
@@ -691,41 +707,50 @@ def sq_oct_shift(sq_c, oct_c):
     """
     #Collect sign to add to every coordinate in sq_c
     for idx in range(len(sq_c)):
+        
         if sq_c[idx] != oct_c[idx]:
-            delta = cmp(oct_c[idx] - sq_c[idx], 0)
+            #print abs(sq_c[idx] - oct_c[idx])
+            if abs(sq_c[idx] - oct_c[idx]) == 3:
+                delta = cmp(oct_c[idx] - sq_c[idx], 0)
+            elif abs(sq_c[idx] - oct_c[idx]) == total_size[idx] - 3:
+                delta = -cmp(oct_c[idx] - sq_c[idx], 0)
+            else:
+                raise ValueError("Input square and octagon to "+\
+                    "sq_oct_shift are not adjacent.")
+    
     return tuple(sq_c[j] + delta for j in range(len(sq_c)))
 
 
-def square_octagon_path(sq_1, oct_2, synd_type, sz_tpl):
+def square_octagon_path(sq_1, oct_2, synd_type, total_size):
     """
     Finds the appropriate nearest-neighbour path using the 
     appropriate_neighbours function, returning the path instead of the
     distance. 
     """
-    square_neighbours = appropriate_neighbours(sq_1, synd_type, sz_tpl)
+    square_neighbours = appropriate_neighbours(sq_1, synd_type, total_size)
     
     #Determine which neighbour to use by whichever is closer to oct_2
     oct_1 = min(square_neighbours, 
-        key = lambda o_1: octagon_octagon_dist(o_1, oct_2, sz_tpl))
+        key = lambda o_1: octagon_octagon_dist(o_1, oct_2, total_size))
 
-    intersection = sq_oct_shift(sq_1, oct_1)
+    intersection = sq_oct_shift(sq_1, oct_1, total_size)
 
-    return octagon_octagon_path(oct_1, oct_2, sz_tpl) + [intersection]
+    return octagon_octagon_path(oct_1, oct_2, total_size) + [intersection]
 
-def square_square_path(sq_1, sq_2, synd_type, sz_tpl):
+def square_square_path(sq_1, sq_2, synd_type, total_size):
     """
     Same as the square_square_dist above, but returns the path.
     """
     #Non-descriptive variable names for the octagons we're going to use
-    neighb_1 = appropriate_neighbours(sq_1, synd_type, sz_tpl)
-    neighb_2 = appropriate_neighbours(sq_2, synd_type, sz_tpl)
+    neighb_1 = appropriate_neighbours(sq_1, synd_type, total_size)
+    neighb_2 = appropriate_neighbours(sq_2, synd_type, total_size)
     
     oct_1, oct_2 = min(product(neighb_1, neighb_2), key = lambda o_tpl:\
-                       octagon_octagon_dist(o_tpl[0], o_tpl[1], sz_tpl))
+                       octagon_octagon_dist(o_tpl[0], o_tpl[1], total_size))
     
-    intersection_1 = sq_oct_shift(sq_1, oct_1)
-    intersection_2 = sq_oct_shift(sq_2, oct_2)
+    intersection_1 = sq_oct_shift(sq_1, oct_1, total_size)
+    intersection_2 = sq_oct_shift(sq_2, oct_2, total_size)
 
-    oct_path = octagon_octagon_path(oct_1, oct_2, sz_tpl)
+    oct_path = octagon_octagon_path(oct_1, oct_2, total_size)
     
     return [intersection_1] + oct_path + [intersection_2]
