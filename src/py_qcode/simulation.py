@@ -1,6 +1,6 @@
 import cPickle as pkl
 from collections import Iterable
-from utils import syndrome_print
+#from utils import syndrome_print
 
 __all__ = ['Simulation']
 

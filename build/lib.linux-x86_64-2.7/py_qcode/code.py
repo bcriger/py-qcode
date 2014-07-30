@@ -1,8 +1,8 @@
 from qecc import Pauli, commutes_with
-from lattice import _even_evens, _odd_odds 
+from lattice import _even_evens, _odd_odds, _squoct_affine_map, skew_coords
 from types import FunctionType
 
-__all__ = ['ErrorCorrectingCode', 'ErrorCheck', 'StabilizerCheck', 'toric_code']
+__all__ = ['ErrorCorrectingCode', 'ErrorCheck', 'StabilizerCheck', 'toric_code', 'square_octagon_code']
 
 class ErrorCheck(object):
     """
@@ -40,7 +40,10 @@ class ErrorCheck(object):
                 finally:
                     pass
             elif isinstance(self.rule, FunctionType):
-                point.syndrome = self.rule(error_str)
+                if point.syndrome is None:
+                    point.syndrome = self.rule(error_str)
+                else:
+                    point.syndrome += self.rule(error_str)
             else:
                 raise TypeError("Rule used by error check must be a function or dict, you entered a value of type: " + type(self.rule))
 
@@ -65,6 +68,7 @@ class StabilizerCheck(ErrorCheck):
                     err_pauli = err_str #Not legible, but works
                 else:
                     raise TypeError("Input type to stabilizer rule not understood.")
+                
                 if all([ltr in 'xX' for ltr in stabilizer.op]):
                     syn_str = 'Z'    
                 elif all([ltr in 'zZ' for ltr in stabilizer.op]):
@@ -72,8 +76,11 @@ class StabilizerCheck(ErrorCheck):
                 else:
                     raise ValueError("CSS Stabilizers must be all-X or all-Z; you entered: {0}".format(stabilizer))
 
+                #print stabilizer, err_pauli, syn_str
                 if not(commutes_with(stabilizer)(err_pauli)):
                     return syn_str
+                else:
+                    return ''
 
         super(StabilizerCheck, self).__init__(primal_sets, dual_points, stab_rule)
 
@@ -88,8 +95,10 @@ class StabilizerCheck(ErrorCheck):
             for idx, point in enumerate(self.dual_points):
                 multi_bit_error = reduce(lambda p1, p2: p1.tens(p2),
                             [pt.error for pt in self.primal_sets[idx]])
-                point.syndrome = self.rule(multi_bit_error)
-        
+                if point.syndrome == None:
+                    point.syndrome = self.rule(multi_bit_error)
+                else:
+                    point.syndrome += self.rule(multi_bit_error)
 
 class ErrorCorrectingCode():
     """
@@ -114,18 +123,55 @@ class ErrorCorrectingCode():
 #UTILITY FUNCTIONS
 def toric_code(primal_grid, dual_grid):
     """
-    Uses a few convenience functions to produce the toric code on a set of square lattices.
+    Uses a few convenience functions to produce the toric code on a set
+    of square lattices.
     """
     star_coords = _even_evens(*dual_grid.size)    
     star_duals = [dual_grid[coord] for coord in star_coords]
-    star_primal = [primal_grid.neighbours(coord) for coord in star_coords]
-    star_check = StabilizerCheck(star_primal, star_duals, 'XXXX', indy_css=True)
+    star_primal = [primal_grid.neighbours(coord) 
+                    for coord in star_coords]
+    star_check = StabilizerCheck(star_primal, star_duals, 'XXXX',
+                                                    indy_css=True)
     
     plaq_coords = _odd_odds(*dual_grid.size)    
     plaq_duals = [dual_grid[coord] for coord in plaq_coords]
-    plaq_primal = [primal_grid.neighbours(coord) for coord in plaq_coords]
-    plaq_check = StabilizerCheck(plaq_primal, plaq_duals, 'ZZZZ', indy_css=True)
+    plaq_primal = [primal_grid.neighbours(coord) 
+                    for coord in plaq_coords]
+    plaq_check = StabilizerCheck(plaq_primal, plaq_duals, 'ZZZZ', 
+                                                    indy_css=True)
 
     return ErrorCorrectingCode([star_check, plaq_check], name="Toric Code")
+
+def square_octagon_code(primal_grid, dual_grid):
+    """
+    Uses a few convenience functions to produce the concatenated 
+    toric/[[4,2,2]] code on a set of square lattices.
+    """
+    nx, ny = primal_grid.size
+
+    sq_coords = _squoct_affine_map(skew_coords(nx, ny))
+    sq_duals = [dual_grid[coord] for coord in sq_coords]
+    sq_primal = primal_grid.squares()
+    sq_check_X = StabilizerCheck(sq_primal, sq_duals, 'XXXX',
+                                                    indy_css=True)
+    
+    sq_check_Z = StabilizerCheck(sq_primal, sq_duals, 'ZZZZ',
+                                                    indy_css=True)
+    
+    x_oct_coords = _squoct_affine_map(_even_evens(nx, ny))
+    x_oct_duals = [dual_grid[coord] for coord in x_oct_coords]
+    x_oct_primal = primal_grid.x_octagons()
+    x_oct_check = StabilizerCheck(x_oct_primal, x_oct_duals,
+                                        'XXXXXXXX', indy_css=True)
+    
+    z_oct_coords = _squoct_affine_map(_odd_odds(nx, ny))
+    z_oct_duals = [dual_grid[coord] for coord in z_oct_coords]
+    z_oct_primal = primal_grid.z_octagons()
+    z_oct_check = StabilizerCheck(z_oct_primal, z_oct_duals,
+                                        'ZZZZZZZZ', indy_css=True)
+
+    return ErrorCorrectingCode([sq_check_Z, sq_check_X,
+                                x_oct_check, z_oct_check], 
+                                name="Square-Octagon Code")
 
 _sum = lambda iterable: reduce(lambda a, b: a + b, iterable)

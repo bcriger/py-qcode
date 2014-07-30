@@ -95,7 +95,8 @@ def square_toric_code_sim(size, error_rate, n_trials, filename):
 
 def squoct_sim(size, error_rate, n_trials, filename):
     """
-    Copypasta from above, maybe I'll un-pasta this later. 
+    Copypasta from square_toric_code_sim, maybe I'll un-pasta this 
+    later. 
     """
     
     sim_lattice = SquareOctagonLattice((size,size))
