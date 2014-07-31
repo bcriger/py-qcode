@@ -8,7 +8,7 @@
   <head>
     <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
     
-    <title>Simulation &mdash; py_qcode 0.0 documentation</title>
+    <title>Simulation Objects &mdash; py_qcode 0.0 documentation</title>
     
     <link rel="stylesheet" href="_static/default.css" type="text/css" />
     <link rel="stylesheet" href="_static/pygments.css" type="text/css" />
@@ -26,7 +26,7 @@
     <script type="text/javascript" src="_static/underscore.js"></script>
     <script type="text/javascript" src="_static/doctools.js"></script>
     <link rel="top" title="py_qcode 0.0 documentation" href="index.html" />
-    <link rel="next" title="Lattices" href="lattice.html" />
+    <link rel="next" title="Points and Lattices" href="lattice.html" />
     <link rel="prev" title="py_qcode: decoding topological error-correcting codes in Python" href="index.html" /> 
   </head>
   <body>
@@ -37,7 +37,7 @@
           <a href="genindex.html" title="General Index"
              accesskey="I">index</a></li>
         <li class="right" >
-          <a href="lattice.html" title="Lattices"
+          <a href="lattice.html" title="Points and Lattices"
              accesskey="N">next</a> |</li>
         <li class="right" >
           <a href="index.html" title="py_qcode: decoding topological error-correcting codes in Python"
@@ -51,13 +51,11 @@
         <div class="bodywrapper">
           <div class="body">
             
-  <div class="section" id="simulation">
-<h1>Simulation<a class="headerlink" href="#simulation" title="Permalink to this headline">¶</a></h1>
-<div class="section" id="class-reference">
-<h2>Class Reference<a class="headerlink" href="#class-reference" title="Permalink to this headline">¶</a></h2>
+  <div class="section" id="simulation-objects">
+<h1>Simulation Objects<a class="headerlink" href="#simulation-objects" title="Permalink to this headline">¶</a></h1>
 <dl class="class">
 <dt id="py_qcode.Simulation">
-<em class="property">class </em><tt class="descclassname">py_qcode.</tt><tt class="descname">Simulation</tt><big>(</big><em>lattice</em>, <em>error_model</em>, <em>code</em>, <em>decoder</em>, <em>n_trials</em><big>)</big><a class="headerlink" href="#py_qcode.Simulation" title="Permalink to this definition">¶</a></dt>
+<em class="property">class </em><tt class="descclassname">py_qcode.</tt><tt class="descname">Simulation</tt><big>(</big><em>lattice</em>, <em>dual_lattice</em>, <em>error_model</em>, <em>code</em>, <em>decoder</em>, <em>logical_operators</em>, <em>n_trials</em><big>)</big><a class="headerlink" href="#py_qcode.Simulation" title="Permalink to this definition">¶</a></dt>
 <dd><p><cite>Simulation</cite> is the top-level class
 for py_qcode, the user is meant to set up, execute and save results
 using these objects.</p>
@@ -92,12 +90,11 @@ using these objects.</p>
 
 <dl class="method">
 <dt id="py_qcode.Simulation.save">
-<tt class="descname">save</tt><big>(</big><big>)</big><a class="headerlink" href="#py_qcode.Simulation.save" title="Permalink to this definition">¶</a></dt>
+<tt class="descname">save</tt><big>(</big><em>filename</em><big>)</big><a class="headerlink" href="#py_qcode.Simulation.save" title="Permalink to this definition">¶</a></dt>
 <dd></dd></dl>
 
 </dd></dl>
 
-</div>
 </div>
 
 
@@ -106,20 +103,12 @@ using these objects.</p>
       </div>
       <div class="sphinxsidebar">
         <div class="sphinxsidebarwrapper">
-  <h3><a href="index.html">Table Of Contents</a></h3>
-  <ul>
-<li><a class="reference internal" href="#">Simulation</a><ul>
-<li><a class="reference internal" href="#class-reference">Class Reference</a></li>
-</ul>
-</li>
-</ul>
-
   <h4>Previous topic</h4>
   <p class="topless"><a href="index.html"
                         title="previous chapter">py_qcode: decoding topological error-correcting codes in Python</a></p>
   <h4>Next topic</h4>
   <p class="topless"><a href="lattice.html"
-                        title="next chapter">Lattices</a></p>
+                        title="next chapter">Points and Lattices</a></p>
   <h3>This Page</h3>
   <ul class="this-page-menu">
     <li><a href="_sources/simulation.txt"
@@ -149,7 +138,7 @@ using these objects.</p>
           <a href="genindex.html" title="General Index"
              >index</a></li>
         <li class="right" >
-          <a href="lattice.html" title="Lattices"
+          <a href="lattice.html" title="Points and Lattices"
              >next</a> |</li>
         <li class="right" >
           <a href="index.html" title="py_qcode: decoding topological error-correcting codes in Python"

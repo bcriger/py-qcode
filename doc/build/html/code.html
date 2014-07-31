@@ -27,7 +27,7 @@
     <script type="text/javascript" src="_static/doctools.js"></script>
     <link rel="top" title="py_qcode 0.0 documentation" href="index.html" />
     <link rel="next" title="Error Models" href="error.html" />
-    <link rel="prev" title="Lattices" href="lattice.html" /> 
+    <link rel="prev" title="Points and Lattices" href="lattice.html" /> 
   </head>
   <body>
     <div class="related">
@@ -40,7 +40,7 @@
           <a href="error.html" title="Error Models"
              accesskey="N">next</a> |</li>
         <li class="right" >
-          <a href="lattice.html" title="Lattices"
+          <a href="lattice.html" title="Points and Lattices"
              accesskey="P">previous</a> |</li>
         <li><a href="index.html">py_qcode 0.0 documentation</a> &raquo;</li> 
       </ul>
@@ -53,26 +53,20 @@
             
   <div class="section" id="error-correcting-codes">
 <h1>Error Correcting Codes<a class="headerlink" href="#error-correcting-codes" title="Permalink to this headline">¶</a></h1>
-<div class="section" id="class-reference">
-<h2>Class Reference<a class="headerlink" href="#class-reference" title="Permalink to this headline">¶</a></h2>
+<div class="section" id="error-detecting-checks">
+<h2>Error-detecting Checks<a class="headerlink" href="#error-detecting-checks" title="Permalink to this headline">¶</a></h2>
 <dl class="class">
-<dt id="py_qcode.ErrorCorrectingCode">
-<em class="property">class </em><tt class="descclassname">py_qcode.</tt><tt class="descname">ErrorCorrectingCode</tt><big>(</big><em>arg</em><big>)</big><a class="headerlink" href="#py_qcode.ErrorCorrectingCode" title="Permalink to this definition">¶</a></dt>
-<dd><p>An error-correcting code, for the purpose of this module, is a rule
-for taking errors on sets of points, and turning them into
-discrete-valued syndromes which are interpreted by the decoder.
-Normally, we would immediately make the restriction to stabilizer
-codes which return binary-valued syndromes, but we want to make
-room for codes which correct non-Pauli errors, and return fuzzy
-syndromes.</p>
+<dt id="py_qcode.ErrorCheck">
+<em class="property">class </em><tt class="descclassname">py_qcode.</tt><tt class="descname">ErrorCheck</tt><big>(</big><em>primal_sets</em>, <em>dual_points</em>, <em>rule</em><big>)</big><a class="headerlink" href="#py_qcode.ErrorCheck" title="Permalink to this definition">¶</a></dt>
+<dd><p>This is the primitive operation of measurement for error-correcting codes; it takes a list of errors on a subset of the primal lattice of the code and translates it into syndromes on a subset of the dual lattice.</p>
 <table class="docutils field-list" frame="void" rules="none">
 <col class="field-name" />
 <col class="field-body" />
 <tbody valign="top">
 <tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><ul class="first last simple">
-<li><strong>primal_lattice</strong> (<a class="reference internal" href="lattice.html#py_qcode.Lattice" title="py_qcode.Lattice"><tt class="xref py py-class docutils literal"><span class="pre">py_qcode.Lattice</span></tt></a>) &#8211; The lattice on which the qubits live.</li>
-<li><strong>dual_lattice</strong> (<a class="reference internal" href="lattice.html#py_qcode.Lattice" title="py_qcode.Lattice"><tt class="xref py py-class docutils literal"><span class="pre">py_qcode.Lattice</span></tt></a>) &#8211; The lattice on which the parity checks live.</li>
-<li><strong>parity_check</strong> (<em>function</em>) &#8211; A rule for mapping errors on the primal lattice to measurement results on the dual lattice.</li>
+<li><strong>primal_sets</strong> (collection of whatever maps to <a class="reference internal" href="lattice.html#py_qcode.Point" title="py_qcode.Point"><tt class="xref py py-class docutils literal"><span class="pre">py_qcode.Point</span></tt></a> objects) &#8211; co-ordinates from which the error check will collect syndromes. I&#8217;ll add input checking so that tuples of co-ordinates can be entered on their own instead of the objects which wrap them.</li>
+<li><strong>dual_points</strong> (set/list of tuples or <a class="reference internal" href="lattice.html#py_qcode.Point" title="py_qcode.Point"><tt class="xref py py-class docutils literal"><span class="pre">py_qcode.Point</span></tt></a> objects.) &#8211; points on the dual lattice to which the syndrome for this error check will be written</li>
+<li><strong>rule</strong> (<em>function or dict</em>) &#8211; lookup table or other mechanism that maps errors to syndromes.</li>
 </ul>
 </td>
 </tr>
@@ -80,12 +74,50 @@ syndromes.</p>
 </table>
 </dd></dl>
 
+</div>
+<div class="section" id="stabilizer-checks">
+<h2>Stabilizer Checks<a class="headerlink" href="#stabilizer-checks" title="Permalink to this headline">¶</a></h2>
 <dl class="class">
-<dt id="py_qcode.StabilizerCode">
-<em class="property">class </em><tt class="descclassname">py_qcode.</tt><tt class="descname">StabilizerCode</tt><big>(</big><em>arg</em><big>)</big><a class="headerlink" href="#py_qcode.StabilizerCode" title="Permalink to this definition">¶</a></dt>
-<dd><p>subclass of
-ErrorCorrectingCode for which syndromes are determined by commutation
-/anti-commutation with a Pauli stabilizer.</p>
+<dt id="py_qcode.StabilizerCheck">
+<em class="property">class </em><tt class="descclassname">py_qcode.</tt><tt class="descname">StabilizerCheck</tt><big>(</big><em>primal_sets</em>, <em>dual_points</em>, <em>stabilizer</em>, <em>indy_css=False</em><big>)</big><a class="headerlink" href="#py_qcode.StabilizerCheck" title="Permalink to this definition">¶</a></dt>
+<dd><p>subclass of <a class="reference internal" href="#py_qcode.ErrorCheck" title="py_qcode.ErrorCheck"><tt class="xref py py-class docutils literal"><span class="pre">py_qcode.ErrorCheck</span></tt></a>, takes anything that can be cast to a <tt class="xref py py-class docutils literal"><span class="pre">qecc.Pauli</span></tt> instead of a rule, and uses commutation to determine the syndrome.</p>
+</dd></dl>
+
+<dl class="class">
+<dt id="py_qcode.ErrorCorrectingCode">
+<em class="property">class </em><tt class="descclassname">py_qcode.</tt><tt class="descname">ErrorCorrectingCode</tt><big>(</big><em>parity_check_list</em>, <em>name='Un-named'</em><big>)</big><a class="headerlink" href="#py_qcode.ErrorCorrectingCode" title="Permalink to this definition">¶</a></dt>
+<dd><p>Wraps a bunch of parity checks.</p>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><strong>parity_check_list</strong> (<em>list</em>) &#8211; A list of <a class="reference internal" href="#py_qcode.ErrorCheck" title="py_qcode.ErrorCheck"><tt class="xref py py-class docutils literal"><span class="pre">py_qcode.ErrorCheck</span></tt></a> objects, which can be a mix of any subclass of <a class="reference internal" href="#py_qcode.ErrorCheck" title="py_qcode.ErrorCheck"><tt class="xref py py-class docutils literal"><span class="pre">py_qcode.ErrorCheck</span></tt></a>.</td>
+</tr>
+</tbody>
+</table>
+<dl class="method">
+<dt id="py_qcode.ErrorCorrectingCode.measure">
+<tt class="descname">measure</tt><big>(</big><big>)</big><a class="headerlink" href="#py_qcode.ErrorCorrectingCode.measure" title="Permalink to this definition">¶</a></dt>
+<dd><p>Evaluates all the parity checks.</p>
+</dd></dl>
+
+</dd></dl>
+
+</div>
+<div class="section" id="pre-defined-codes">
+<h2>Pre-defined Codes<a class="headerlink" href="#pre-defined-codes" title="Permalink to this headline">¶</a></h2>
+<dl class="function">
+<dt id="py_qcode.toric_code">
+<tt class="descclassname">py_qcode.</tt><tt class="descname">toric_code</tt><big>(</big><em>primal_grid</em>, <em>dual_grid</em><big>)</big><a class="headerlink" href="#py_qcode.toric_code" title="Permalink to this definition">¶</a></dt>
+<dd><p>Uses a few convenience functions to produce the toric code on a set
+of square lattices.</p>
+</dd></dl>
+
+<dl class="function">
+<dt id="py_qcode.square_octagon_code">
+<tt class="descclassname">py_qcode.</tt><tt class="descname">square_octagon_code</tt><big>(</big><em>primal_grid</em>, <em>dual_grid</em><big>)</big><a class="headerlink" href="#py_qcode.square_octagon_code" title="Permalink to this definition">¶</a></dt>
+<dd><p>Uses a few convenience functions to produce the concatenated 
+toric/[[4,2,2]] code on a set of square lattices.</p>
 </dd></dl>
 
 </div>
@@ -100,14 +132,16 @@ ErrorCorrectingCode for which syndromes are determined by commutation
   <h3><a href="index.html">Table Of Contents</a></h3>
   <ul>
 <li><a class="reference internal" href="#">Error Correcting Codes</a><ul>
-<li><a class="reference internal" href="#class-reference">Class Reference</a></li>
+<li><a class="reference internal" href="#error-detecting-checks">Error-detecting Checks</a></li>
+<li><a class="reference internal" href="#stabilizer-checks">Stabilizer Checks</a></li>
+<li><a class="reference internal" href="#pre-defined-codes">Pre-defined Codes</a></li>
 </ul>
 </li>
 </ul>
 
   <h4>Previous topic</h4>
   <p class="topless"><a href="lattice.html"
-                        title="previous chapter">Lattices</a></p>
+                        title="previous chapter">Points and Lattices</a></p>
   <h4>Next topic</h4>
   <p class="topless"><a href="error.html"
                         title="next chapter">Error Models</a></p>
@@ -143,7 +177,7 @@ ErrorCorrectingCode for which syndromes are determined by commutation
           <a href="error.html" title="Error Models"
              >next</a> |</li>
         <li class="right" >
-          <a href="lattice.html" title="Lattices"
+          <a href="lattice.html" title="Points and Lattices"
              >previous</a> |</li>
         <li><a href="index.html">py_qcode 0.0 documentation</a> &raquo;</li> 
       </ul>

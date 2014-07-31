@@ -2,7 +2,7 @@ import networkx as nx
 from qecc import X, Z
 import pdb
 
-__all__ = ['Decoder', 'mwpm_decoder', 'RGBPDecoder', 'BHRGDecoder']
+__all__ = ['Decoder', 'mwpm_decoder']
 
 class Decoder():
     """
@@ -99,18 +99,5 @@ def mwpm_decoder(primal_lattice, dual_lattice):
 
     return Decoder(matching_alg, primal_lattice, dual_lattice, name='Minimum-Weight Matching')
 
-class RGBPDecoder(Decoder):
-    """
-    A renormalization group / belief propagation decoder based on Duclos-Cianci and Poulin.
-    """
-    def __init__(self, arg):
-        self.arg = arg
-
-class BHRGDecoder(Decoder):
-    """
-    Bravyi/Haah renormalization group decoder.
-    """
-    def __init__(self, arg):
-        self.arg = arg
 
 #Convenience Fuctions

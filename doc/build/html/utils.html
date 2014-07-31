@@ -8,7 +8,7 @@
   <head>
     <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
     
-    <title>Python Module Index &mdash; py_qcode 0.0 documentation</title>
+    <title>Utility Functions &mdash; py_qcode 0.0 documentation</title>
     
     <link rel="stylesheet" href="_static/default.css" type="text/css" />
     <link rel="stylesheet" href="_static/pygments.css" type="text/css" />
@@ -26,13 +26,7 @@
     <script type="text/javascript" src="_static/underscore.js"></script>
     <script type="text/javascript" src="_static/doctools.js"></script>
     <link rel="top" title="py_qcode 0.0 documentation" href="index.html" />
- 
-
-    <script type="text/javascript">
-      DOCUMENTATION_OPTIONS.COLLAPSE_INDEX = true;
-    </script>
-
-
+    <link rel="prev" title="Decoders" href="decoder.html" /> 
   </head>
   <body>
     <div class="related">
@@ -42,8 +36,8 @@
           <a href="genindex.html" title="General Index"
              accesskey="I">index</a></li>
         <li class="right" >
-          <a href="#" title="Python Module Index"
-             >modules</a> |</li>
+          <a href="decoder.html" title="Decoders"
+             accesskey="P">previous</a> |</li>
         <li><a href="index.html">py_qcode 0.0 documentation</a> &raquo;</li> 
       </ul>
     </div>  
@@ -53,23 +47,36 @@
         <div class="bodywrapper">
           <div class="body">
             
+  <div class="section" id="utility-functions">
+<h1>Utility Functions<a class="headerlink" href="#utility-functions" title="Permalink to this headline">¶</a></h1>
+<dl class="function">
+<dt id="py_qcode.error_print">
+<tt class="descclassname">py_qcode.</tt><tt class="descname">error_print</tt><big>(</big><em>lattice</em><big>)</big><a class="headerlink" href="#py_qcode.error_print" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
 
-   <h1>Python Module Index</h1>
+<dl class="function">
+<dt id="py_qcode.syndrome_print">
+<tt class="descclassname">py_qcode.</tt><tt class="descname">syndrome_print</tt><big>(</big><em>lattice</em><big>)</big><a class="headerlink" href="#py_qcode.syndrome_print" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
 
-   <div class="modindex-jumpbox">
-   <a href="#cap-p"><strong>p</strong></a>
-   </div>
+<dl class="function">
+<dt id="py_qcode.square_toric_code_sim">
+<tt class="descclassname">py_qcode.</tt><tt class="descname">square_toric_code_sim</tt><big>(</big><em>size</em>, <em>error_rate</em>, <em>n_trials</em>, <em>filename</em><big>)</big><a class="headerlink" href="#py_qcode.square_toric_code_sim" title="Permalink to this definition">¶</a></dt>
+<dd><p>This function is square in more than one sense; it does everything
+the most vanilla way possible, and it uses a square grid to define 
+the torus. You put in an integer size, an error rate and a number
+of trials to execute, and it produces a pickled dict containing 
+the input to a simulation object in a file.</p>
+</dd></dl>
 
-   <table class="indextable modindextable" cellspacing="0" cellpadding="2">
-     <tr class="pcap"><td></td><td>&nbsp;</td><td></td></tr>
-     <tr class="cap" id="cap-p"><td></td><td>
-       <strong>p</strong></td><td></td></tr>
-     <tr>
-       <td></td>
-       <td>
-       <a href="index.html#module-py_qcode"><tt class="xref">py_qcode</tt></a></td><td>
-       <em></em></td></tr>
-   </table>
+<dl class="function">
+<dt id="py_qcode.squoct_sim">
+<tt class="descclassname">py_qcode.</tt><tt class="descname">squoct_sim</tt><big>(</big><em>size</em>, <em>error_rate</em>, <em>n_trials</em>, <em>filename</em><big>)</big><a class="headerlink" href="#py_qcode.squoct_sim" title="Permalink to this definition">¶</a></dt>
+<dd><p>Copypasta from square_toric_code_sim, maybe I&#8217;ll un-pasta this 
+later.</p>
+</dd></dl>
+
+</div>
 
 
           </div>
@@ -77,6 +84,14 @@
       </div>
       <div class="sphinxsidebar">
         <div class="sphinxsidebarwrapper">
+  <h4>Previous topic</h4>
+  <p class="topless"><a href="decoder.html"
+                        title="previous chapter">Decoders</a></p>
+  <h3>This Page</h3>
+  <ul class="this-page-menu">
+    <li><a href="_sources/utils.txt"
+           rel="nofollow">Show Source</a></li>
+  </ul>
 <div id="searchbox" style="display: none">
   <h3>Quick search</h3>
     <form class="search" action="search.html" method="get">
@@ -101,8 +116,8 @@
           <a href="genindex.html" title="General Index"
              >index</a></li>
         <li class="right" >
-          <a href="#" title="Python Module Index"
-             >modules</a> |</li>
+          <a href="decoder.html" title="Decoders"
+             >previous</a> |</li>
         <li><a href="index.html">py_qcode 0.0 documentation</a> &raquo;</li> 
       </ul>
     </div>
