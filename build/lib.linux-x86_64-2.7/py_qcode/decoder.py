@@ -1,5 +1,6 @@
 import networkx as nx
 from qecc import X, Z
+import pdb
 
 __all__ = ['Decoder', 'mwpm_decoder', 'RGBPDecoder', 'BHRGDecoder']
 
@@ -83,11 +84,16 @@ def mwpm_decoder(primal_lattice, dual_lattice):
         #Produce error chains according to min-length path between
         #mated points
         for pauli, tpl_lst in zip([X,Z],[x_mate_tuples, z_mate_tuples]):
-            for pair in tpl_lst:    
+            #pdb.set_trace()
+            for pair in tpl_lst:
                 coord_set = primal_lattice.min_distance_path(*pair, synd_type=str(pauli.op))
                 for coord in coord_set:
                     #print coord
-                    primal_lattice[coord].error *= pauli   
+                    try:
+                        primal_lattice[coord].error *= pauli
+                    except KeyError: 
+                        print pair
+                        print coord_set
 
         pass #This function is secretly a subroutine
 

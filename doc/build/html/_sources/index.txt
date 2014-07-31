@@ -8,6 +8,7 @@ py_qcode: decoding topological error-correcting codes in Python
 ===============================================================
 
 Contents:
+---------
 
 .. toctree::
    :maxdepth: 2
@@ -17,6 +18,7 @@ Contents:
    code
    error
    decoder
+   utils
 
 Introduction
 ============
@@ -39,4 +41,3 @@ Indices and tables
 * :ref:`genindex`
 * :ref:`modindex`
 * :ref:`search`
-

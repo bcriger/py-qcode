@@ -1,16 +1,20 @@
-Lattices
-========
+Points and Lattices
+===================
 
-Class Reference
----------------
+The Point Class
+~~~~~~~~~~~~~~~
 .. autoclass:: py_qcode.Point
     :members:
     :undoc-members:
 
+Lattices
+~~~~~~~~
 .. autoclass:: py_qcode.Lattice
     :members:
     :undoc-members:
 
+Defined Lattices
+~~~~~~~~~~~~~~~~
 .. autoclass:: py_qcode.SquareLattice
     :members:
     :undoc-members:

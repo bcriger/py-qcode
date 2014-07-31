@@ -1,14 +1,12 @@
 Error Models
 ============
 
-Class Reference
----------------
 .. autoclass:: py_qcode.ErrorModel
     :members:
     :undoc-members:
 
-.. autoclass:: py_qcode.DepolarizingModel
-    :members:
-    :undoc-members:
+Pre-defined Models
+~~~~~~~~~~~~~~~~~~
+.. autofunction:: py_qcode.depolarizing_model
 
-.. autoclass:: py_qcode.
+.. autofunction:: py_qcode.iidxz_model

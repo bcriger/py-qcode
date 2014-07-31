@@ -8,7 +8,7 @@
   <head>
     <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
     
-    <title>Lattices &mdash; py_qcode 0.0 documentation</title>
+    <title>Points and Lattices &mdash; py_qcode 0.0 documentation</title>
     
     <link rel="stylesheet" href="_static/default.css" type="text/css" />
     <link rel="stylesheet" href="_static/pygments.css" type="text/css" />
@@ -27,7 +27,7 @@
     <script type="text/javascript" src="_static/doctools.js"></script>
     <link rel="top" title="py_qcode 0.0 documentation" href="index.html" />
     <link rel="next" title="Error Correcting Codes" href="code.html" />
-    <link rel="prev" title="Simulation" href="simulation.html" /> 
+    <link rel="prev" title="Simulation Objects" href="simulation.html" /> 
   </head>
   <body>
     <div class="related">
@@ -40,7 +40,7 @@
           <a href="code.html" title="Error Correcting Codes"
              accesskey="N">next</a> |</li>
         <li class="right" >
-          <a href="simulation.html" title="Simulation"
+          <a href="simulation.html" title="Simulation Objects"
              accesskey="P">previous</a> |</li>
         <li><a href="index.html">py_qcode 0.0 documentation</a> &raquo;</li> 
       </ul>
@@ -51,13 +51,13 @@
         <div class="bodywrapper">
           <div class="body">
             
-  <div class="section" id="lattices">
-<h1>Lattices<a class="headerlink" href="#lattices" title="Permalink to this headline">¶</a></h1>
-<div class="section" id="class-reference">
-<h2>Class Reference<a class="headerlink" href="#class-reference" title="Permalink to this headline">¶</a></h2>
+  <div class="section" id="points-and-lattices">
+<h1>Points and Lattices<a class="headerlink" href="#points-and-lattices" title="Permalink to this headline">¶</a></h1>
+<div class="section" id="the-point-class">
+<h2>The Point Class<a class="headerlink" href="#the-point-class" title="Permalink to this headline">¶</a></h2>
 <dl class="class">
 <dt id="py_qcode.Point">
-<em class="property">class </em><tt class="descclassname">py_qcode.</tt><tt class="descname">Point</tt><big>(</big><em>coords</em>, <em>error=None</em>, <em>syndrome=None</em><big>)</big><a class="headerlink" href="#py_qcode.Point" title="Permalink to this definition">¶</a></dt>
+<em class="property">class </em><tt class="descclassname">py_qcode.</tt><tt class="descname">Point</tt><big>(</big><em>coords</em>, <em>error=None</em>, <em>syndrome=None</em>, <em>inferred_error=None</em><big>)</big><a class="headerlink" href="#py_qcode.Point" title="Permalink to this definition">¶</a></dt>
 <dd><p>Represents a point in two or three dimensions. Normally, I&#8217;d use a
 <tt class="docutils literal"><span class="pre">namedtuple</span></tt>, because I&#8217;m not a psychopath, but I want to use
 default arguments without getting too fancy. Each point can also 
@@ -70,7 +70,7 @@ syndrome which results from measurement of an
 <col class="field-body" />
 <tbody valign="top">
 <tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><ul class="first last simple">
-<li><strong>coords</strong> (<em>tuple of ints, length 2 or 3</em>) &#8211; co-ordinates of the point in question.</li>
+<li><strong>coords</strong> (<em>tuple of ints</em>) &#8211; co-ordinates of the point in question.</li>
 <li><strong>error</strong> (<em>any</em>) &#8211; A value which denotes an error. An <tt class="docutils literal"><span class="pre">ErrorCorrectingCode</span></tt> must check that this value corresponds to an operator which can be translated into a syndrome.</li>
 <li><strong>syndrome</strong> (<em>any</em>) &#8211; A value which denotes an syndrome. A <tt class="docutils literal"><span class="pre">Decoder</span></tt> must check that this value corresponds to an operator which can be translated into a syndrome.</li>
 </ul>
@@ -78,53 +78,130 @@ syndrome which results from measurement of an
 </tr>
 </tbody>
 </table>
+<dl class="method">
+<dt id="py_qcode.Point.clear">
+<tt class="descname">clear</tt><big>(</big><big>)</big><a class="headerlink" href="#py_qcode.Point.clear" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
 </dd></dl>
 
+</div>
+<div class="section" id="lattices">
+<h2>Lattices<a class="headerlink" href="#lattices" title="Permalink to this headline">¶</a></h2>
 <dl class="class">
 <dt id="py_qcode.Lattice">
-<em class="property">class </em><tt class="descclassname">py_qcode.</tt><tt class="descname">Lattice</tt><big>(</big><em>sz_tpl</em>, <em>is_3D=False</em>, <em>closed_boundary=True</em><big>)</big><a class="headerlink" href="#py_qcode.Lattice" title="Permalink to this definition">¶</a></dt>
+<em class="property">class </em><tt class="descclassname">py_qcode.</tt><tt class="descname">Lattice</tt><big>(</big><em>points</em>, <em>dim</em>, <em>dist=None</em>, <em>is_ft=False</em>, <em>size=None</em>, <em>is_dual=False</em><big>)</big><a class="headerlink" href="#py_qcode.Lattice" title="Permalink to this definition">¶</a></dt>
 <dd><p>A collection of points. Superclass to <tt class="docutils literal"><span class="pre">SquareLattice</span></tt>, <tt class="docutils literal"><span class="pre">SquareOctagonLattice</span></tt>, <tt class="docutils literal"><span class="pre">UnionJackLattice</span></tt>, whatever other convenient lattices I put in.</p>
-<p>Represents a 2D/3D lattice of points with integer 
-co-ordinates on which a stabilizer code can be defined.</p>
+<p>Represents a arbitrary-dimensional lattice of points with integer co-ordinates on which a stabilizer code can be defined. Note that, although the word &#8220;lattice&#8221; is used to describe these objects, the only requirement is that its constituent points have co-ordinates. No property of the graph structure is assumed, especially planarity.</p>
 <table class="docutils field-list" frame="void" rules="none">
 <col class="field-name" />
 <col class="field-body" />
 <tbody valign="top">
 <tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><ul class="first last simple">
-<li><strong>sz_tpl</strong> (<em>tuple, length 2 or 3, containing integers.</em>) &#8211; linear dimensions of the lattice.</li>
-<li><strong>is_3D</strong> (<em>bool</em>) &#8211; indicates whether the lattice is to be two- or three- dimensional.</li>
+<li><strong>points</strong> (list of <a class="reference internal" href="#py_qcode.Point" title="py_qcode.Point"><tt class="xref py py-class docutils literal"><span class="pre">py_qcode.Point</span></tt></a> objects) &#8211; collection of points on the lattice.</li>
+<li><strong>dist</strong> (<em>function</em>) &#8211; Returns the distance between two points. Note: In order to perform MWPM decoding, only the dual lattice needs a distance function.</li>
+<li><strong>is_ft</strong> (<em>bool</em>) &#8211; indicates whether the lattice is to possess an extra dimension for fault-tolerant decoding.</li>
 <li><strong>closed_boundary</strong> (<em>bool</em>) &#8211; Indicates whether to identify the Nth co-ordinate with the zeroth co-ordinate in every dimension.</li>
 </ul>
 </td>
 </tr>
 </tbody>
 </table>
+<dl class="method">
+<dt id="py_qcode.Lattice.clear">
+<tt class="descname">clear</tt><big>(</big><big>)</big><a class="headerlink" href="#py_qcode.Lattice.clear" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
 </dd></dl>
 
+</div>
+<div class="section" id="defined-lattices">
+<h2>Defined Lattices<a class="headerlink" href="#defined-lattices" title="Permalink to this headline">¶</a></h2>
 <dl class="class">
 <dt id="py_qcode.SquareLattice">
-<em class="property">class </em><tt class="descclassname">py_qcode.</tt><tt class="descname">SquareLattice</tt><big>(</big><em>sz_tpl</em>, <em>is_3D=False</em>, <em>closed_boundary=True</em>, <em>rough_sides=('f'</em>, <em>'b')</em><big>)</big><a class="headerlink" href="#py_qcode.SquareLattice" title="Permalink to this definition">¶</a></dt>
-<dd><p>Represents a lattice in which qubits are placed on the edges of a grid of squares.</p>
+<em class="property">class </em><tt class="descclassname">py_qcode.</tt><tt class="descname">SquareLattice</tt><big>(</big><em>sz_tpl</em>, <em>is_dual=False</em>, <em>is_ft=False</em>, <em>closed_boundary=True</em>, <em>rough_sides=('u'</em>, <em>'r')</em><big>)</big><a class="headerlink" href="#py_qcode.SquareLattice" title="Permalink to this definition">¶</a></dt>
+<dd><p>Represents a lattice in which qubits are placed on the edges of a grid of squares with size given by <cite>sz_tpl</cite>.</p>
 <table class="docutils field-list" frame="void" rules="none">
 <col class="field-name" />
 <col class="field-body" />
 <tbody valign="top">
-<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><strong>rough_sides</strong> (<em>tuple of strings</em>) &#8211; Denotes which, if any, of the sides of the lattice are to have &#8216;rough&#8217; boundary conditions. Values in <tt class="docutils literal"><span class="pre">rough_sides</span></tt> must be drawn from <tt class="docutils literal"><span class="pre">['u',</span> <span class="pre">'d',</span> <span class="pre">'r',</span> <span class="pre">'l',</span> <span class="pre">'f',</span> <span class="pre">'b']</span></tt> (up, down, left, right, front, back).</td>
+<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><strong>rough_sides</strong> (<em>tuple of strings</em>) &#8211; Denotes which, if any, of the sides of the lattice are to have &#8216;rough&#8217; boundary conditions. Values in <tt class="docutils literal"><span class="pre">rough_sides</span></tt> must be drawn from <tt class="docutils literal"><span class="pre">['u',</span> <span class="pre">'d',</span> <span class="pre">'r',</span> <span class="pre">'l',</span> <span class="pre">'f',</span> <span class="pre">'b']</span></tt> (up, down, left, right, front, back). Default is <cite>(&#8216;u&#8217;,&#8217;r&#8217;)</cite>.</td>
 </tr>
 </tbody>
 </table>
+<dl class="method">
+<dt id="py_qcode.SquareLattice.min_distance_path">
+<tt class="descname">min_distance_path</tt><big>(</big><em>dual_start</em>, <em>dual_end</em>, <em>synd_type=None</em><big>)</big><a class="headerlink" href="#py_qcode.SquareLattice.min_distance_path" title="Permalink to this definition">¶</a></dt>
+<dd><p>Returns a canonical minimum distance path on the _primal_ lattice 
+between two points of the _dual_ lattice. This is based on cutting
+as few corners as possible on the minimum-size bounding box. The 
+final path is the union of minimum distance paths between start, 
+corners, and end.</p>
+</dd></dl>
+
+<dl class="method">
+<dt id="py_qcode.SquareLattice.neighbours">
+<tt class="descname">neighbours</tt><big>(</big><em>location</em><big>)</big><a class="headerlink" href="#py_qcode.SquareLattice.neighbours" title="Permalink to this definition">¶</a></dt>
+<dd><p>Returns a list of points which are one unit of distance away from a given location.
+Convenience method used to define stars and plaquettes below.</p>
+<p>June 6, 2014: Only supports closed_boundary</p>
+<p>TODO: Make this depend on the distance function, so that it can be made
+a method of Lattice, overridden by SquareLattice.</p>
+</dd></dl>
+
+<dl class="method">
+<dt id="py_qcode.SquareLattice.plaquettes">
+<tt class="descname">plaquettes</tt><big>(</big><big>)</big><a class="headerlink" href="#py_qcode.SquareLattice.plaquettes" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="method">
+<dt id="py_qcode.SquareLattice.stars">
+<tt class="descname">stars</tt><big>(</big><big>)</big><a class="headerlink" href="#py_qcode.SquareLattice.stars" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
 </dd></dl>
 
 <dl class="class">
 <dt id="py_qcode.SquareOctagonLattice">
-<em class="property">class </em><tt class="descclassname">py_qcode.</tt><tt class="descname">SquareOctagonLattice</tt><big>(</big><em>sz_tpl</em>, <em>is_3D=False</em>, <em>closed_boundary=True</em><big>)</big><a class="headerlink" href="#py_qcode.SquareOctagonLattice" title="Permalink to this definition">¶</a></dt>
-<dd><p>Represents a lattice in which qubits are placed on the corners of squares and octagons.</p>
+<em class="property">class </em><tt class="descclassname">py_qcode.</tt><tt class="descname">SquareOctagonLattice</tt><big>(</big><em>sz_tpl</em>, <em>is_dual=False</em>, <em>is_ft=False</em>, <em>closed_boundary=True</em>, <em>rough_sides=('u'</em>, <em>'r')</em><big>)</big><a class="headerlink" href="#py_qcode.SquareOctagonLattice" title="Permalink to this definition">¶</a></dt>
+<dd><p>Represents a lattice in which qubits are placed on the corners of 
+squares/octagons. This lattice results from allowing each point on 
+the edge of a SquareLattice (TM) to expand into a square. Begins by
+creating a square grid of points according to a size tuple, 
+identically to SquareLattice, with each coordinate passed through 
+an affine map. Each point in this lattice is then &#8216;graduated&#8217; to a
+square consiting of nearest neighbours.</p>
+<dl class="method">
+<dt id="py_qcode.SquareOctagonLattice.min_distance_path">
+<tt class="descname">min_distance_path</tt><big>(</big><em>dual_start</em>, <em>dual_end</em>, <em>synd_type</em><big>)</big><a class="headerlink" href="#py_qcode.SquareOctagonLattice.min_distance_path" title="Permalink to this definition">¶</a></dt>
+<dd><p>Returns a canonical minimum distance path on the _primal_ 
+lattice between two points of the _dual_ lattice. This is based
+on finding the path between neighbouring octagons of whatever 
+dual coordinates are fed in, and testing to see which sets of 
+neighbours are optimal.</p>
+</dd></dl>
+
+<dl class="method">
+<dt id="py_qcode.SquareOctagonLattice.squares">
+<tt class="descname">squares</tt><big>(</big><big>)</big><a class="headerlink" href="#py_qcode.SquareOctagonLattice.squares" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="method">
+<dt id="py_qcode.SquareOctagonLattice.x_octagons">
+<tt class="descname">x_octagons</tt><big>(</big><big>)</big><a class="headerlink" href="#py_qcode.SquareOctagonLattice.x_octagons" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="method">
+<dt id="py_qcode.SquareOctagonLattice.z_octagons">
+<tt class="descname">z_octagons</tt><big>(</big><big>)</big><a class="headerlink" href="#py_qcode.SquareOctagonLattice.z_octagons" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
 </dd></dl>
 
 <dl class="class">
 <dt id="py_qcode.UnionJackLattice">
-<em class="property">class </em><tt class="descclassname">py_qcode.</tt><tt class="descname">UnionJackLattice</tt><big>(</big><em>sz_tpl</em><big>)</big><a class="headerlink" href="#py_qcode.UnionJackLattice" title="Permalink to this definition">¶</a></dt>
-<dd><p>Represents a lattice in which qubits are placed on the intersections of the diagonals of squares, as well as their corners.</p>
+<em class="property">class </em><tt class="descclassname">py_qcode.</tt><tt class="descname">UnionJackLattice</tt><big>(</big><em>sz_tpl</em>, <em>is_dual=True</em>, <em>is_ft=False</em>, <em>closed_boundary=True</em>, <em>rough_sides=('u'</em>, <em>'r')</em><big>)</big><a class="headerlink" href="#py_qcode.UnionJackLattice" title="Permalink to this definition">¶</a></dt>
+<dd><p>Gives the dual lattice to the SquareOctagonLattice above.</p>
 </dd></dl>
 
 </div>
@@ -138,15 +215,17 @@ co-ordinates on which a stabilizer code can be defined.</p>
         <div class="sphinxsidebarwrapper">
   <h3><a href="index.html">Table Of Contents</a></h3>
   <ul>
-<li><a class="reference internal" href="#">Lattices</a><ul>
-<li><a class="reference internal" href="#class-reference">Class Reference</a></li>
+<li><a class="reference internal" href="#">Points and Lattices</a><ul>
+<li><a class="reference internal" href="#the-point-class">The Point Class</a></li>
+<li><a class="reference internal" href="#lattices">Lattices</a></li>
+<li><a class="reference internal" href="#defined-lattices">Defined Lattices</a></li>
 </ul>
 </li>
 </ul>
 
   <h4>Previous topic</h4>
   <p class="topless"><a href="simulation.html"
-                        title="previous chapter">Simulation</a></p>
+                        title="previous chapter">Simulation Objects</a></p>
   <h4>Next topic</h4>
   <p class="topless"><a href="code.html"
                         title="next chapter">Error Correcting Codes</a></p>
@@ -182,7 +261,7 @@ co-ordinates on which a stabilizer code can be defined.</p>
           <a href="code.html" title="Error Correcting Codes"
              >next</a> |</li>
         <li class="right" >
-          <a href="simulation.html" title="Simulation"
+          <a href="simulation.html" title="Simulation Objects"
              >previous</a> |</li>
         <li><a href="index.html">py_qcode 0.0 documentation</a> &raquo;</li> 
       </ul>
