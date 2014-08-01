@@ -1,0 +1,154 @@
+
+
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN"
+  "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+
+
+<html xmlns="http://www.w3.org/1999/xhtml">
+  <head>
+    <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
+    
+    <title>Simulation Objects &mdash; py_qcode 0.0 documentation</title>
+    
+    <link rel="stylesheet" href="_static/default.css" type="text/css" />
+    <link rel="stylesheet" href="_static/pygments.css" type="text/css" />
+    
+    <script type="text/javascript">
+      var DOCUMENTATION_OPTIONS = {
+        URL_ROOT:    '',
+        VERSION:     '0.0',
+        COLLAPSE_INDEX: false,
+        FILE_SUFFIX: '.html',
+        HAS_SOURCE:  true
+      };
+    </script>
+    <script type="text/javascript" src="_static/jquery.js"></script>
+    <script type="text/javascript" src="_static/underscore.js"></script>
+    <script type="text/javascript" src="_static/doctools.js"></script>
+    <link rel="top" title="py_qcode 0.0 documentation" href="index.html" />
+    <link rel="next" title="Points and Lattices" href="lattice.html" />
+    <link rel="prev" title="py_qcode: decoding topological error-correcting codes in Python" href="index.html" /> 
+  </head>
+  <body>
+    <div class="related">
+      <h3>Navigation</h3>
+      <ul>
+        <li class="right" style="margin-right: 10px">
+          <a href="genindex.html" title="General Index"
+             accesskey="I">index</a></li>
+        <li class="right" >
+          <a href="lattice.html" title="Points and Lattices"
+             accesskey="N">next</a> |</li>
+        <li class="right" >
+          <a href="index.html" title="py_qcode: decoding topological error-correcting codes in Python"
+             accesskey="P">previous</a> |</li>
+        <li><a href="index.html">py_qcode 0.0 documentation</a> &raquo;</li> 
+      </ul>
+    </div>  
+
+    <div class="document">
+      <div class="documentwrapper">
+        <div class="bodywrapper">
+          <div class="body">
+            
+  <div class="section" id="simulation-objects">
+<h1>Simulation Objects<a class="headerlink" href="#simulation-objects" title="Permalink to this headline">¶</a></h1>
+<dl class="class">
+<dt id="py_qcode.Simulation">
+<em class="property">class </em><tt class="descclassname">py_qcode.</tt><tt class="descname">Simulation</tt><big>(</big><em>lattice</em>, <em>dual_lattice</em>, <em>error_model</em>, <em>code</em>, <em>decoder</em>, <em>logical_operators</em>, <em>n_trials</em><big>)</big><a class="headerlink" href="#py_qcode.Simulation" title="Permalink to this definition">¶</a></dt>
+<dd><p><cite>Simulation</cite> is the top-level class
+for py_qcode, the user is meant to set up, execute and save results
+using these objects.</p>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><ul class="first last simple">
+<li><strong>error_model</strong> (<tt class="xref py py-class docutils literal"><span class="pre">py_qcode:ErrorModel</span></tt>, input) &#8211; A description of the errors to be applied independently to the qubits of <cite>lattice</cite>.</li>
+<li><strong>code</strong> (<a class="reference internal" href="code.html#py_qcode.ErrorCorrectingCode" title="py_qcode.ErrorCorrectingCode"><tt class="xref py py-class docutils literal"><span class="pre">py_qcode.ErrorCorrectingCode</span></tt></a>, input) &#8211; An error-correcting code which translates errors on a lattice to syndromes on the dual lattice.</li>
+<li><strong>decoder</strong> (<a class="reference internal" href="decoder.html#py_qcode.Decoder" title="py_qcode.Decoder"><tt class="xref py py-class docutils literal"><span class="pre">py_qcode.Decoder</span></tt></a>, input) &#8211; A protocol for inferring errors given syndromes.</li>
+<li><strong>n_trials</strong> (<em>integer, input</em>) &#8211; a number of simulations to be performed in series. This can be used to organize batch jobs so that one can submit more than one simulation per job.</li>
+<li><strong>true_coset</strong> (<em>str, output</em>) &#8211; The actual coset to which the random error applied in the simulation belongs.</li>
+<li><strong>inferred_coset</strong> &#8211; The coset assigned by the error-correcting code during the simulation.</li>
+</ul>
+</td>
+</tr>
+</tbody>
+</table>
+<dl class="method">
+<dt id="py_qcode.Simulation.run">
+<tt class="descname">run</tt><big>(</big><big>)</big><a class="headerlink" href="#py_qcode.Simulation.run" title="Permalink to this definition">¶</a></dt>
+<dd><p>The main routine in this library, follows the recipe <cite>n_trials</cite> times in series:</p>
+<ul class="simple">
+<li>Apply the error model to the primary lattice, assigning values to the <cite>error</cite> attributes of the <a class="reference internal" href="lattice.html#py_qcode.Point" title="py_qcode.Point"><tt class="xref py py-class docutils literal"><span class="pre">py_qcode.Point</span></tt></a> objects within.</li>
+<li>Obtain the true coset of the error with respect to the <a class="reference internal" href="code.html#py_qcode.ErrorCorrectingCode" title="py_qcode.ErrorCorrectingCode"><tt class="xref py py-class docutils literal"><span class="pre">py_qcode.ErrorCorrectingCode</span></tt></a> being used.</li>
+<li>Perform a measurement, using the attributes of the error-correcting code to generate syndromes on the dual lattice.</li>
+<li>Infer the coset of the error by acting the decoder on the dual lattice.</li>
+<li>Record both cosets.</li>
+</ul>
+</dd></dl>
+
+<dl class="method">
+<dt id="py_qcode.Simulation.save">
+<tt class="descname">save</tt><big>(</big><em>filename</em><big>)</big><a class="headerlink" href="#py_qcode.Simulation.save" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+</dd></dl>
+
+</div>
+
+
+          </div>
+        </div>
+      </div>
+      <div class="sphinxsidebar">
+        <div class="sphinxsidebarwrapper">
+  <h4>Previous topic</h4>
+  <p class="topless"><a href="index.html"
+                        title="previous chapter">py_qcode: decoding topological error-correcting codes in Python</a></p>
+  <h4>Next topic</h4>
+  <p class="topless"><a href="lattice.html"
+                        title="next chapter">Points and Lattices</a></p>
+  <h3>This Page</h3>
+  <ul class="this-page-menu">
+    <li><a href="_sources/simulation.txt"
+           rel="nofollow">Show Source</a></li>
+  </ul>
+<div id="searchbox" style="display: none">
+  <h3>Quick search</h3>
+    <form class="search" action="search.html" method="get">
+      <input type="text" name="q" />
+      <input type="submit" value="Go" />
+      <input type="hidden" name="check_keywords" value="yes" />
+      <input type="hidden" name="area" value="default" />
+    </form>
+    <p class="searchtip" style="font-size: 90%">
+    Enter search terms or a module, class or function name.
+    </p>
+</div>
+<script type="text/javascript">$('#searchbox').show(0);</script>
+        </div>
+      </div>
+      <div class="clearer"></div>
+    </div>
+    <div class="related">
+      <h3>Navigation</h3>
+      <ul>
+        <li class="right" style="margin-right: 10px">
+          <a href="genindex.html" title="General Index"
+             >index</a></li>
+        <li class="right" >
+          <a href="lattice.html" title="Points and Lattices"
+             >next</a> |</li>
+        <li class="right" >
+          <a href="index.html" title="py_qcode: decoding topological error-correcting codes in Python"
+             >previous</a> |</li>
+        <li><a href="index.html">py_qcode 0.0 documentation</a> &raquo;</li> 
+      </ul>
+    </div>
+    <div class="footer">
+        &copy; Copyright 2014, Ben Criger.
+      Created using <a href="http://sphinx.pocoo.org/">Sphinx</a> 1.1.3.
+    </div>
+  </body>
+</html>
