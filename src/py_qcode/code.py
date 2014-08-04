@@ -1,6 +1,7 @@
 from qecc import Pauli, commutes_with
 from lattice import _even_evens, _odd_odds, _squoct_affine_map, skew_coords
 from types import FunctionType
+from numpy.random import rand
 
 __all__ = ['ErrorCorrectingCode', 'ErrorCheck', 'StabilizerCheck', 'toric_code', 'square_octagon_code']
 
@@ -19,12 +20,27 @@ class ErrorCheck(object):
     :param rule: lookup table or other mechanism that maps errors to syndromes.
 
     :type rule: function or dict
+
+    :param noise_model: a probability/function pair which is applied to
+    the correct syndrome to yield a noisy syndrome. 
+
+    :type noise_model: tuple
     """
-    def __init__(self, primal_sets, dual_points, rule):
+    def __init__(self, primal_sets, dual_points, rule,
+                    noise_model=(1., lambda a: a)):
 
         self.primal_sets = primal_sets
         self.dual_points = dual_points
         self.rule = rule
+        
+        def noise_func(syndrome):
+            prob, func = noise_model
+            val = rand()
+            if val < prob:
+                syndrome = func(syndrome)
+            return syndrome
+        
+        self.noise_func = noise_func
 
     def evaluate(self):
         for idx, point in enumerate(self.dual_points):
@@ -32,18 +48,24 @@ class ErrorCheck(object):
             if isinstance(self.rule, dict):
                 try:
                     if point.syndrome is None:
-                        point.syndrome = self.rule[error_str]
+                        point.syndrome = \
+                                self.noise_func(self.rule[error_str])
                     else:
-                        point.syndrome += self.rule[error_str]
+                        point.syndrome += \
+                                self.noise_func(self.rule[error_str])
+                
                 except KeyError:
                     raise KeyError("There is no entry in the lookup table for the error " + error_str)
                 finally:
                     pass
+            
             elif isinstance(self.rule, FunctionType):
                 if point.syndrome is None:
-                    point.syndrome = self.rule(error_str)
+                    point.syndrome = \
+                            self.noise_func(self.rule(error_str))
                 else:
-                    point.syndrome += self.rule(error_str)
+                    point.syndrome += \
+                            self.noise_func(self.rule(error_str))
             else:
                 raise TypeError("Rule used by error check must be a function or dict, you entered a value of type: " + type(self.rule))
 
@@ -51,7 +73,7 @@ class StabilizerCheck(ErrorCheck):
     """
     subclass of :class:`py_qcode.ErrorCheck`, takes anything that can be cast to a :class:`qecc.Pauli` instead of a rule, and uses commutation to determine the syndrome. 
     """
-    def __init__(self, primal_sets, dual_points, stabilizer, indy_css=False):
+    def __init__(self, primal_sets, dual_points, stabilizer, noise_model, indy_css=False):
         
         if type(stabilizer) is str:
             stabilizer = Pauli(stabilizer)
@@ -82,7 +104,7 @@ class StabilizerCheck(ErrorCheck):
                 else:
                     return ''
 
-        super(StabilizerCheck, self).__init__(primal_sets, dual_points, stab_rule)
+        super(StabilizerCheck, self).__init__(primal_sets, dual_points, stab_rule, noise_model)
 
         self.stabilizer = stabilizer
         
@@ -96,9 +118,9 @@ class StabilizerCheck(ErrorCheck):
                 multi_bit_error = reduce(lambda p1, p2: p1.tens(p2),
                             [pt.error for pt in self.primal_sets[idx]])
                 if point.syndrome == None:
-                    point.syndrome = self.rule(multi_bit_error)
+                    point.syndrome = self.noise_func(self.rule(multi_bit_error))
                 else:
-                    point.syndrome += self.rule(multi_bit_error)
+                    point.syndrome += self.noise_func(self.rule(multi_bit_error))
 
 class ErrorCorrectingCode():
     """
