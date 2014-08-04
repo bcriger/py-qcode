@@ -99,5 +99,13 @@ def mwpm_decoder(primal_lattice, dual_lattice):
 
     return Decoder(matching_alg, primal_lattice, dual_lattice, name='Minimum-Weight Matching')
 
+def ft_mwpm_decoder(primal_lattice, dual_lattice_list):
+    """
+    Fault-tolerant decoder based on minimum-weight perfect matching 
+    using the blossom algorithm, implemented in networkx.
+    """
 
-#Convenience Fuctions
+    def hi_d_matching_alg(primal_lattice, dual_lattice_list):
+        pass
+
+    pass
