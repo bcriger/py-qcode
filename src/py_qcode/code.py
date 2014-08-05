@@ -27,7 +27,7 @@ class ErrorCheck(object):
     :type noise_model: tuple
     """
     def __init__(self, primal_sets, dual_points, rule,
-                    noise_model=(1., lambda a: a)):
+                    noise_model=(0., lambda a: a)):
 
         self.primal_sets = primal_sets
         self.dual_points = dual_points
@@ -141,7 +141,7 @@ class ErrorCorrectingCode():
         """
         for check in self.parity_check_list:
             check.evaluate()
-        
+
 #UTILITY FUNCTIONS
 def toric_code(primal_grid, dual_grid):
     """
