@@ -127,14 +127,14 @@ class FTSimulation():
     `FTSimulation` is the class for representing simulations of fault-tolerant error-correction protocols.
     """
     #Magic Methods
-    def __init__(self, lattice, dual_lattice_list, error_model, code, 
+    def __init__(self, lattice, dual_lattice_list, error_model, code_func, 
                                 decoder, logical_operators, n_trials):
 
         #Defined objects
         self.lattice = lattice
         self.dual_lattice_list = dual_lattice_list
         self.error_model = error_model
-        self.code = code
+        self.code_func = code_func
         self.decoder = decoder
         
         if not isinstance(logical_operators, Iterable):
@@ -170,18 +170,22 @@ class FTSimulation():
             #The bulk of the work
             for dual_lattice in dual_lattice_list:
                 self.error_model.act_on(self.lattice)
-                self.code.measure()
-                self.decoder.infer()
+                #New code object created for every iteration:
+                current_code = self.code_func(self.lattice, 
+                    dual_lattice)
+                current_code.measure()
+            
+            self.decoder.infer()
 
             #Error checking, if the resulting Pauli is not in the 
             #normalizer, chuck an error:
             
-            self.dual_lattice.clear()
+            dual_lattice.clear()
             #syndrome_print(self.dual_lattice)
-            self.code.measure()
+            current_code.measure()
             #syndrome_print(self.dual_lattice)
             
-            for point in self.dual_lattice.points:
+            for point in dual_lattice.points:
                 if point.syndrome:
                     raise ValueError('Product of "inferred error"'+\
                         ' with actual error anticommutes with some'+\
@@ -200,9 +204,10 @@ class FTSimulation():
         big_dict['lattice_size'] = self.lattice.size
         big_dict['dual_lattice_class'] = \
             str(self.dual_lattice.__class__).split('.')[-1][:-2]
-        big_dict['dual_lattice_size'] = self.dual_lattice.size
+        big_dict['dual_lattice_size'] = self.dual_lattice_list[0].size
+        big_dict['n_measurements'] = len(self.dual_lattice_list)
         big_dict['error_model'] = repr(self.error_model)
-        big_dict['code'] = self.code.name
+        big_dict['code'] = self.code_func.func_name
         big_dict['decoder'] = self.decoder.name
         big_dict['n_trials'] = self.n_trials
         big_dict['logical_errors'] = self.logical_error
