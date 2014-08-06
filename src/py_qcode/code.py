@@ -3,7 +3,8 @@ from lattice import _even_evens, _odd_odds, _squoct_affine_map, skew_coords
 from types import FunctionType
 from numpy.random import rand
 
-__all__ = ['ErrorCorrectingCode', 'ErrorCheck', 'StabilizerCheck', 'toric_code', 'square_octagon_code']
+__all__ = ['ErrorCorrectingCode', 'ErrorCheck', 'StabilizerCheck', 
+            'toric_code', 'square_octagon_code', 'noisy_toric_code']
 
 class ErrorCheck(object):
     """
@@ -73,7 +74,8 @@ class StabilizerCheck(ErrorCheck):
     """
     subclass of :class:`py_qcode.ErrorCheck`, takes anything that can be cast to a :class:`qecc.Pauli` instead of a rule, and uses commutation to determine the syndrome. 
     """
-    def __init__(self, primal_sets, dual_points, stabilizer, noise_model, indy_css=False):
+    def __init__(self, primal_sets, dual_points, stabilizer,
+                     noise_model=(0., lambda a: a), indy_css=False):
         
         if type(stabilizer) is str:
             stabilizer = Pauli(stabilizer)
@@ -196,4 +198,40 @@ def square_octagon_code(primal_grid, dual_grid):
                                 x_oct_check, z_oct_check], 
                                 name="Square-Octagon Code")
 
+def noisy_toric_code(primal_grid, dual_grid, error_rate):
+    """
+    Uses a few convenience functions to produce the toric code on a set
+    of square lattices, this time with noisy syndrome checks.
+    """
+    star_coords = _even_evens(*dual_grid.size)    
+    star_duals = [dual_grid[coord] for coord in star_coords]
+    star_primal = [primal_grid.neighbours(coord) 
+                    for coord in star_coords]
+    z_flip = lambda synd: letter_flip(synd, 'Z')
+    star_check = StabilizerCheck(star_primal, star_duals, 'XXXX',
+        (error_rate, z_flip), indy_css=True)
+    
+    plaq_coords = _odd_odds(*dual_grid.size)    
+    plaq_duals = [dual_grid[coord] for coord in plaq_coords]
+    plaq_primal = [primal_grid.neighbours(coord) 
+                    for coord in plaq_coords]
+    x_flip = lambda synd: letter_flip(synd, 'X')
+    plaq_check = StabilizerCheck(plaq_primal, plaq_duals, 'ZZZZ', 
+        (error_rate, x_flip), indy_css=True)
+
+    return ErrorCorrectingCode([star_check, plaq_check], 
+                                name="Noisy Toric Code")
+
 _sum = lambda iterable: reduce(lambda a, b: a + b, iterable)
+
+def letter_flip(synd, letter):
+    """
+    This is a convenience function used to 'noise up' input syndromes.
+    """
+    #print synd
+    if synd == letter:
+        return ''
+    elif synd == '':
+        return letter
+    else:
+        raise ValueError("Unknown syndrome: {0}".format(synd))
