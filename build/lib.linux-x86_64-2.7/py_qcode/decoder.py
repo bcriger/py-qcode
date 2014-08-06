@@ -2,7 +2,7 @@ import networkx as nx
 from qecc import X, Z
 import pdb
 
-__all__ = ['Decoder', 'mwpm_decoder', 'RGBPDecoder', 'BHRGDecoder']
+__all__ = ['Decoder', 'mwpm_decoder']
 
 class Decoder():
     """
@@ -99,18 +99,93 @@ def mwpm_decoder(primal_lattice, dual_lattice):
 
     return Decoder(matching_alg, primal_lattice, dual_lattice, name='Minimum-Weight Matching')
 
-class RGBPDecoder(Decoder):
+def ft_mwpm_decoder(primal_lattice, dual_lattice_list):
     """
-    A renormalization group / belief propagation decoder based on Duclos-Cianci and Poulin.
+    Fault-tolerant decoder based on minimum-weight perfect matching 
+    using the blossom algorithm, implemented in networkx. This decoder 
+    follows the scheme in Dennis/Kitaev/Landahl/Preskill.
+    Key Points:
+    -----------
+     + We treat X and Z syndromes as being completely independent.
+     + We produce a :math:`d+1`-dimensional lattice as an intermediate
+       object, recording differences between the syndromes as vertices 
+       on the graph.
     """
-    def __init__(self, arg):
-        self.arg = arg
 
-class BHRGDecoder(Decoder):
-    """
-    Bravyi/Haah renormalization group decoder.
-    """
-    def __init__(self, arg):
-        self.arg = arg
+    def hi_d_matching_alg(primal_lattice, dual_lattice_list):
+        
+        #First, construct a pair of graphs given syndrome data:
+        x_graph = nx.Graph(); z_graph = nx.Graph()
+        
+        #For all points on each dual_lattice, compare with the point at
+        #the previous time step, and add a node to the appropriate 
+        #graph if they differ:
+        for point in dual_lattice.points:
+            if point.syndrome: #exists
+                if any([ltr in point.syndrome for ltr in 'xX']):
+                    x_graph.add_node(point.coords + (0, ))
+                if any([ltr in point.syndrome for ltr in 'zZ']):
+                    z_graph.add_node(point.coords + (0, ))
 
-#Convenience Fuctions
+        for idx in range(1, len(dual_lattice_list)):
+            curr_lattice = dual_lattice_list[idx]
+            prev_lattice = dual_lattice_list[idx - 1]
+            for point in curr_lattice.points:
+                crds = point.coords
+                if point.syndrome != prev_lattice[crds].syndrome:
+                    if any([ltr in point.syndrome for ltr in 'xX']):
+                        x_graph.add_node(crds + (idx, ))
+                    if any([ltr in point.syndrome for ltr in 'zZ']):
+                        z_graph.add_node(crds + (idx, ))                    
+            
+        #set an additive constant large enough for all weights to be 
+        #positive:
+        size_constant = 2 * len(primal_lattice.size) * \
+                    max(primal_lattice.size) + len(dual_lattice_list)
+
+        x_mate_dict, z_mate_dict = \
+        map(nx.max_weight_matching, (x_graph, z_graph))
+        x_mate_temps = x_mate_dict.items()
+        z_mate_temps = z_mate_dict.items()
+
+        #NetworkX assumes directional graph, includes reversed edges.
+        #This will "correct errors twice", leaving stray errors on the
+        #lattice.
+        for tpl_lst in [x_mate_temps, z_mate_temps]:
+                for tpl in tpl_lst:
+                    rvrs = tuple(reversed(tpl))
+                    if rvrs in tpl_lst:
+                        tpl_lst.remove(rvrs)
+        
+        x_mate_tuples = []
+        z_mate_tuples = []
+
+        #Eliminate vertical paths
+        for lst_in, lst_out in zip([x_mate_temps, z_mate_temps],
+                                    [x_mate_tuples, z_mate_tuples]):
+            for mate_tuple in lst_in:
+                if mate_tuple[0][:-1] != mate_tuple[1][:-1]:
+                    lst_out.append(mate_tuple)
+
+        #Project remaining paths onto n-dimensions:
+        for lst in ([x_mate_tuples, z_mate_tuples]):
+            for item in lst:
+                item[0], item[1] = item[0][:-1], item[1][:-1]
+
+        #Produce error chains according to min-length path between
+        #mated points
+        for pauli, tpl_lst in zip([X,Z],[x_mate_tuples, z_mate_tuples]):
+            #pdb.set_trace()
+            for pair in tpl_lst:
+                coord_set = primal_lattice.min_distance_path(*pair, synd_type=str(pauli.op))
+                for coord in coord_set:
+                    #print coord
+                    try:
+                        primal_lattice[coord].error *= pauli
+                    except KeyError: 
+                        print pair
+                        print coord_set
+
+        pass #Subroutine
+
+    pass

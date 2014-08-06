@@ -3,8 +3,8 @@ import cPickle as pkl
 from simulation import Simulation
 from lattice import SquareLattice, SquareOctagonLattice, UnionJackLattice
 from error import depolarizing_model
-from decoder import mwpm_decoder
-from code import toric_code, square_octagon_code
+from decoder import mwpm_decoder, ft_mwpm_decoder
+from code import toric_code, noisy_toric_code, square_octagon_code
 from logical_operators import toric_log_ops, squoct_log_ops
 
 import cPickle as pkl
@@ -92,6 +92,32 @@ def square_toric_code_sim(size, error_rate, n_trials, filename):
     sim = Simulation(**sim_dict)
     sim.run()
     sim.save(filename + '.sim')
+
+def noisy_toric_code_sim(size, error_rate, n_trials, filename):
+    """
+    Slightly less vanilla than `square_toric_code_sim`, this function
+
+    """
+    
+    sim_lattice = SquareLattice((size,size))
+    sim_dual_lattice_list = [SquareLattice((size,size), is_dual=True)] * size
+    sim_model = depolarizing_model(error_rate)
+    sim_code = noisy_toric_code(sim_lattice, sim_dual_lattice)
+    sim_decoder = ft_mwpm_decoder(sim_lattice, sim_dual_lattice)
+    sim_log_ops = toric_log_ops((size,size))
+
+    sim_keys = ['lattice', 'dual_lattice', 'error_model', 'code', 
+                            'decoder', 'logical_operators', 'n_trials']
+
+    sim_values = [sim_lattice, sim_dual_lattice, sim_model, sim_code, 
+                                sim_decoder, sim_log_ops, n_trials]
+    
+    sim_dict = dict(zip(sim_keys, sim_values))
+
+    sim = Simulation(**sim_dict)
+    sim.run()
+    sim.save(filename + '.sim')
+
 
 def squoct_sim(size, error_rate, n_trials, filename):
     """

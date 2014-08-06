@@ -2,7 +2,7 @@ import networkx as nx
 from qecc import X, Z
 import pdb
 
-__all__ = ['Decoder', 'mwpm_decoder']
+__all__ = ['Decoder', 'mwpm_decoder', 'ft_mwpm_decoder']
 
 class Decoder():
     """
@@ -120,7 +120,7 @@ def ft_mwpm_decoder(primal_lattice, dual_lattice_list):
         #For all points on each dual_lattice, compare with the point at
         #the previous time step, and add a node to the appropriate 
         #graph if they differ:
-        for point in dual_lattice.points:
+        for point in dual_lattice_list[0].points:
             if point.syndrome: #exists
                 if any([ltr in point.syndrome for ltr in 'xX']):
                     x_graph.add_node(point.coords + (0, ))
@@ -188,4 +188,5 @@ def ft_mwpm_decoder(primal_lattice, dual_lattice_list):
 
         pass #Subroutine
 
-    pass
+    return Decoder(hi_d_matching_alg, primal_lattice, dual_lattice_list, 
+                    name = '(n+1)-dimensional Minimum-Weight Matching')
