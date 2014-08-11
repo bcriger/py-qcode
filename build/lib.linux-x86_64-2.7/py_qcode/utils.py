@@ -1,6 +1,6 @@
 import cPickle as pkl
 
-from simulation import Simulation
+from simulation import Simulation, FTSimulation
 from lattice import SquareLattice, SquareOctagonLattice, UnionJackLattice
 from error import depolarizing_model
 from decoder import mwpm_decoder, ft_mwpm_decoder
@@ -10,7 +10,7 @@ from logical_operators import toric_log_ops, squoct_log_ops
 import cPickle as pkl
 
 __all__ = ['sim_from_file', 'square_toric_code_sim', 'error_print',
-             'syndrome_print', 'squoct_sim']
+             'syndrome_print', 'squoct_sim', 'noisy_toric_code_sim']
 
 def error_print(lattice):
     printnone = True
@@ -102,19 +102,21 @@ def noisy_toric_code_sim(size, error_rate, n_trials, filename):
     sim_lattice = SquareLattice((size,size))
     sim_dual_lattice_list = [SquareLattice((size,size), is_dual=True)] * size
     sim_model = depolarizing_model(error_rate)
-    sim_code = noisy_toric_code(sim_lattice, sim_dual_lattice)
-    sim_decoder = ft_mwpm_decoder(sim_lattice, sim_dual_lattice)
+    sim_code_func = noisy_toric_code
+    sim_decoder = ft_mwpm_decoder(sim_lattice, sim_dual_lattice_list)
     sim_log_ops = toric_log_ops((size,size))
 
-    sim_keys = ['lattice', 'dual_lattice', 'error_model', 'code', 
-                            'decoder', 'logical_operators', 'n_trials']
+    sim_keys = ['lattice', 'dual_lattice_list', 'error_model', 
+                'synd_noise', 'code_func', 'decoder', 
+                'logical_operators', 'n_trials']
 
-    sim_values = [sim_lattice, sim_dual_lattice, sim_model, sim_code, 
-                                sim_decoder, sim_log_ops, n_trials]
+    sim_values = [sim_lattice, sim_dual_lattice_list, sim_model, 
+                    error_rate, sim_code_func, sim_decoder, 
+                    sim_log_ops, n_trials]
     
     sim_dict = dict(zip(sim_keys, sim_values))
 
-    sim = Simulation(**sim_dict)
+    sim = FTSimulation(**sim_dict)
     sim.run()
     sim.save(filename + '.sim')
 
