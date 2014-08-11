@@ -3,9 +3,10 @@ from qecc import X, Z
 import pdb
 from scipy import weave
 from os import getcwd
+from os.path import abspath
 from numpy import zeros, int8
 from py_qcode import __path__ as install_path
-install_path = install_path[0] # str instead of str list.
+install_path = abspath(install_path[0]) # str instead of str list.
 
 __all__ = ['Decoder', 'mwpm_decoder', 'ft_mwpm_decoder']
 
@@ -183,6 +184,8 @@ def blossom_matching_alg(primal_lattice, dual_lattice):
     #Auxiliary arguments to scipy.weave.inline:
     arg_names = ['num_verts', 'num_edges', 'edges', 'partners']
     headers = ['<PerfectMatching.h>']
+    libraries = ["rt"]
+    #print install_path
     include_dirs = [install_path + '/blossom5-v2.04.src/']
     extra_objects = [include_dirs[0] + 'blossom.o']
 
@@ -200,7 +203,8 @@ def blossom_matching_alg(primal_lattice, dual_lattice):
         weave.inline(c_code, arg_names = arg_names, 
             headers = headers, include_dirs = include_dirs, 
             type_converters = weave.converters.blitz, 
-            extra_objects = extra_objects)
+            extra_objects = extra_objects, 
+            compiler='gcc', libraries=libraries)
 
     #Post-process 1D partner lists to avoid duplicate paths:
 
