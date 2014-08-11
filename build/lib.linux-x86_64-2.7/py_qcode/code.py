@@ -3,7 +3,8 @@ from lattice import _even_evens, _odd_odds, _squoct_affine_map, skew_coords
 from types import FunctionType
 from numpy.random import rand
 
-__all__ = ['ErrorCorrectingCode', 'ErrorCheck', 'StabilizerCheck', 'toric_code', 'square_octagon_code']
+__all__ = ['ErrorCorrectingCode', 'ErrorCheck', 'StabilizerCheck', 
+            'toric_code', 'square_octagon_code', 'noisy_toric_code']
 
 class ErrorCheck(object):
     """
@@ -218,15 +219,19 @@ def noisy_toric_code(primal_grid, dual_grid, error_rate):
     plaq_check = StabilizerCheck(plaq_primal, plaq_duals, 'ZZZZ', 
         (error_rate, x_flip), indy_css=True)
 
+    return ErrorCorrectingCode([star_check, plaq_check], 
+                                name="Noisy Toric Code")
+
 _sum = lambda iterable: reduce(lambda a, b: a + b, iterable)
 
 def letter_flip(synd, letter):
     """
     This is a convenience function used to 'noise up' input syndromes.
     """
+    #print synd
     if synd == letter:
-        return None
-    elif synd is None:
+        return ''
+    elif synd == '':
         return letter
     else:
         raise ValueError("Unknown syndrome: {0}".format(synd))
