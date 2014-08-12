@@ -4,7 +4,7 @@ import pdb
 from scipy import weave
 from os import getcwd
 from os.path import abspath
-from numpy import zeros, int8
+from numpy import zeros, int16
 from py_qcode import __path__ as install_path
 install_path = abspath(install_path[0]) # str instead of str list.
 
@@ -142,10 +142,10 @@ def blossom_matching_alg(primal_lattice, dual_lattice):
     num_x_edges = num_x_verts * (num_x_verts - 1) / 2
     num_z_edges = num_z_verts * (num_z_verts - 1) / 2
 
-    x_edges = zeros((num_x_edges, 3), dtype = int8)
-    z_edges = zeros((num_z_edges, 3), dtype = int8)
-    x_partners = zeros((num_x_verts,), dtype = int8)
-    z_partners = zeros((num_z_verts,), dtype = int8)
+    x_edges = zeros((num_x_edges, 3), dtype = int16)
+    z_edges = zeros((num_z_edges, 3), dtype = int16)
+    x_partners = zeros((num_x_verts,), dtype = int16)
+    z_partners = zeros((num_z_verts,), dtype = int16)
     
     dist = dual_lattice.dist
     for verts, edges, synd_type in zip([x_verts, z_verts],

@@ -4,7 +4,7 @@ import pdb
 from scipy import weave
 from os import getcwd
 from os.path import abspath
-from numpy import zeros, int8
+from numpy import zeros, int16
 from py_qcode import __path__ as install_path
 install_path = abspath(install_path[0]) # str instead of str list.
 
@@ -142,10 +142,10 @@ def blossom_matching_alg(primal_lattice, dual_lattice):
     num_x_edges = num_x_verts * (num_x_verts - 1) / 2
     num_z_edges = num_z_verts * (num_z_verts - 1) / 2
 
-    x_edges = zeros((num_x_edges, 3), dtype = int8)
-    z_edges = zeros((num_z_edges, 3), dtype = int8)
-    x_partners = zeros((num_x_verts,), dtype = int8)
-    z_partners = zeros((num_z_verts,), dtype = int8)
+    x_edges = zeros((num_x_edges, 3), dtype = int16)
+    z_edges = zeros((num_z_edges, 3), dtype = int16)
+    x_partners = zeros((num_x_verts,), dtype = int16)
+    z_partners = zeros((num_z_verts,), dtype = int16)
     
     dist = dual_lattice.dist
     for verts, edges, synd_type in zip([x_verts, z_verts],
@@ -185,7 +185,7 @@ def blossom_matching_alg(primal_lattice, dual_lattice):
     arg_names = ['num_verts', 'num_edges', 'edges', 'partners']
     headers = ['<PerfectMatching.h>']
     libraries = ["rt"]
-    print install_path
+    #print install_path
     include_dirs = [install_path + '/blossom5-v2.04.src/']
     extra_objects = [include_dirs[0] + 'blossom.o']
 
@@ -204,7 +204,7 @@ def blossom_matching_alg(primal_lattice, dual_lattice):
             headers = headers, include_dirs = include_dirs, 
             type_converters = weave.converters.blitz, 
             extra_objects = extra_objects, 
-            compiler='gcc', libraries=libraries, force=1)
+            compiler='gcc', libraries=libraries)
 
     #Post-process 1D partner lists to avoid duplicate paths:
 

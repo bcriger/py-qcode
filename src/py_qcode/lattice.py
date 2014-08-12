@@ -92,21 +92,16 @@ class Lattice(object):
 
     :type dist: function
 
-    :param is_ft: indicates whether the lattice is to possess an extra dimension for fault-tolerant decoding.
-    
-    :type is_ft: bool
-
     :param closed_boundary: Indicates whether to identify the Nth co-ordinate with the zeroth co-ordinate in every dimension.
 
     :type closed_boundary: bool
     """
     #Magic Methods
-    def __init__(self, points, dim, dist=None, is_ft=False, size = None, is_dual = False):
+    def __init__(self, points, dim, dist=None, size = None, is_dual = False):
         
         self.points = points
         self.dim = dim
         self.dist = dist
-        self.is_ft = is_ft
         self.size = size
         self.is_dual = is_dual
 
@@ -135,7 +130,7 @@ class SquareLattice(Lattice):
 
     :type rough_sides: tuple of strings
     """
-    def __init__(self, sz_tpl, is_dual = False, is_ft = False, closed_boundary = True, rough_sides = ('u', 'r')):
+    def __init__(self, sz_tpl, is_dual = False, closed_boundary = True, rough_sides = ('u', 'r')):
         
         dim = len(sz_tpl)
         x_len, y_len = sz_tpl[:2] 
@@ -150,17 +145,11 @@ class SquareLattice(Lattice):
             points_2d = map(Point, skew_coords(x_len, y_len))
             dist = None
 
-        if is_ft:
-            if len(sz_tpl) != 3:
-                raise ValueError("Square lattices for fault-tolerant simulations must be 3D.")
-            z_len = sz_tpl[2]
-            points = layer(points_2d, z_len)
-        else:
-            if len(sz_tpl) != 2:
-                raise ValueError("Square lattices for non-fault-tolerant simulations must be 2D.")
-            points = points_2d
+        if len(sz_tpl) != 2:
+            raise ValueError("Square lattices for non-fault-tolerant simulations must be 2D.")
+        points = points_2d
 
-        super(SquareLattice, self).__init__(points, dim, dist, is_ft)
+        super(SquareLattice, self).__init__(points, dim, dist)
         self.size = sz_tpl
         self.is_dual = is_dual
         
@@ -284,7 +273,7 @@ class SquareOctagonLattice(Lattice):
     an affine map. Each point in this lattice is then 'graduated' to a
     square consiting of nearest neighbours.  
     """
-    def __init__(self, sz_tpl, is_dual = False, is_ft = False, closed_boundary = True, rough_sides = ('u', 'r')):
+    def __init__(self, sz_tpl, is_dual = False, closed_boundary = True, rough_sides = ('u', 'r')):
         dim = len(sz_tpl)
 
         try:
@@ -318,7 +307,7 @@ class SquareOctagonLattice(Lattice):
 
         dist = None #Primal lattices don't need distance functions for now
 
-        super(SquareOctagonLattice, self).__init__(points, dim, dist, is_ft)
+        super(SquareOctagonLattice, self).__init__(points, dim, dist)
         
         #max coordinate value is derived by a change of co-ordinates, 
         #adding 1 to account for neighbourhoods
@@ -412,7 +401,7 @@ class UnionJackLattice(Lattice):
     """
     Gives the dual lattice to the SquareOctagonLattice above. 
     """
-    def __init__(self, sz_tpl, is_dual = True, is_ft = False, closed_boundary = True, rough_sides = ('u', 'r')):
+    def __init__(self, sz_tpl, is_dual = True, closed_boundary = True, rough_sides = ('u', 'r')):
         dim = len(sz_tpl)
         
         try:
@@ -459,7 +448,7 @@ class UnionJackLattice(Lattice):
                 .format([pt1, pt2]))
 
 
-        super(UnionJackLattice, self).__init__(points, dim, dist, is_ft)
+        super(UnionJackLattice, self).__init__(points, dim, dist)
         
         self.size = x_len, y_len
         self.total_size = total_size
