@@ -4,11 +4,11 @@ from qecc import X, Z, I
 
 #size=(14,14)
 #size=(40,40)
-size=(4,4)
+size=(2,2)
 
 n_trials = 1
 
-
+'''
 test_lattice = pq.SquareLattice(size)
 test_dual_lattice = pq.SquareLattice(size, is_dual=True)
 test_model = pq.depolarizing_model(0.05)
@@ -23,7 +23,7 @@ test_model = pq.depolarizing_model(0.05)
 test_code = pq.square_octagon_code(test_lattice, test_dual_lattice)
 test_decoder = pq.mwpm_decoder(test_lattice, test_dual_lattice)
 test_logical_ops = pq.squoct_log_ops(test_lattice.total_size)
-'''
+
 for idx in range(n_trials):
     test_model.act_on(test_lattice)
     print "Real Errors: \n============"

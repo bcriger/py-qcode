@@ -1,10 +1,10 @@
 """
 Code Comparison Project, April 2014
 Ben Criger
-Shameless plagiarism from Bravyi/Haah
 """
 
 from itertools import product
+from math import floor
 
 __all__ = ['Point', 'Lattice', 'SquareLattice', 'SquareOctagonLattice',
              'UnionJackLattice']
@@ -163,7 +163,7 @@ class SquareLattice(Lattice):
     def __getitem__(self, coord_pair):
         x, y = coord_pair
         sz_x = self.size[0]
-        shift = x % 2 - 1 if self.is_dual else x % 2
+        shift = -(x % 2) if self.is_dual else x % 2 - 1
         return self.points[x * sz_x + (y + shift) / 2]
 
     def neighbours(self, location):
@@ -287,42 +287,39 @@ class SquareOctagonLattice(Lattice):
             x_len, y_len = sz_tpl
         except ValueError:
             raise ValueError("Only 2D is supported for now!")
-
-        #We apply this affine map in order to ensure that the leftmost 
-        #(bottom) column (row) of points is at co-ordinate 0:
-        sq_cntrs = _squoct_affine_map(skew_coords(x_len, y_len))
-
-        #Calculate values to mod by, store for later after super-init
-        max_x, max_y = 2 * x_len - 1, 2 * y_len - 1
         
-        #total_size is the values to mod by for the boundary conditions
-        #Largest center co-ordinate + 1 (for the neighbour) + 1
-        #(for the boundary)
-        
-        total_size = sq2oct(max_x) + 2, sq2oct(max_y) + 2
-        x_mod, y_mod = total_size
-
-        squoct_coords = []
-        for coord_pair in sq_cntrs:
-            x, y = coord_pair
-            left, right = (x - 1) % x_mod, (x + 1) % x_mod
-            down, up    = (y - 1) % y_mod, (y + 1) % y_mod
-            squoct_coords.extend([(left, down),  (left, up),
-                    (right, down), (right, up)])
-
-        points = map(Point, squoct_coords)
-
         dist = None #Primal lattices don't need distance functions for now
-
-        super(SquareOctagonLattice, self).__init__(points, dim, dist)
         
-        #max coordinate value is derived by a change of co-ordinates, 
-        #adding 1 to account for neighbourhoods
+        #Co-ordinates are placed in a sorted list, beginning with the 
+        #x-coordinates:
+        total_x = 6 * x_len
+        total_y = 6 * y_len
+        coords = []
+        x_cs = [x for x in range(total_x) if (x - 1) % 3 != 0]
+        #primitive y-list requires x-dependent shift
+        y_list = [y for y in range(2, total_y, 2) if y % 3 != 0]
+        
+        for x in x_cs:
+            shift = -2 if x % 2 else 1
+            coords.extend([(x, y + shift) for y in y_list])
+        
+        points = map(Point, coords)
+        super(SquareOctagonLattice, self).__init__(points, dim, dist)
         
         self.size = x_len, y_len
         
-        self.total_size = total_size
+        self.total_size = (total_x, total_y)
     
+    def __getitem__(self, coord_pair):
+        x, y = coord_pair
+        sz_y = self.size[1] * 2
+        num_blocks_ahead = (x + int(floor(x / 3))) / 2
+        shift = -2 if x % 2 else 1
+        num_elems_ahead = y - shift #2, 4, 8, 10, ...
+        num_elems_ahead -= 2 * (1 + int(floor(y / 6))) #0, 2, 4, 6 ...
+        num_elems_ahead /= 2 #0, 1, 2, 3
+        return self.points[num_blocks_ahead * sz_y + num_elems_ahead]
+
     def squares(self):
         nx, ny = self.size
         square_centers = _squoct_affine_map(skew_coords(nx, ny))
@@ -424,6 +421,11 @@ class UnionJackLattice(Lattice):
         max_x, max_y = 2 * x_len - 1, 2 * y_len - 1
         total_size = sq2oct(max_x) + 2, sq2oct(max_y) + 2
         
+        def __getitem__(self, coord_pair):
+            sz_y = self.size[1] * 2
+            x, y = (x - 1)/3, (y - 1)/3
+            return self.points[x * sz_y + y]
+
         def dist(pt1, pt2, synd_type):
             """
             This function is complicated because the number of errors 
