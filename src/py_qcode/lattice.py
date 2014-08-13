@@ -1,10 +1,10 @@
 """
 Code Comparison Project, April 2014
 Ben Criger
-Shameless plagiarism from Bravyi/Haah
 """
 
 from itertools import product
+from math import floor
 
 __all__ = ['Point', 'Lattice', 'SquareLattice', 'SquareOctagonLattice',
              'UnionJackLattice']
@@ -306,13 +306,20 @@ class SquareOctagonLattice(Lattice):
         points = map(Point, coords)
         super(SquareOctagonLattice, self).__init__(points, dim, dist)
         
-        #max coordinate value is derived by a change of co-ordinates, 
-        #adding 1 to account for neighbourhoods
-        
         self.size = x_len, y_len
         
         self.total_size = (total_x, total_y)
     
+    def __getitem__(self, coord_pair):
+        x, y = coord_pair
+        sz_y = self.size[1] * 2
+        num_blocks_ahead = (x + int(floor(x / 3))) / 2
+        shift = -2 if x % 2 else 1
+        num_elems_ahead = y - shift #2, 4, 8, 10, ...
+        num_elems_ahead -= 2 * (1 + int(floor(y / 6))) #0, 2, 4, 6 ...
+        num_elems_ahead /= 2 #0, 1, 2, 3
+        return self.points[num_blocks_ahead * sz_y + num_elems_ahead]
+
     def squares(self):
         nx, ny = self.size
         square_centers = _squoct_affine_map(skew_coords(nx, ny))
