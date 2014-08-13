@@ -421,6 +421,11 @@ class UnionJackLattice(Lattice):
         max_x, max_y = 2 * x_len - 1, 2 * y_len - 1
         total_size = sq2oct(max_x) + 2, sq2oct(max_y) + 2
         
+        def __getitem__(self, coord_pair):
+            sz_y = self.size[1] * 2
+            x, y = (x - 1)/3, (y - 1)/3
+            return self.points[x * sz_y + y]
+
         def dist(pt1, pt2, synd_type):
             """
             This function is complicated because the number of errors 
