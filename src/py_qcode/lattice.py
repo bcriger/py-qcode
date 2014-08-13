@@ -17,6 +17,8 @@ __all__.extend(['skew_coords', '_squoct_affine_map', 'straight_octagon_dist',
                 'square_square_path', 'appropriate_neighbours'])
 """
 
+__all__.extend(['hoelzer_dist'])
+
 ##constants##
 SIDES = ['u', 'd', 'r', 'l', 'f', 'b'] #up, down, left, right, front, back
 
@@ -479,28 +481,6 @@ def check_int_tpl(coords):
             " you entered: {0}".format(coords))
     pass
 
-'''#testing
-def promote(point, new_coord):
-    """
-    Adds a new coordinate to a point, preserving the error and syndrome stored therein.
-    """
-    pt_attrs = point.__dict__.values()
-    if type(new_coord) is int:
-        pt_attrs[0] += (new_coord,)
-    else:
-        raise TypeError("New coordinate must be an int.")
-    return Point(*pt_attrs)
-
-
-def layer(points, new_len):
-    """
-    Naively extends a collection of points into a new dimension by producing `new_len` new copies of the points at integral co-ordinates.
-    """
-    new_pt_lst = []
-    for stratum in range(new_len):
-        new_pt_lst.append(map(lambda pt: promote(pt, stratum), points))
-    return new_pt_lst
-'''
 _evens = lambda n: range(0, 2 * n, 2)
 
 _odds = lambda n: range(1, 2 * n + 1, 2)
@@ -785,3 +765,23 @@ def square_square_path(sq_1, sq_2, synd_type, total_size):
     oct_path = octagon_octagon_path(oct_1, oct_2, total_size)
     
     return [intersection_1] + oct_path + [intersection_2]
+
+def hoelzer_dist(x1, x2, y1, y2, sz_x, sz_y):
+    """
+    Here, I test the square-octagon distance metric given by Tobias 
+    Hoelzer in his Bachelor's Thesis. It is meant to be numerically
+    identical to the current UnionJackLattice.dist. 
+    """
+    #First, we map the co-ordinates back to the virtual lattice:
+    x1, x2, y1, y2 = map(oct2sq, [x1, x2, y1, y2])
+    sz_x, sz_y = sz_x / 3, sz_y / 3
+    
+    dist = min([abs(x1 - x2), sz_x - abs(x1 - x2)]) + \
+            min([abs(y1 - y2), sz_y - abs(y1 - y2)])
+    
+    if x1 != x2:
+        dist += 2 * ((x1 + 1) % 2)
+    if y1 != y2:
+        dist += 2 * ((y1 + 1) % 2)
+    
+    return dist
