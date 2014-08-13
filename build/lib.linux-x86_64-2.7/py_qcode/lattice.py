@@ -92,21 +92,16 @@ class Lattice(object):
 
     :type dist: function
 
-    :param is_ft: indicates whether the lattice is to possess an extra dimension for fault-tolerant decoding.
-    
-    :type is_ft: bool
-
     :param closed_boundary: Indicates whether to identify the Nth co-ordinate with the zeroth co-ordinate in every dimension.
 
     :type closed_boundary: bool
     """
     #Magic Methods
-    def __init__(self, points, dim, dist=None, is_ft=False, size = None, is_dual = False):
+    def __init__(self, points, dim, dist=None, size = None, is_dual = False):
         
         self.points = points
         self.dim = dim
         self.dist = dist
-        self.is_ft = is_ft
         self.size = size
         self.is_dual = is_dual
 
@@ -135,7 +130,7 @@ class SquareLattice(Lattice):
 
     :type rough_sides: tuple of strings
     """
-    def __init__(self, sz_tpl, is_dual = False, is_ft = False, closed_boundary = True, rough_sides = ('u', 'r')):
+    def __init__(self, sz_tpl, is_dual = False, closed_boundary = True, rough_sides = ('u', 'r')):
         
         dim = len(sz_tpl)
         x_len, y_len = sz_tpl[:2] 
@@ -150,17 +145,11 @@ class SquareLattice(Lattice):
             points_2d = map(Point, skew_coords(x_len, y_len))
             dist = None
 
-        if is_ft:
-            if len(sz_tpl) != 3:
-                raise ValueError("Square lattices for fault-tolerant simulations must be 3D.")
-            z_len = sz_tpl[2]
-            points = layer(points_2d, z_len)
-        else:
-            if len(sz_tpl) != 2:
-                raise ValueError("Square lattices for non-fault-tolerant simulations must be 2D.")
-            points = points_2d
+        if len(sz_tpl) != 2:
+            raise ValueError("Square lattices for non-fault-tolerant simulations must be 2D.")
+        points = points_2d
 
-        super(SquareLattice, self).__init__(points, dim, dist, is_ft)
+        super(SquareLattice, self).__init__(points, dim, dist)
         self.size = sz_tpl
         self.is_dual = is_dual
         
@@ -170,6 +159,13 @@ class SquareLattice(Lattice):
             raise ValueError(("rough_sides must be in the list {0}." +\
                 "You entered: {1}").format(SIDES, rough_sides))
     
+    #Overwriting __getitem__ for increased speed:
+    def __getitem__(self, coord_pair):
+        x, y = coord_pair
+        sz_x = self.size[0]
+        shift = x % 2 - 1 if self.is_dual else x % 2
+        return self.points[x * sz_x + (y + shift) / 2]
+
     def neighbours(self, location):
         """
         Returns a list of points which are one unit of distance away from a given location.
@@ -284,7 +280,7 @@ class SquareOctagonLattice(Lattice):
     an affine map. Each point in this lattice is then 'graduated' to a
     square consiting of nearest neighbours.  
     """
-    def __init__(self, sz_tpl, is_dual = False, is_ft = False, closed_boundary = True, rough_sides = ('u', 'r')):
+    def __init__(self, sz_tpl, is_dual = False, closed_boundary = True, rough_sides = ('u', 'r')):
         dim = len(sz_tpl)
 
         try:
@@ -318,7 +314,7 @@ class SquareOctagonLattice(Lattice):
 
         dist = None #Primal lattices don't need distance functions for now
 
-        super(SquareOctagonLattice, self).__init__(points, dim, dist, is_ft)
+        super(SquareOctagonLattice, self).__init__(points, dim, dist)
         
         #max coordinate value is derived by a change of co-ordinates, 
         #adding 1 to account for neighbourhoods
@@ -412,7 +408,7 @@ class UnionJackLattice(Lattice):
     """
     Gives the dual lattice to the SquareOctagonLattice above. 
     """
-    def __init__(self, sz_tpl, is_dual = True, is_ft = False, closed_boundary = True, rough_sides = ('u', 'r')):
+    def __init__(self, sz_tpl, is_dual = True, closed_boundary = True, rough_sides = ('u', 'r')):
         dim = len(sz_tpl)
         
         try:
@@ -459,7 +455,7 @@ class UnionJackLattice(Lattice):
                 .format([pt1, pt2]))
 
 
-        super(UnionJackLattice, self).__init__(points, dim, dist, is_ft)
+        super(UnionJackLattice, self).__init__(points, dim, dist)
         
         self.size = x_len, y_len
         self.total_size = total_size
@@ -481,7 +477,7 @@ def check_int_tpl(coords):
             " you entered: {0}".format(coords))
     pass
 
-
+'''#testing
 def promote(point, new_coord):
     """
     Adds a new coordinate to a point, preserving the error and syndrome stored therein.
@@ -502,7 +498,7 @@ def layer(points, new_len):
     for stratum in range(new_len):
         new_pt_lst.append(map(lambda pt: promote(pt, stratum), points))
     return new_pt_lst
-
+'''
 _evens = lambda n: range(0, 2 * n, 2)
 
 _odds = lambda n: range(1, 2 * n + 1, 2)
@@ -517,22 +513,55 @@ _odd_odds = lambda nx, ny: map(tuple, list(product(_odds(nx), _odds(ny))))
 
 def sym_coords(nx, ny):
     """
-    Convenience function for square lattice definition, returns all pairs of co-ordinates on an n-by-n lattice which are both even or both odd. 
+    Convenience function for square lattice definition, returns all 
+    pairs of co-ordinates on an n-by-n lattice which are both even or 
+    both odd. Note that it iterates over all of the points in the 2D
+    grid which is nx-by-ny large, this is so the list of returned 
+    coordinates is sorted.
     """
-    return _even_evens(nx, ny) + _odd_odds(nx, ny)
+    symmetric_coordinates = []
+    for x in range(2 * nx):
+        if x % 2 == 0:
+            for y in range(2 * ny):
+                if y % 2 == 0:
+                    symmetric_coordinates.append((x,y))
+        else:
+            for y in range(2 * ny):
+                if y % 2 == 1:
+                    symmetric_coordinates.append((x,y))
+    return symmetric_coordinates
 
 
 def skew_coords(nx, ny):
     """
-    Convenience function for square lattice definition, returns all pairs of co-ordinates on an n-by-n lattice which are "even-odd" or "odd-even". 
+    Convenience function for square lattice definition, returns all 
+    pairs of co-ordinates on an n-by-n lattice which are "even-odd" or 
+    "odd-even".Note that it iterates over all of the points in the 2D
+    grid which is nx-by-ny large, this is so the list of returned 
+    coordinates is sorted.
     """
-    return _even_odds(nx, ny) + _odd_evens(nx, ny)
+    skewed_coordinates = []
+    for x in range(2 * nx):
+        if x % 2 == 0:
+            for y in range(2 * ny):
+                if y % 2 == 1:
+                    skewed_coordinates.append((x,y))
+        else:
+            for y in range(2 * ny):
+                if y % 2 == 0:
+                    skewed_coordinates.append((x,y))
+    return skewed_coordinates
 
 def all_coords(nx, ny):
     """
-    Returns all points on a square lattice, used to determine the dual lattice of the SquareOctagonLattice.
+    Returns all points on a square lattice, used to determine the dual 
+    lattice of the SquareOctagonLattice.
     """
-    return sym_coords(nx, ny) + skew_coords(nx, ny)
+    all_coordinates = []
+    for x in range(2 * nx):
+        for y in range(2 * ny):
+            all_coordinates.append((x,y))
+    return all_coordinates
 
 def sq2oct(coord):
     """
