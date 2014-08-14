@@ -139,10 +139,17 @@ class SquareLattice(Lattice):
 
         if is_dual:
             points_2d = map(Point, sym_coords(x_len, y_len))
+            """
             dist = lambda coord1, coord2, synd_type: sum([min([abs(a - b) % (2 * sz),
                                                     (2 * sz - abs(a - b)) % (2 * sz)]) 
                                                 for a, b, sz in 
                                                 zip(coord1, coord2, sz_tpl)])
+            """
+            def dist(coord1, coord2, synd_type):
+                return sum([min([abs(a - b) % (2 * sz),
+                            (2 * sz - abs(a - b)) % (2 * sz)]) 
+                            for a, b, sz in 
+                            zip(coord1, coord2, sz_tpl)]) 
         else:
             points_2d = map(Point, skew_coords(x_len, y_len))
             dist = None
@@ -438,7 +445,8 @@ class UnionJackLattice(Lattice):
             easy case, then we relate the more difficult cases back to
             it.
             """
-            
+            if pt1 == pt2:
+                return 0
             #Return appropriate distance given co-ordinate types
             if is_sq_cent(pt1):
                 if is_sq_cent(pt2):
