@@ -126,22 +126,45 @@ num_t dist(num_t x1, num_t y1, num_t x2, num_t y2, num_t sz_x, num_t sz_y, char 
     Step two: We compute the neighbouring co-ordinates, in case some of
     the inputs represent squares:
     */
-
-    if (synd_type == 'Z'){
-        x1_u = (x1 + (x1 % 2)) % sz_x; y1_u = (y1 + (y1 % 2)) % sz_y;
-        x2_u = (x2 + (x2 % 2)) % sz_x; y2_u = (y2 + (y2 % 2)) % sz_y;
-        if (x1 == 0) x1_d = sz_x - 1; else x1_d = (x1 - (x1 % 2));
-        if (y1 == 0) y1_d = 0;        else y1_d = (y1 - (y1 % 2));
-        if (x2 == 0) x2_d = sz_x - 1; else x2_d = (x2 - (x2 % 2));
-        if (y2 == 0) y2_d = 0;        else y2_d = (y2 - (y2 % 2));
+    if (x1 % 2){ //x coord is odd
+        if (synd_type == 'X'){
+            x1_u = (x1 + 1) % sz_x; x1_d = (x1 - 1) % sz_x;
+            y1_u = y1; y1_d = y1; 
+        }
+        else if (synd_type == 'Z'){
+            x1_u = x1; x1_d = x1;
+            y1_u = (y1 + 1) % sz_y; if (y1 == 0) y1_d = sz_y; else y1_d = y1 - 1; 
+        }
     }
-    else if (synd_type == 'X'){
-        x1_u = (x1 + !(x1 % 2)) % sz_x; y1_u = (y1 + !(y1 % 2)) % sz_y;
-        x2_u = (x2 + !(x2 % 2)) % sz_x; y2_u = (y2 + !(y2 % 2)) % sz_y;
-        if (x1 == 0) x1_d = 0;        else x1_d = (x1 - !(x1 % 2));
-        if (y1 == 0) y1_d = sz_y - 1; else y1_d = (y1 - !(y1 % 2));
-        if (x2 == 0) x2_d = 0;        else x2_d = (x2 - !(x2 % 2));
-        if (y2 == 0) y2_d = sz_y - 1; else y2_d = (y2 - !(y2 % 2));
+    else { //x coord is even
+        if (synd_type == 'Z'){
+            x1_u = (x1 + 1) % sz_x; if (x1 == 0) x1_d = sz_x; else x1_d = (x1 - 1);
+            y1_u = y1; y1_d = y1; 
+        }
+        else if (synd_type == 'X'){
+            x1_u = x1; x1_d = x1;
+            y1_u = (y1 + 1) % sz_y; if (y1 == 0) y1_d = sz_y; else y1_d = y1 - 1; 
+        }
+    }
+    if (x2 % 2){ //x coord is odd
+        if (synd_type == 'X'){
+            x2_u = (x2 + 1) % sz_x; x2_d = (x2 - 1) % sz_x;
+            y2_u = y2; y2_d = y2; 
+        }
+        else if (synd_type == 'Z'){
+            x2_u = x2; x1_d = x2;
+            y2_u = (y2 + 1) % sz_y; if (y2 == 0) y2_d = sz_y; else y2_d = y1 - 1; 
+        }
+    }
+    else { //x coord is even
+        if (synd_type == 'Z'){
+            x2_u = (x2 + 1) % sz_x; if (x2 == 0) x2_d = sz_x; else x2_d = (x2 - 1);
+            y2_u = y2; y2_d = y2; 
+        }
+        else if (synd_type == 'X'){
+            x2_u = x2; x2_d = x2;
+            y2_u = (y2 + 1) % sz_y; if (y2 == 0) y2_d = sz_y; else y2_d = y2 - 1; 
+        }
     }
     #ifdef _DEBUG_NEIGHBOURS
     printf("%c-type Neighbours of (%hu, %hu) as determined by dist: \n", synd_type, x1, y1);
