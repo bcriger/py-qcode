@@ -5,6 +5,12 @@ Ben Criger
 
 from itertools import product
 from math import floor
+from ctypes import c_ushort, c_char, cdll
+import os.path
+path_to_lib = os.path.join(os.path.dirname(__file__), 'libsquoct_dist.so')
+#libsquoct_dist = cdll.LoadLibrary(os.path.join(me, 'libsquoct_dist.so'))
+libsquoct_dist = cdll.LoadLibrary(path_to_lib)
+#import squoct_dist
 
 __all__ = ['Point', 'Lattice', 'SquareLattice', 'SquareOctagonLattice',
              'UnionJackLattice']
@@ -137,10 +143,17 @@ class SquareLattice(Lattice):
 
         if is_dual:
             points_2d = map(Point, sym_coords(x_len, y_len))
+            """
             dist = lambda coord1, coord2, synd_type: sum([min([abs(a - b) % (2 * sz),
                                                     (2 * sz - abs(a - b)) % (2 * sz)]) 
                                                 for a, b, sz in 
                                                 zip(coord1, coord2, sz_tpl)])
+            """
+            def dist(coord1, coord2, synd_type):
+                return sum([min([abs(a - b) % (2 * sz),
+                            (2 * sz - abs(a - b)) % (2 * sz)]) 
+                            for a, b, sz in 
+                            zip(coord1, coord2, sz_tpl)]) 
         else:
             points_2d = map(Point, skew_coords(x_len, y_len))
             dist = None
@@ -425,7 +438,7 @@ class UnionJackLattice(Lattice):
             sz_y = self.size[1] * 2
             x, y = (x - 1)/3, (y - 1)/3
             return self.points[x * sz_y + y]
-
+        '''
         def dist(pt1, pt2, synd_type):
             """
             This function is complicated because the number of errors 
@@ -436,7 +449,8 @@ class UnionJackLattice(Lattice):
             easy case, then we relate the more difficult cases back to
             it.
             """
-            
+            if pt1 == pt2:
+                return 0
             #Return appropriate distance given co-ordinate types
             if is_sq_cent(pt1):
                 if is_sq_cent(pt2):
@@ -455,7 +469,12 @@ class UnionJackLattice(Lattice):
             raise ValueError("Co-ordinates {0} could not be"+\
                 " identified as square or octagon centers."\
                 .format([pt1, pt2]))
-
+        '''
+        def dist(pt1, pt2, synd_type):
+            x1, y1 = map(c_ushort, pt1); x2, y2 = map(c_ushort, pt2)
+            sz_x, sz_y = map(c_ushort, total_size)
+            return libsquoct_dist.dist(x1, y1, x2, y2, sz_x, sz_y, 
+                                                    c_char(synd_type))
 
         super(UnionJackLattice, self).__init__(points, dim, dist)
         
@@ -479,28 +498,6 @@ def check_int_tpl(coords):
             " you entered: {0}".format(coords))
     pass
 
-'''#testing
-def promote(point, new_coord):
-    """
-    Adds a new coordinate to a point, preserving the error and syndrome stored therein.
-    """
-    pt_attrs = point.__dict__.values()
-    if type(new_coord) is int:
-        pt_attrs[0] += (new_coord,)
-    else:
-        raise TypeError("New coordinate must be an int.")
-    return Point(*pt_attrs)
-
-
-def layer(points, new_len):
-    """
-    Naively extends a collection of points into a new dimension by producing `new_len` new copies of the points at integral co-ordinates.
-    """
-    new_pt_lst = []
-    for stratum in range(new_len):
-        new_pt_lst.append(map(lambda pt: promote(pt, stratum), points))
-    return new_pt_lst
-'''
 _evens = lambda n: range(0, 2 * n, 2)
 
 _odds = lambda n: range(1, 2 * n + 1, 2)
@@ -785,3 +782,23 @@ def square_square_path(sq_1, sq_2, synd_type, total_size):
     oct_path = octagon_octagon_path(oct_1, oct_2, total_size)
     
     return [intersection_1] + oct_path + [intersection_2]
+
+def hoelzer_dist(x1, x2, y1, y2, sz_x, sz_y):
+    """
+    Here, I test the square-octagon distance metric given by Tobias 
+    Hoelzer in his Bachelor's Thesis. It is meant to be numerically
+    identical to the current UnionJackLattice.dist. 
+    """
+    #First, we map the co-ordinates back to the virtual lattice:
+    x1, x2, y1, y2 = map(oct2sq, [x1, x2, y1, y2])
+    sz_x, sz_y = sz_x / 3, sz_y / 3
+    
+    dist = min([abs(x1 - x2), sz_x - abs(x1 - x2)]) + \
+            min([abs(y1 - y2), sz_y - abs(y1 - y2)])
+    
+    if x1 != x2:
+        dist += 2 * ((x1 + 1) % 2)
+    if y1 != y2:
+        dist += 2 * ((y1 + 1) % 2)
+    
+    return dist

@@ -7,11 +7,6 @@
 #include "stdio.h"
 #endif
 
-num_t i_max_2(num_t a, num_t b){
-    if (a < b) return b;
-    else return a;
-}
-
 num_t i_min_2(num_t a, num_t b){
     if (a < b) return a;
     else return b;
