@@ -15,7 +15,7 @@ CFLAGS := -O3 -fPIC #For optimization
 INCLUDES := 
 
 #Directory to search for shared libraries when linking/loading
-LIBDIR := -L.
+LIBDIR := -{L,R}.
 
 #Shared Libraries
 LIBS = -l${NAME} -lrt

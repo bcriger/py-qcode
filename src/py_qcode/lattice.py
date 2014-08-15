@@ -5,6 +5,12 @@ Ben Criger
 
 from itertools import product
 from math import floor
+from ctypes import c_ushort, c_char, cdll
+import os.path
+path_to_lib = os.path.join(os.path.dirname(__file__), 'libsquoct_dist.so')
+#libsquoct_dist = cdll.LoadLibrary(os.path.join(me, 'libsquoct_dist.so'))
+libsquoct_dist = cdll.LoadLibrary(path_to_lib)
+#import squoct_dist
 
 __all__ = ['Point', 'Lattice', 'SquareLattice', 'SquareOctagonLattice',
              'UnionJackLattice']
@@ -16,8 +22,6 @@ __all__.extend(['skew_coords', '_squoct_affine_map', 'straight_octagon_dist',
                 'square_octagon_path', 'square_square_dist',
                 'square_square_path', 'appropriate_neighbours'])
 """
-
-__all__.extend(['hoelzer_dist'])
 
 ##constants##
 SIDES = ['u', 'd', 'r', 'l', 'f', 'b'] #up, down, left, right, front, back
@@ -434,7 +438,7 @@ class UnionJackLattice(Lattice):
             sz_y = self.size[1] * 2
             x, y = (x - 1)/3, (y - 1)/3
             return self.points[x * sz_y + y]
-
+        '''
         def dist(pt1, pt2, synd_type):
             """
             This function is complicated because the number of errors 
@@ -465,7 +469,12 @@ class UnionJackLattice(Lattice):
             raise ValueError("Co-ordinates {0} could not be"+\
                 " identified as square or octagon centers."\
                 .format([pt1, pt2]))
-
+        '''
+        def dist(pt1, pt2, synd_type):
+            x1, y1 = map(c_ushort, pt1); x2, y2 = map(c_ushort, pt2)
+            sz_x, sz_y = map(c_ushort, total_size)
+            return libsquoct_dist.dist(x1, y1, x2, y2, sz_x, sz_y, 
+                                                    c_char(synd_type))
 
         super(UnionJackLattice, self).__init__(points, dim, dist)
         
