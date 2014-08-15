@@ -1,4 +1,4 @@
-from distutils.core import setup
+from setuptools import setup, find_packages
 
 import sys, os
 sys.path.insert(0, os.path.join(os.getcwd(), 'src/'))
@@ -12,4 +12,5 @@ setup(
     author_email='bcriger@gmail.com',
     package_dir={'': 'src'},
     packages=['py_qcode'],
+    include_package_data=True
 )
