@@ -105,6 +105,10 @@ class Simulation():
                 com_relation_list.append(operator.test(self.lattice))
             self.logical_error.append(com_relation_list)
     
+        #Clean up results from final simulation
+        self.lattice.clear()
+        self.dual_lattice.clear()
+    
     def save(self, filename):
         big_dict = {}
         big_dict['lattice_class'] = \
