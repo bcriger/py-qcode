@@ -1,2 +1,2 @@
 recursive-include src/py_qcode/blossom5-v2.04.src *
-include src/py_qcode/libsquoct_dist.so
+include src/py_qcode/libqcode_dist.so
