@@ -1,5 +1,6 @@
 MANIFEST.in
 setup.py
+src/c/squoct_dist.c
 src/py_qcode/__init__.py
 src/py_qcode/c_lib_test.py
 src/py_qcode/code.py

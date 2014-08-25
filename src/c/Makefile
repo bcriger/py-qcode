@@ -1,4 +1,4 @@
-NAME = squoct_dist
+NAME = qcode_dist
 
 #Sources and objects for making the library/test program:
 LIB_SRCS = ${NAME}.c
@@ -12,10 +12,10 @@ CC = gcc
 CFLAGS := -O3 -fPIC #For optimization
 
 #Source to include when compiling
-INCLUDES := 
+INCLUDES :=
 
 #Directory to search for shared libraries when linking/loading
-LIBDIR := -{L,R}.
+LIBDIR := -L$(shell pwd) -Wl,-rpath=$(shell pwd)
 
 #Shared Libraries
 LIBS = -l${NAME} -lrt

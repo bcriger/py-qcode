@@ -1,5 +1,8 @@
-#include "squoct_dist.h"
+#include "qcode_dist.h"
 #include "stdio.h"
+
+#define TORIC_CODE
+//#define SQUOCT_CODE
 
 int main(int argc, char const *argv[])
 {
@@ -20,8 +23,15 @@ int main(int argc, char const *argv[])
         printf("Second Point: (%d, %d)\n", x2, y2);
         printf("Syndrome Type: %c\n", synd_type);
 
-        d = dist((num_t)x1, (num_t)y1, (num_t)x2, (num_t)y2, 
+        #ifdef TORIC_CODE
+        d = toric_dist((num_t)x1, (num_t)y1, (num_t)x2, (num_t)y2, 
                     (num_t)sz_x, (num_t)sz_y, synd_type);
+        #endif
+        
+        #ifdef SQUOCT_CODE
+        d = squoct_dist((num_t)x1, (num_t)y1, (num_t)x2, (num_t)y2, 
+                    (num_t)sz_x, (num_t)sz_y, synd_type);
+        #endif
         
         printf("Resulting Distance: %hu\n", (unsigned short int)d);
         
