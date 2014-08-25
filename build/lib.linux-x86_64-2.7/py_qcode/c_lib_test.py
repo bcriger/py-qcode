@@ -1,10 +1,10 @@
 """
-This script will call the function 'dist' from libsquoct_dist.so in
+This script will call the function 'dist' from libqcode_dist.so in
 ../c, using ctypes.
 """
 from ctypes import CDLL, c_ushort, c_char
 
-libsquoct_dist = CDLL('../c/libsquoct_dist.so')
+libqcode_dist = CDLL('../c/libqcode_dist.so')
 
 total_size = (24, 24)
 
@@ -13,7 +13,7 @@ def print_dist(pt1, pt2):
     for synd_type in 'XZ':
         x1, y1 = map(c_ushort, pt1); x2, y2 = map(c_ushort, pt2)
         sz_x, sz_y = map(c_ushort, total_size)
-        delta = libsquoct_dist.dist(x1, y1, x2, y2, sz_x, sz_y, 
+        delta = libqcode_dist.squoct_dist(x1, y1, x2, y2, sz_x, sz_y, 
                                                     c_char(synd_type))
         print "{3}-type distance between {0} and {1}: {2}".format(
             pt1, pt2, delta, synd_type)

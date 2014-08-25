@@ -179,6 +179,7 @@ def blossom_matching_alg(primal_lattice, dual_lattice):
             int partner = pm->GetMatch(vert_idx);
             partners(vert_idx) = partner;
         }
+    delete pm;
     '''
     
     #Auxiliary arguments to scipy.weave.inline:

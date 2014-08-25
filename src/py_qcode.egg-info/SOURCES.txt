@@ -1,13 +1,13 @@
 MANIFEST.in
 setup.py
-src/c/squoct_dist.c
+src/c/qcode_dist.c
 src/py_qcode/__init__.py
 src/py_qcode/c_lib_test.py
 src/py_qcode/code.py
 src/py_qcode/decoder.py
 src/py_qcode/error.py
 src/py_qcode/lattice.py
-src/py_qcode/libsquoct_dist.so
+src/py_qcode/libqcode_dist.so
 src/py_qcode/logical_operators.py
 src/py_qcode/simulation.py
 src/py_qcode/test.py
