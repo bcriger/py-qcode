@@ -1,4 +1,4 @@
-#include "squoct_dist.h"
+#include "qcode_dist.h"
 
 #ifdef _DEBUG
 #include "stdio.h"
@@ -78,7 +78,7 @@ num_t octagonal_dist(num_t x1, num_t y1, num_t x2, num_t y2, num_t sz_x, num_t s
     return num_steps;
 }
 
-num_t dist(num_t x1, num_t y1, num_t x2, num_t y2, num_t sz_x, num_t sz_y, char synd_type){
+num_t squoct_dist(num_t x1, num_t y1, num_t x2, num_t y2, num_t sz_x, num_t sz_y, char synd_type){
     /*
     This function returns the distance on the dual lattice for the 
     concatenated toric/[[4,2,2]] code defined in 
@@ -220,3 +220,8 @@ num_t dist(num_t x1, num_t y1, num_t x2, num_t y2, num_t sz_x, num_t sz_y, char 
     return num_steps;
 }
 
+num_t toric_dist(num_t x1, num_t y1, num_t x2, num_t y2, num_t sz_x, num_t sz_y, char synd_type){
+    /*This function takes the same arguments as squoct_dist, and
+    returns the distance between two points on a sz_x by sz_y torus.*/
+    return min_abs_sub(x1, x2, sz_x) + min_abs_sub(y1, y2, sz_y);
+}

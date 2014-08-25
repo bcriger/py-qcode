@@ -92,6 +92,20 @@ def square_toric_code_sim(size, error_rate, n_trials, filename):
     sim = Simulation(**sim_dict)
     sim.run()
     sim.save(filename + '.sim')
+    
+    del sim_lattice
+    del sim_dual_lattice
+    del sim_model
+    del sim_code
+    del sim_decoder
+    del sim_log_ops
+    del sim_dict
+    del sim_keys
+    del sim_values
+    del size
+    del error_rate
+    del n_trials
+    del filename
 
 def noisy_toric_code_sim(size, error_rate, n_trials, filename):
     """

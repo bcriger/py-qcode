@@ -7,10 +7,10 @@ from itertools import product
 from math import floor
 from ctypes import c_ushort, c_char, cdll
 import os.path
-path_to_lib = os.path.join(os.path.dirname(__file__), 'libsquoct_dist.so')
-#libsquoct_dist = cdll.LoadLibrary(os.path.join(me, 'libsquoct_dist.so'))
-libsquoct_dist = cdll.LoadLibrary(path_to_lib)
-#import squoct_dist
+path_to_lib = os.path.join(os.path.dirname(__file__), 'libqcode_dist.so')
+#libqcode_dist = cdll.LoadLibrary(os.path.join(me, 'libqcode_dist.so'))
+libqcode_dist = cdll.LoadLibrary(path_to_lib)
+#import qcode_dist
 
 __all__ = ['Point', 'Lattice', 'SquareLattice', 'SquareOctagonLattice',
              'UnionJackLattice']
@@ -154,6 +154,13 @@ class SquareLattice(Lattice):
                             (2 * sz - abs(a - b)) % (2 * sz)]) 
                             for a, b, sz in 
                             zip(coord1, coord2, sz_tpl)]) 
+            '''
+            def dist(coord1, coord2, synd_type):
+                x1, y1 = map(c_ushort, coord1); x2, y2 = map(c_ushort, coord2)
+                sz_x, sz_y = map(c_ushort, [x_len, y_len])
+                return libqcode_dist.toric_dist(x1, y1, x2, y2, sz_x, sz_y, 
+                                                        c_char(synd_type))
+            '''
         else:
             points_2d = map(Point, skew_coords(x_len, y_len))
             dist = None
@@ -473,9 +480,9 @@ class UnionJackLattice(Lattice):
         def dist(pt1, pt2, synd_type):
             x1, y1 = map(c_ushort, pt1); x2, y2 = map(c_ushort, pt2)
             sz_x, sz_y = map(c_ushort, total_size)
-            return libsquoct_dist.dist(x1, y1, x2, y2, sz_x, sz_y, 
+            return libqcode_dist.squoct_dist(x1, y1, x2, y2, sz_x, sz_y, 
                                                     c_char(synd_type))
-
+        
         super(UnionJackLattice, self).__init__(points, dim, dist)
         
         self.size = x_len, y_len
