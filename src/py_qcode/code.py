@@ -72,7 +72,9 @@ class ErrorCheck(object):
 
 class StabilizerCheck(ErrorCheck):
     """
-    subclass of :class:`py_qcode.ErrorCheck`, takes anything that can be cast to a :class:`qecc.Pauli` instead of a rule, and uses commutation to determine the syndrome. 
+    subclass of :class:`py_qcode.ErrorCheck`, takes anything that can 
+    be cast to a :class:`qecc.Pauli` instead of a rule, and uses 
+    commutation to determine the syndrome. 
     """
     def __init__(self, primal_sets, dual_points, stabilizer,
                      noise_model=(0., lambda a: a), indy_css=False):
@@ -207,7 +209,9 @@ def noisy_toric_code(primal_grid, dual_grid, error_rate):
     star_duals = [dual_grid[coord] for coord in star_coords]
     star_primal = [primal_grid.neighbours(coord) 
                     for coord in star_coords]
+    
     z_flip = lambda synd: letter_flip(synd, 'Z')
+    
     star_check = StabilizerCheck(star_primal, star_duals, 'XXXX',
         (error_rate, z_flip), indy_css=True)
     
@@ -215,7 +219,9 @@ def noisy_toric_code(primal_grid, dual_grid, error_rate):
     plaq_duals = [dual_grid[coord] for coord in plaq_coords]
     plaq_primal = [primal_grid.neighbours(coord) 
                     for coord in plaq_coords]
+    
     x_flip = lambda synd: letter_flip(synd, 'X')
+    
     plaq_check = StabilizerCheck(plaq_primal, plaq_duals, 'ZZZZ', 
         (error_rate, x_flip), indy_css=True)
 
