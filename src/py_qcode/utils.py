@@ -15,7 +15,7 @@ __all__ = ['sim_from_file', 'square_toric_code_sim', 'error_print',
 def error_print(lattice):
     printnone = True
     for point in lattice.points:
-        if not(point.error.op == 'I'):
+        if (point.error) and (not(point.error.op == 'I')):
             print point
             printnone = False
 
