@@ -262,11 +262,22 @@ def hi_d_matching_alg(primal_lattice, dual_lattice_list):
                     x_graph.add_node(crds + (idx, ))
                 if any([ltr in point.syndrome for ltr in 'zZ']):
                     z_graph.add_node(crds + (idx, ))                    
-        
+    print 'x_graph = ' + str(x_graph.edges())    
     #set an additive constant large enough for all weights to be 
     #positive:
     size_constant = 2 * len(primal_lattice.size) * \
                 max(primal_lattice.size) + len(dual_lattice_list)
+
+    for g, synd_type in zip([x_graph, z_graph], ['X','Z']):
+        for node in g.nodes():
+            other_nodes = g.nodes()
+            other_nodes.remove(node)
+            for other_node in other_nodes:
+                #Negative weights are no good for networkx
+                edge_tuple = (node, other_node,
+                    size_constant - dual_lattice_list[0].dist(node, other_node, synd_type)
+                    + abs(node[-1]-other_node[-1]))
+                g.add_weighted_edges_from([edge_tuple])
 
     x_mate_dict, z_mate_dict = \
     map(nx.max_weight_matching, (x_graph, z_graph))

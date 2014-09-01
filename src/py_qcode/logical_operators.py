@@ -52,11 +52,24 @@ def squoct_log_ops(total_size):
         raise ValueError('Only 2D codes are supported in this'+\
          'function for now, maybe define your operators manually')
     
-    edge_0 = range(0, total_size[0], 6) + range(2, total_size[0], 6)
-    edge_1 = range(0, total_size[1], 6) + range(2, total_size[1], 6)
-    shift_edge_0 = range(3, total_size[0], 6) + range(5, total_size[0], 6)
-    shift_edge_1 = range(3, total_size[1], 6) + range(5, total_size[1], 6)
+    edge_0 = sorted(range(0, total_size[0], 6) + range(2, total_size[0], 6))
+    edge_1 = sorted(range(0, total_size[1], 6) + range(2, total_size[1], 6))
+    shift_edge_0 = sorted(range(3, total_size[0], 6) + range(5, total_size[0], 6))
+    shift_edge_1 = sorted(range(3, total_size[1], 6) + range(5, total_size[1], 6))
     
+    #Tough to tell what is/is not a gauge operator. Alternate sets 
+    #defined below:
+
+    x_1 = LogicalOperator("X_1", Pauli('X' * (total_size[0] / 3)),
+                            [(x, 0) for x in shift_edge_0])
+    x_2 = LogicalOperator("X_2", Pauli('X' * (total_size[1] / 3)),
+                            [(0, x) for x in shift_edge_1])
+    z_1 = LogicalOperator("Z_1", Pauli('Z' * (total_size[1] / 3)),
+                            [(3, x) for x in edge_1])
+    z_2 = LogicalOperator("Z_2", Pauli('Z' * (total_size[0] / 3)),
+                            [(x, 3) for x in edge_0])
+
+    '''
     x_1 = LogicalOperator("X_1", Pauli('X' * (total_size[1] / 3)),
                             [(3, x) for x in edge_1])
     x_2 = LogicalOperator("X_2", Pauli('X' * (total_size[0] / 3)),
@@ -65,5 +78,7 @@ def squoct_log_ops(total_size):
                             [(x, 0) for x in shift_edge_0])
     z_2 = LogicalOperator("Z_2", Pauli('Z' * (total_size[1] / 3)),
                             [(0, x) for x in shift_edge_1])
-    
+    '''
+
+
     return [x_1, x_2, z_1, z_2]
