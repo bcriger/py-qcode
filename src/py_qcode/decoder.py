@@ -255,8 +255,8 @@ def hi_d_matching_alg(primal_lattice, dual_lattice_list):
         prev_lattice = dual_lattice_list[idx - 1]
         for point in curr_lattice.points:
             crds = point.coords
-            print "co-ordinates: {0}".format(str(crds))
-            #print "syndrome comparison: {0} vs. {1}".format(point.syndrome, prev_lattice[crds].syndrome)
+            #print "co-ordinates: {0}".format(str(crds))
+            print "syndrome comparison: {0} vs. {1}".format(point.syndrome, prev_lattice[crds].syndrome)
             if point.syndrome != prev_lattice[crds].syndrome:
                 if any([ltr in point.syndrome for ltr in 'xX']):
                     x_graph.add_node(crds + (idx, ))
