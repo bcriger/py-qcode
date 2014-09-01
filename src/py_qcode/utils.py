@@ -15,7 +15,7 @@ __all__ = ['sim_from_file', 'square_toric_code_sim', 'error_print',
 def error_print(lattice):
     printnone = True
     for point in lattice.points:
-        if not(point.error.op == 'I'):
+        if (point.error) and (not(point.error.op == 'I')):
             print point
             printnone = False
 
@@ -95,12 +95,16 @@ def square_toric_code_sim(size, error_rate, n_trials, filename):
 
 def noisy_toric_code_sim(size, error_rate, n_trials, filename):
     """
-    Slightly less vanilla than `square_toric_code_sim`, this function
-
+    Slightly less vanilla than `square_toric_code_sim`, this function 
+    assigns `error_rate` to both the `error_model` and `code` 
+    properties of the simulation, such that the wrong syndrome is 
+    returned from the code at that error rate. 
     """
     
     sim_lattice = SquareLattice((size,size))
-    sim_dual_lattice_list = [SquareLattice((size,size), is_dual=True)] * size
+    sim_dual_lattice_list = []
+    for idx in xrange(size):
+        sim_dual_lattice_list.append(SquareLattice((size,size), is_dual=True))
     sim_model = depolarizing_model(error_rate)
     sim_code_func = noisy_toric_code
     sim_decoder = ft_mwpm_decoder(sim_lattice, sim_dual_lattice_list)
@@ -111,8 +115,8 @@ def noisy_toric_code_sim(size, error_rate, n_trials, filename):
                 'logical_operators', 'n_trials']
 
     sim_values = [sim_lattice, sim_dual_lattice_list, sim_model, 
-                    error_rate, sim_code_func, sim_decoder, 
-                    sim_log_ops, n_trials]
+                    error_rate, sim_code_func, 
+                    sim_decoder, sim_log_ops, n_trials]
     
     sim_dict = dict(zip(sim_keys, sim_values))
 
