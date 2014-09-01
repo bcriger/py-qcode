@@ -8,17 +8,27 @@ __all__ = ['ErrorCorrectingCode', 'ErrorCheck', 'StabilizerCheck',
 
 class ErrorCheck(object):
     """
-    This is the primitive operation of measurement for error-correcting codes; it takes a list of errors on a subset of the primal lattice of the code and translates it into syndromes on a subset of the dual lattice.
+    This is the primitive operation of measurement for 
+    error-correcting codes; it takes a list of errors on a subset of 
+    the primal lattice of the code and translates it into syndromes on 
+    a subset of the dual lattice.
 
-    :param primal_sets: co-ordinates from which the error check will collect syndromes. I'll add input checking so that tuples of co-ordinates can be entered on their own instead of the objects which wrap them.
+    :param primal_sets: co-ordinates from which the error check will 
+    collect syndromes. I'll add input checking so that tuples of co-
+    ordinates can be entered on their own instead of the objects which 
+    wrap them.
 
-    :type primal_sets: collection of whatever maps to :class:`py_qcode.Point` objects
+    :type primal_sets: collection of whatever maps to 
+    :class:`py_qcode.Point` objects
 
-    :param dual_points: points on the dual lattice to which the syndrome for this error check will be written
+    :param dual_points: points on the dual lattice to which the 
+    syndrome for this error check will be written
 
-    :type dual_points: set/list of tuples or :class:`py_qcode.Point` objects.
+    :type dual_points: set/list of tuples or :class:`py_qcode.Point` 
+    objects.
 
-    :param rule: lookup table or other mechanism that maps errors to syndromes.
+    :param rule: lookup table or other mechanism that maps errors to
+    syndromes.
 
     :type rule: function or dict
 
@@ -72,7 +82,9 @@ class ErrorCheck(object):
 
 class StabilizerCheck(ErrorCheck):
     """
-    subclass of :class:`py_qcode.ErrorCheck`, takes anything that can be cast to a :class:`qecc.Pauli` instead of a rule, and uses commutation to determine the syndrome. 
+    subclass of :class:`py_qcode.ErrorCheck`, takes anything that can 
+    be cast to a :class:`qecc.Pauli` instead of a rule, and uses 
+    commutation to determine the syndrome. 
     """
     def __init__(self, primal_sets, dual_points, stabilizer,
                      noise_model=(0., lambda a: a), indy_css=False):
@@ -207,7 +219,9 @@ def noisy_toric_code(primal_grid, dual_grid, error_rate):
     star_duals = [dual_grid[coord] for coord in star_coords]
     star_primal = [primal_grid.neighbours(coord) 
                     for coord in star_coords]
+    
     z_flip = lambda synd: letter_flip(synd, 'Z')
+    
     star_check = StabilizerCheck(star_primal, star_duals, 'XXXX',
         (error_rate, z_flip), indy_css=True)
     
@@ -215,7 +229,9 @@ def noisy_toric_code(primal_grid, dual_grid, error_rate):
     plaq_duals = [dual_grid[coord] for coord in plaq_coords]
     plaq_primal = [primal_grid.neighbours(coord) 
                     for coord in plaq_coords]
+    
     x_flip = lambda synd: letter_flip(synd, 'X')
+    
     plaq_check = StabilizerCheck(plaq_primal, plaq_duals, 'ZZZZ', 
         (error_rate, x_flip), indy_css=True)
 

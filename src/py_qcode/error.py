@@ -10,9 +10,16 @@ ACCEPTABLE_OPERATORS = PAULIS + ['H', 'P']
 
 class ErrorModel(object):
     """
-    Wraps a list of tuples corresponding to a discrete probability and an operator. This assumes independent identically-distributed noise, though not necessarily Pauli.
+    Wraps a list of tuples corresponding to a discrete probability and 
+    an operator. This assumes independent identically-distributed 
+    noise, though not necessarily Pauli.
 
-    :param prob_op_list: A list of probabilites and associated operators. The probabilites are floats which must sum to 1 to within :math:`10^{-12}`. The operators are represented by strings which must be drawn from the list of acceptable operators `['I','X','Y','Z','H','P']` Each pair (a probability and its associated operator) is stored in a tuple.
+    :param prob_op_list: A list of probabilites and associated 
+    operators. The probabilites are floats which must sum to 1 to 
+    within :math:`10^{-12}`. The operators are represented by strings
+    which must be drawn from the list of acceptable operators 
+    `['I','X','Y','Z','H','P']` Each pair (a probability and its 
+    associated operator) is stored in a tuple.
 
     :type prob_op_list: list
     """
@@ -63,13 +70,18 @@ class PauliErrorModel(ErrorModel):
 
 def depolarizing_model(p):
     """
-    The depolarizing model applies the identity with probability :math:`1-p`, and each of the single qubit Pauli operators :math:`X`, :math:`Y`, and :math:`Z` with probability :math:`\dfrac{p}{3}`. 
+    The depolarizing model applies the identity with probability 
+    :math:`1-p`, and each of the single qubit Pauli operators 
+    :math:`X`, :math:`Y`, and :math:`Z` with probability 
+    :math:`\dfrac{p}{3}`. 
     """
     return PauliErrorModel([(1. - p, 'I'), (p / 3., 'X'), (p / 3., 'Y'), (p / 3., 'Z')])
 
 def iidxz_model(px, pz=None):
     """
-    The independent identically-distributed X/Z model applies a bit and phase flip to each site, resulting in a reduced probability of Y errors
+    The independent identically-distributed X/Z model applies a bit 
+    and phase flip to each site, resulting in a reduced probability of
+    Y errors.
     """
     if pz is None:
         pz = px

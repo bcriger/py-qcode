@@ -207,6 +207,11 @@ class FTSimulation():
                 #print operator
                 com_relation_list.append(operator.test(self.lattice))
             self.logical_error.append(com_relation_list)
+        
+        #Clean up results from final simulation
+        self.lattice.clear()
+        for dual_lattice in self.dual_lattice_list:
+            dual_lattice.clear()
     
     def save(self, filename):
         big_dict = {}
