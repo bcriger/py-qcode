@@ -102,7 +102,9 @@ def noisy_toric_code_sim(size, error_rate, n_trials, filename):
     """
     
     sim_lattice = SquareLattice((size,size))
-    sim_dual_lattice_list = [SquareLattice((size,size), is_dual=True)] * size
+    sim_dual_lattice_list = []
+    for idx in xrange(size):
+        sim_dual_lattice_list.append(SquareLattice((size,size), is_dual=True))
     sim_model = depolarizing_model(error_rate)
     sim_code_func = noisy_toric_code
     sim_decoder = ft_mwpm_decoder(sim_lattice, sim_dual_lattice_list)
