@@ -4,29 +4,33 @@ from qecc import X, Z, I
 
 from time import sleep
 
-#size=(14,14)
+size=(2,2)
 #size=(40,40)
-size=(128,128)
+#size=(128,128)
 
 n_trials = 1
 
-
+'''
 test_lattice = pq.SquareLattice(size)
 test_dual_lattice = pq.SquareLattice(size, is_dual=True)
 test_model = pq.depolarizing_model(0.05)
 test_code = pq.toric_code(test_lattice, test_dual_lattice)
 test_decoder = pq.mwpm_decoder(test_lattice, test_dual_lattice)
 test_logical_ops = pq.toric_log_ops(test_lattice.size)
-
 '''
+
 test_lattice = pq.SquareOctagonLattice(size)
 test_dual_lattice = pq.UnionJackLattice(size, is_dual=True)
 test_model = pq.depolarizing_model(0.05)
 test_code = pq.square_octagon_code(test_lattice, test_dual_lattice)
 test_decoder = pq.mwpm_decoder(test_lattice, test_dual_lattice)
 test_logical_ops = pq.squoct_log_ops(test_lattice.total_size)
-'''
+
 for idx in range(n_trials):
+    
+    test_lattice.clear()
+    test_dual_lattice.clear()
+
     test_model.act_on(test_lattice)
     print "Real Errors: \n============"
     pq.error_print(test_lattice)
@@ -51,15 +55,15 @@ for idx in range(n_trials):
     print "Logical Operator Commutation Relations:\n======================================="
     for op in test_logical_ops:
         print op.test(test_lattice)
-    test_lattice.clear()
-    test_dual_lattice.clear()
+    #test_lattice.clear()
+    #test_dual_lattice.clear()
 
 #del block to test memory usage between iterations
-del test_lattice
-del test_dual_lattice
-del test_decoder
-del test_code
-del test_model
-del test_logical_ops
+#del test_lattice
+#del test_dual_lattice
+#del test_decoder
+#del test_code
+#del test_model
+#del test_logical_ops
 
-sleep(5)
+#sleep(5)
