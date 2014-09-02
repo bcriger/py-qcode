@@ -59,7 +59,7 @@ def squoct_log_ops(total_size):
     
     #Tough to tell what is/is not a gauge operator. Alternate sets 
     #defined below:
-
+    '''
     x_1 = LogicalOperator("X_1", Pauli('X' * (total_size[0] / 3)),
                             [(x, 0) for x in shift_edge_0])
     x_2 = LogicalOperator("X_2", Pauli('X' * (total_size[1] / 3)),
@@ -68,8 +68,8 @@ def squoct_log_ops(total_size):
                             [(3, x) for x in edge_1])
     z_2 = LogicalOperator("Z_2", Pauli('Z' * (total_size[0] / 3)),
                             [(x, 3) for x in edge_0])
-
     '''
+    #'''
     x_1 = LogicalOperator("X_1", Pauli('X' * (total_size[1] / 3)),
                             [(3, x) for x in edge_1])
     x_2 = LogicalOperator("X_2", Pauli('X' * (total_size[0] / 3)),
@@ -78,7 +78,7 @@ def squoct_log_ops(total_size):
                             [(x, 0) for x in shift_edge_0])
     z_2 = LogicalOperator("Z_2", Pauli('Z' * (total_size[1] / 3)),
                             [(0, x) for x in shift_edge_1])
-    '''
+    #'''
 
 
     return [x_1, x_2, z_1, z_2]
