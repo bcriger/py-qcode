@@ -15,13 +15,13 @@ libqcode_dist = cdll.LoadLibrary(path_to_lib)
 __all__ = ['Point', 'Lattice', 'SquareLattice', 'SquareOctagonLattice',
              'UnionJackLattice']
 
-"""
+#"""
 __all__.extend(['skew_coords', '_squoct_affine_map', 'straight_octagon_dist', 
                 'straight_octagon_path', 'octagon_octagon_path',
                 'octagon_octagon_dist', 'square_octagon_dist', 
                 'square_octagon_path', 'square_square_dist',
                 'square_square_path', 'appropriate_neighbours'])
-"""
+#"""
 
 ##constants##
 SIDES = ['u', 'd', 'r', 'l', 'f', 'b'] #up, down, left, right, front, back
@@ -300,7 +300,9 @@ class SquareOctagonLattice(Lattice):
     an affine map. Each point in this lattice is then 'graduated' to a
     square consiting of nearest neighbours.  
     """
-    def __init__(self, sz_tpl, is_dual = False, closed_boundary = True, rough_sides = ('u', 'r')):
+    def __init__(self, sz_tpl, is_dual = False, 
+                    closed_boundary = True, rough_sides = ('u', 'r')):
+
         dim = len(sz_tpl)
 
         try:
@@ -445,7 +447,7 @@ class UnionJackLattice(Lattice):
             sz_y = self.size[1] * 2
             x, y = (x - 1)/3, (y - 1)/3
             return self.points[x * sz_y + y]
-        '''
+        #'''
         def dist(pt1, pt2, synd_type):
             """
             This function is complicated because the number of errors 
@@ -482,7 +484,7 @@ class UnionJackLattice(Lattice):
             sz_x, sz_y = map(c_ushort, total_size)
             return libqcode_dist.squoct_dist(x1, y1, x2, y2, sz_x, sz_y, 
                                                     c_char(synd_type))
-        
+        '''
         super(UnionJackLattice, self).__init__(points, dim, dist)
         
         self.size = x_len, y_len
