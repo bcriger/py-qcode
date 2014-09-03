@@ -8,7 +8,7 @@ TEST_OBJS = ${NAME}_test.o
 
 #Compiler and flags
 CC = gcc 
-#CFLAGS := -g -fPIC -D_DEBUG_NEIGHBOURS #For debugging
+#CFLAGS := -g -fPIC -D_DEBUG -D_DEBUG_NEIGHBOURS #For debugging
 CFLAGS := -O3 -fPIC #For optimization
 
 #Source to include when compiling
