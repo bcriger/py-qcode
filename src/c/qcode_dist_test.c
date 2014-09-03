@@ -1,8 +1,8 @@
 #include "qcode_dist.h"
 #include "stdio.h"
 
-#define TORIC_CODE
-//#define SQUOCT_CODE
+//#define TORIC_CODE
+#define SQUOCT_CODE
 
 int main(int argc, char const *argv[])
 {
