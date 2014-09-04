@@ -10,9 +10,9 @@ install_path = abspath(install_path[0]) # str instead of str list.
 
 __all__ = ['Decoder', 'mwpm_decoder', 'ft_mwpm_decoder']
 
-#"""
+"""
 __all__.extend(['matching_alg'])
-#"""
+"""
 
 
 class Decoder():
@@ -310,8 +310,10 @@ def hi_d_matching_alg(primal_lattice, dual_lattice_list):
 
     #Project remaining paths onto n-dimensions:
     for lst in ([x_mate_tuples, z_mate_tuples]):
-        for item in lst:
-            item[0], item[1] = item[0][:-1], item[1][:-1]
+        for idx, item in enumerate(lst):
+            temp_item = list(item)
+            temp_item[0], temp_item[1] = temp_item[0][:-1], temp_item[1][:-1]
+            lst[idx] = tuple(temp_item)
 
     #Produce error chains according to min-length path between
     #mated points
