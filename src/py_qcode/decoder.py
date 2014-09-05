@@ -284,10 +284,14 @@ def hi_d_matching_alg(primal_lattice, dual_lattice_list):
                 #Negative weights are no good for networkx
                 edge_tuple = (node, other_node,
                     size_constant - dual_lattice_list[0].dist(node, other_node, synd_type)
-                    + abs(node[-1]-other_node[-1]))
+                    - abs(node[-1]-other_node[-1]))
                 g.add_weighted_edges_from([edge_tuple])
 
+
+    #print 'primal_lattice' + str(primal_lattice)
+    #print 'dual_lattice_list' + str(dual_lattice_list)
     #print 'x_graph = ' + str(x_graph.adj)    
+    #print 'z_graph = ' + str(z_graph.adj)    
     
     x_mate_dict, z_mate_dict = \
     map(nx.max_weight_matching, (x_graph, z_graph))
