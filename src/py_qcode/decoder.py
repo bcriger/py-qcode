@@ -262,12 +262,15 @@ def hi_d_matching_alg(primal_lattice, dual_lattice_list):
             crds = point.coords
             #print "co-ordinates: {0}".format(str(crds))
             #print "syndrome comparison: {0} vs. {1}".format(point.syndrome, prev_lattice[crds].syndrome)
-            if point.syndrome != prev_lattice[crds].syndrome:
-                if any([ltr in point.syndrome for ltr in 'xX']):
+            curr_synd = point.syndrome
+            prev_synd = prev_lattice[crds].syndrome
+            if curr_synd != prev_synd:
+                if any([ltr in curr_synd + prev_synd for ltr in 'xX']):
                     x_graph.add_node(crds + (idx, ))
-                if any([ltr in point.syndrome for ltr in 'zZ']):
+                if any([ltr in curr_synd + prev_synd for ltr in 'zZ']):
                     z_graph.add_node(crds + (idx, ))                    
-    print 'x_graph = ' + str(x_graph.edges())    
+    
+    #import pdb; pdb.set_trace()
     #set an additive constant large enough for all weights to be 
     #positive:
     size_constant = 2 * len(primal_lattice.size) * \
@@ -284,6 +287,8 @@ def hi_d_matching_alg(primal_lattice, dual_lattice_list):
                     + abs(node[-1]-other_node[-1]))
                 g.add_weighted_edges_from([edge_tuple])
 
+    #print 'x_graph = ' + str(x_graph.adj)    
+    
     x_mate_dict, z_mate_dict = \
     map(nx.max_weight_matching, (x_graph, z_graph))
     x_mate_temps = x_mate_dict.items()
