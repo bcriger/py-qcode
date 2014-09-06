@@ -10,9 +10,9 @@ install_path = abspath(install_path[0]) # str instead of str list.
 
 __all__ = ['Decoder', 'mwpm_decoder', 'ft_mwpm_decoder']
 
-#"""
+"""
 __all__.extend(['matching_alg'])
-#"""
+"""
 
 
 class Decoder():
@@ -262,12 +262,15 @@ def hi_d_matching_alg(primal_lattice, dual_lattice_list):
             crds = point.coords
             #print "co-ordinates: {0}".format(str(crds))
             #print "syndrome comparison: {0} vs. {1}".format(point.syndrome, prev_lattice[crds].syndrome)
-            if point.syndrome != prev_lattice[crds].syndrome:
-                if any([ltr in point.syndrome for ltr in 'xX']):
+            curr_synd = point.syndrome
+            prev_synd = prev_lattice[crds].syndrome
+            if curr_synd != prev_synd:
+                if any([ltr in curr_synd + prev_synd for ltr in 'xX']):
                     x_graph.add_node(crds + (idx, ))
-                if any([ltr in point.syndrome for ltr in 'zZ']):
+                if any([ltr in curr_synd + prev_synd for ltr in 'zZ']):
                     z_graph.add_node(crds + (idx, ))                    
-    print 'x_graph = ' + str(x_graph.edges())    
+    
+    #import pdb; pdb.set_trace()
     #set an additive constant large enough for all weights to be 
     #positive:
     size_constant = 2 * len(primal_lattice.size) * \
@@ -281,9 +284,15 @@ def hi_d_matching_alg(primal_lattice, dual_lattice_list):
                 #Negative weights are no good for networkx
                 edge_tuple = (node, other_node,
                     size_constant - dual_lattice_list[0].dist(node, other_node, synd_type)
-                    + abs(node[-1]-other_node[-1]))
+                    - abs(node[-1]-other_node[-1]))
                 g.add_weighted_edges_from([edge_tuple])
 
+
+    #print 'primal_lattice' + str(primal_lattice)
+    #print 'dual_lattice_list' + str(dual_lattice_list)
+    #print 'x_graph = ' + str(x_graph.adj)    
+    #print 'z_graph = ' + str(z_graph.adj)    
+    
     x_mate_dict, z_mate_dict = \
     map(nx.max_weight_matching, (x_graph, z_graph))
     x_mate_temps = x_mate_dict.items()
@@ -310,8 +319,10 @@ def hi_d_matching_alg(primal_lattice, dual_lattice_list):
 
     #Project remaining paths onto n-dimensions:
     for lst in ([x_mate_tuples, z_mate_tuples]):
-        for item in lst:
-            item[0], item[1] = item[0][:-1], item[1][:-1]
+        for idx, item in enumerate(lst):
+            temp_item = list(item)
+            temp_item[0], temp_item[1] = temp_item[0][:-1], temp_item[1][:-1]
+            lst[idx] = tuple(temp_item)
 
     #Produce error chains according to min-length path between
     #mated points
