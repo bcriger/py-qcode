@@ -447,7 +447,7 @@ class UnionJackLattice(Lattice):
             sz_y = self.size[1] * 2
             x, y = (x - 1)/3, (y - 1)/3
             return self.points[x * sz_y + y]
-        #'''
+        '''
         def dist(pt1, pt2, synd_type):
             """
             This function is complicated because the number of errors 
@@ -484,7 +484,7 @@ class UnionJackLattice(Lattice):
             sz_x, sz_y = map(c_ushort, total_size)
             return libqcode_dist.squoct_dist(x1, y1, x2, y2, sz_x, sz_y, 
                                                     c_char(synd_type))
-        '''
+        #'''
         super(UnionJackLattice, self).__init__(points, dim, dist)
         
         self.size = x_len, y_len
