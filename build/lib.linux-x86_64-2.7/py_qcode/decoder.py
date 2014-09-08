@@ -58,7 +58,11 @@ def ft_mwpm_decoder(primal_lattice, dual_lattice_list):
        object, recording differences between the syndromes as vertices 
        on the graph.
     """
+    '''
     return Decoder(hi_d_matching_alg, primal_lattice, dual_lattice_list, 
+                    name = '(n+1)-dimensional Minimum-Weight Matching')
+    '''
+    return Decoder(hi_d_blossom_matching_alg, primal_lattice, dual_lattice_list, 
                     name = '(n+1)-dimensional Minimum-Weight Matching')
 
 def matching_alg(primal_lattice, dual_lattice):
@@ -284,10 +288,14 @@ def hi_d_matching_alg(primal_lattice, dual_lattice_list):
                 #Negative weights are no good for networkx
                 edge_tuple = (node, other_node,
                     size_constant - dual_lattice_list[0].dist(node, other_node, synd_type)
-                    + abs(node[-1]-other_node[-1]))
+                    - abs(node[-1]-other_node[-1]))
                 g.add_weighted_edges_from([edge_tuple])
 
+
+    #print 'primal_lattice' + str(primal_lattice)
+    #print 'dual_lattice_list' + str(dual_lattice_list)
     #print 'x_graph = ' + str(x_graph.adj)    
+    #print 'z_graph = ' + str(z_graph.adj)    
     
     x_mate_dict, z_mate_dict = \
     map(nx.max_weight_matching, (x_graph, z_graph))
@@ -335,3 +343,154 @@ def hi_d_matching_alg(primal_lattice, dual_lattice_list):
                     print coord_set
 
     pass #Subroutine
+
+def hi_d_blossom_matching_alg(primal_lattice, dual_lattice_list):
+    """
+    This algorithm uses the C++ library 'Blossom V' to perform the 
+    perfect matching algorithm, hopefully saving a bit of time on the 
+    most expensive part of decoding.
+    """
+    x_verts = []; z_verts = []
+    
+    #For all points on each dual_lattice, compare with the point at
+    #the previous time step, and add a node to the appropriate 
+    #graph if they differ:
+    for point in dual_lattice_list[0].points:
+        if point.syndrome: #exists
+            if any([ltr in point.syndrome for ltr in 'xX']):
+                x_verts.append(point.coords + (0, ))
+            if any([ltr in point.syndrome for ltr in 'zZ']):
+                z_verts.append(point.coords + (0, ))
+
+    for idx in range(1, len(dual_lattice_list)):
+        curr_lattice = dual_lattice_list[idx]
+        prev_lattice = dual_lattice_list[idx - 1]
+        for point in curr_lattice.points:
+            crds = point.coords
+            #print "co-ordinates: {0}".format(str(crds))
+            #print "syndrome comparison: {0} vs. {1}".format(point.syndrome, prev_lattice[crds].syndrome)
+            curr_synd = point.syndrome
+            prev_synd = prev_lattice[crds].syndrome
+            if curr_synd != prev_synd:
+                if any([ltr in curr_synd + prev_synd for ltr in 'xX']):
+                    x_verts.append(crds + (idx, ))
+                if any([ltr in curr_synd + prev_synd for ltr in 'zZ']):
+                    z_verts.append(crds + (idx, ))
+
+    num_x_verts, num_z_verts = len(x_verts), len(z_verts) 
+    num_x_edges = num_x_verts * (num_x_verts - 1) / 2
+    num_z_edges = num_z_verts * (num_z_verts - 1) / 2
+
+    x_edges = zeros((num_x_edges, 3), dtype = int16)
+    z_edges = zeros((num_z_edges, 3), dtype = int16)
+    x_partners = zeros((num_x_verts,), dtype = int16)
+    z_partners = zeros((num_z_verts,), dtype = int16)
+    
+    #dist = dual_lattice.dist
+    dist = lambda v, o_v, s_t : \
+        dual_lattice_list[0].dist(v[:-1], o_v[:-1], s_t) + \
+        abs(v[-1] - o_v[-1])
+    
+    for verts, edges, synd_type in zip([x_verts, z_verts],
+                                         [x_edges, z_edges], 'XZ'):
+        edge_count = 0
+        for vert_idx, vert in enumerate(verts):
+            for other_idx, o_vert in enumerate(verts[vert_idx + 1:]):
+                edges[edge_count,:] = vert_idx,\
+                                        other_idx + vert_idx + 1, \
+                                        dist(vert, o_vert, synd_type)
+                edge_count += 1
+
+    #Bring in code
+    c_code = '''
+    int edge_idx, vert_idx;
+    int return_val[num_verts];
+    PerfectMatching *pm = new PerfectMatching(num_verts, num_edges);
+
+    struct PerfectMatching::Options options;
+    options.verbose = false; //suppress printing from c++
+
+    pm->options = options;
+
+    for ( edge_idx = 0; edge_idx < num_edges; edge_idx++ )
+    {
+        pm->AddEdge(edges(edge_idx,0), edges(edge_idx,1), edges(edge_idx,2));
+    }
+    pm->Solve();
+    for (vert_idx = 0; vert_idx < num_verts; ++vert_idx)
+        {
+            int partner = pm->GetMatch(vert_idx);
+            partners(vert_idx) = partner;
+        }
+    delete pm;
+    '''
+    
+    #Auxiliary arguments to scipy.weave.inline:
+    arg_names = ['num_verts', 'num_edges', 'edges', 'partners']
+    headers = ['<PerfectMatching.h>']
+    libraries = ["rt"]
+    #print install_path
+    include_dirs = [install_path + '/blossom5-v2.04.src/']
+    extra_objects = [include_dirs[0] + 'blossom.o']
+
+    #The heavy lifting:
+    """
+    print 'x_edges\n======='
+    print x_edges
+    print 'z_edges\n======='
+    print z_edges
+    """
+    for num_verts, num_edges, edges, partners in \
+    zip([num_x_verts, num_z_verts],[num_x_edges, num_z_edges],
+        [x_edges, z_edges], [x_partners, z_partners]):
+        
+        weave.inline(c_code, arg_names = arg_names, 
+            headers = headers, include_dirs = include_dirs, 
+            type_converters = weave.converters.blitz, 
+            extra_objects = extra_objects, 
+            compiler='gcc', libraries=libraries)
+
+    #Post-process 1D partner lists to avoid duplicate paths:
+
+    x_mate_temps, z_mate_temps = [], []
+    x_mate_tuples, z_mate_tuples = [], []
+    for verts, partners, mate_tuples in zip([x_verts, z_verts],
+                                        [x_partners, z_partners],
+                                        [x_mate_temps, z_mate_temps]):
+        partnered_verts = []
+        for vert, partner in enumerate(partners):
+            if vert in partnered_verts:
+                continue
+            else:
+                mate_tuples.append((verts[vert], verts[partners[vert]]))
+                partnered_verts.append(partners[vert])
+
+    #Eliminate vertical paths
+    for lst_in, lst_out in zip([x_mate_temps, z_mate_temps],
+                                [x_mate_tuples, z_mate_tuples]):
+        for mate_tuple in lst_in:
+            if mate_tuple[0][:-1] != mate_tuple[1][:-1]:
+                lst_out.append(mate_tuple)
+
+    #Project remaining paths onto n-dimensions:
+    for lst in ([x_mate_tuples, z_mate_tuples]):
+        for idx, item in enumerate(lst):
+            temp_item = list(item)
+            temp_item[0], temp_item[1] = temp_item[0][:-1], temp_item[1][:-1]
+            lst[idx] = tuple(temp_item)
+
+    #Produce error chains according to min-length path between
+    #mated points
+    for pauli, tpl_lst in zip([X,Z],[x_mate_tuples, z_mate_tuples]):
+        #pdb.set_trace()
+        for pair in tpl_lst:
+            coord_set = primal_lattice.min_distance_path(*pair, synd_type=str(pauli.op))
+            for coord in coord_set:
+                #print coord
+                try:
+                    primal_lattice[coord].error *= pauli
+                except KeyError: 
+                    print pair
+                    print coord_set
+
+    pass #This function is secretly a subroutine

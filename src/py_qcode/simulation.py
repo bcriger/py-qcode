@@ -182,8 +182,9 @@ class FTSimulation():
             
             #In order to guarantee that the resulting lattice operator 
             #is in the normalizer, we assume that the final round of 
-            #error correction is perfect. Errors hidden by this round
-            #survive to the next. 
+            #error correction is perfect. Theoretically, errors hidden
+            #by this round survive to the next. In practice, thus far,
+            #These errors are cleared.  
             noiseless_code = self.code_func(self.lattice, 
                                     self.dual_lattice_list[-1], 0.0)
             noiseless_code.measure()
@@ -195,7 +196,7 @@ class FTSimulation():
             
             self.dual_lattice_list[-1].clear()
             #syndrome_print(self.dual_lattice_list[-1])
-            
+            noiseless_code.measure()
             for point in self.dual_lattice_list[-1].points:
                 if point.syndrome:
                     raise ValueError('Product of "inferred error"'+\
