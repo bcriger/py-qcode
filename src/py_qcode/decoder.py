@@ -378,6 +378,13 @@ def hi_d_blossom_matching_alg(primal_lattice, dual_lattice_list):
                     z_verts.append(crds + (idx, ))
 
     num_x_verts, num_z_verts = len(x_verts), len(z_verts) 
+    
+    #Fatal error if number of vertices is odd, we catch that early:
+    if (num_x_verts % 2) != 0:
+        raise ValueError("# of X vertices odd, no perfect matching.")
+    if (num_z_verts % 2) != 0:
+        raise ValueError("# of Z vertices odd, no perfect matching.")
+    
     num_x_edges = num_x_verts * (num_x_verts - 1) / 2
     num_z_edges = num_z_verts * (num_z_verts - 1) / 2
 

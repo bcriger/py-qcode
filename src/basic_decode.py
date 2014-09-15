@@ -5,7 +5,7 @@ from qecc import X, Z, I
 from time import sleep
 
 #size=(2,2)
-size=(40,40)
+size=(20,20)
 #size=(128,128)
 
 n_trials = 1
@@ -56,13 +56,3 @@ for idx in range(n_trials):
         print op.test(test_lattice)
     #test_lattice.clear()
     #test_dual_lattice.clear()
-
-#del block to test memory usage between iterations
-#del test_lattice
-#del test_dual_lattice
-#del test_decoder
-#del test_code
-#del test_model
-#del test_logical_ops
-
-#sleep(5)
