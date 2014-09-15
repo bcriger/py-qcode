@@ -10,7 +10,8 @@ from logical_operators import toric_log_ops, squoct_log_ops
 import cPickle as pkl
 
 __all__ = ['sim_from_file', 'square_toric_code_sim', 'error_print',
-             'syndrome_print', 'squoct_sim', 'noisy_toric_code_sim']
+            'syndrome_print', 'squoct_sim', 'noisy_toric_code_sim',
+            'noisy_squoct_sim']
 
 def error_print(lattice):
     printnone = True
@@ -149,3 +150,34 @@ def squoct_sim(size, error_rate, n_trials, filename):
     sim = Simulation(**sim_dict)
     sim.run()
     sim.save(filename + '.sim')
+
+def noisy_squoct_sim(size, error_rate, n_trials, filename):
+    """
+    This function provides a convenient means of doing a typical 
+    fault-tolerant simulation using the square-octagon code with noisy
+    syndrome measurements. 
+    """
+    
+    sim_lattice = SquareOctagonLattice((size,size))
+    sim_dual_lattice_list = []
+    for idx in xrange(size):
+        sim_dual_lattice_list.append(UnionJackLattice((size,size), is_dual=True))
+    sim_model = depolarizing_model(error_rate)
+    sim_code_func = noisy_squoct_code
+    sim_decoder = ft_mwpm_decoder(sim_lattice, sim_dual_lattice_list)
+    sim_log_ops = squoct_log_ops((size,size))
+
+    sim_keys = ['lattice', 'dual_lattice_list', 'error_model', 
+                'synd_noise', 'code_func', 'decoder', 
+                'logical_operators', 'n_trials']
+
+    sim_values = [sim_lattice, sim_dual_lattice_list, sim_model, 
+                    error_rate, sim_code_func, 
+                    sim_decoder, sim_log_ops, n_trials]
+    
+    sim_dict = dict(zip(sim_keys, sim_values))
+
+    sim = FTSimulation(**sim_dict)
+    sim.run()
+    sim.save(filename + '.sim')
+
