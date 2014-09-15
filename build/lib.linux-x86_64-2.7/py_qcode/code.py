@@ -4,7 +4,8 @@ from types import FunctionType
 from numpy.random import rand
 
 __all__ = ['ErrorCorrectingCode', 'ErrorCheck', 'StabilizerCheck', 
-            'toric_code', 'square_octagon_code', 'noisy_toric_code']
+            'toric_code', 'square_octagon_code', 'noisy_toric_code', 
+            'noisy_squoct_code']
 
 class ErrorCheck(object):
     """
@@ -220,8 +221,6 @@ def noisy_toric_code(primal_grid, dual_grid, error_rate):
     star_primal = [primal_grid.neighbours(coord) 
                     for coord in star_coords]
     
-    z_flip = lambda synd: letter_flip(synd, 'Z')
-    
     star_check = StabilizerCheck(star_primal, star_duals, 'XXXX',
         (error_rate, z_flip), indy_css=True)
     
@@ -230,8 +229,6 @@ def noisy_toric_code(primal_grid, dual_grid, error_rate):
     plaq_primal = [primal_grid.neighbours(coord) 
                     for coord in plaq_coords]
     
-    x_flip = lambda synd: letter_flip(synd, 'X')
-    
     plaq_check = StabilizerCheck(plaq_primal, plaq_duals, 'ZZZZ', 
         (error_rate, x_flip), indy_css=True)
 
@@ -239,6 +236,38 @@ def noisy_toric_code(primal_grid, dual_grid, error_rate):
                                 name="Noisy Toric Code")
 
 _sum = lambda iterable: reduce(lambda a, b: a + b, iterable)
+
+def noisy_squoct_code(primal_grid, dual_grid, error_rate):
+    """
+    Uses a few convenience functions to produce the concatenated 
+    toric/[[4,2,2]] code on a set of square lattices.
+    """
+    nx, ny = primal_grid.size
+
+    sq_coords = _squoct_affine_map(skew_coords(nx, ny))
+    sq_duals = [dual_grid[coord] for coord in sq_coords]
+    sq_primal = primal_grid.squares()
+    sq_check_X = StabilizerCheck(sq_primal, sq_duals, 'XXXX',
+                        (error_rate, z_flip), indy_css=True)
+    
+    sq_check_Z = StabilizerCheck(sq_primal, sq_duals, 'ZZZZ',
+                        (error_rate, x_flip), indy_css=True)
+    
+    x_oct_coords = _squoct_affine_map(_even_evens(nx, ny))
+    x_oct_duals = [dual_grid[coord] for coord in x_oct_coords]
+    x_oct_primal = primal_grid.x_octagons()
+    x_oct_check = StabilizerCheck(x_oct_primal, x_oct_duals,
+                    'XXXXXXXX', (error_rate, z_flip), indy_css=True)
+    
+    z_oct_coords = _squoct_affine_map(_odd_odds(nx, ny))
+    z_oct_duals = [dual_grid[coord] for coord in z_oct_coords]
+    z_oct_primal = primal_grid.z_octagons()
+    z_oct_check = StabilizerCheck(z_oct_primal, z_oct_duals,
+                    'ZZZZZZZZ', (error_rate, x_flip), indy_css=True)
+
+    return ErrorCorrectingCode([sq_check_Z, sq_check_X,
+                                x_oct_check, z_oct_check], 
+                                name="Noisy Square-Octagon Code")
 
 def letter_flip(synd, letter):
     """
@@ -251,3 +280,6 @@ def letter_flip(synd, letter):
         return letter
     else:
         raise ValueError("Unknown syndrome: {0}".format(synd))
+
+z_flip = lambda synd: letter_flip(synd, 'Z')
+x_flip = lambda synd: letter_flip(synd, 'X')
