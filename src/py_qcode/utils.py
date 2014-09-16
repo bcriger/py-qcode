@@ -11,7 +11,7 @@ import cPickle as pkl
 
 __all__ = ['sim_from_file', 'square_toric_code_sim', 'error_print',
             'syndrome_print', 'squoct_sim', 'noisy_toric_code_sim',
-            'noisy_squoct_sim']
+            'noisy_squoct_sim', 'n_anyons']
 
 def n_anyons(dual_lattice, anyon_t):
     if anyon_t not in 'xzXZ':
