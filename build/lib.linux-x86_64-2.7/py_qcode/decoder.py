@@ -46,7 +46,7 @@ def mwpm_decoder(primal_lattice, dual_lattice, blossom=True):
         return Decoder(matching_alg, primal_lattice, dual_lattice, 
                                         name='Minimum-Weight Matching')
 
-def ft_mwpm_decoder(primal_lattice, dual_lattice_list):
+def ft_mwpm_decoder(primal_lattice, dual_lattice_list, blossom=True):
     """
     Fault-tolerant decoder based on minimum-weight perfect matching 
     using the blossom algorithm, implemented in networkx. This decoder 
@@ -58,11 +58,11 @@ def ft_mwpm_decoder(primal_lattice, dual_lattice_list):
        object, recording differences between the syndromes as vertices 
        on the graph.
     """
-    '''
-    return Decoder(hi_d_matching_alg, primal_lattice, dual_lattice_list, 
+    if blossom:
+        return Decoder(hi_d_blossom_matching_alg, primal_lattice, dual_lattice_list, 
                     name = '(n+1)-dimensional Minimum-Weight Matching')
-    '''
-    return Decoder(hi_d_blossom_matching_alg, primal_lattice, dual_lattice_list, 
+    else:
+        return Decoder(hi_d_matching_alg, primal_lattice, dual_lattice_list, 
                     name = '(n+1)-dimensional Minimum-Weight Matching')
 
 def matching_alg(primal_lattice, dual_lattice):
@@ -249,32 +249,13 @@ def blossom_matching_alg(primal_lattice, dual_lattice):
 def hi_d_matching_alg(primal_lattice, dual_lattice_list):
     #First, construct a pair of graphs given syndrome data:
     x_graph = nx.Graph(); z_graph = nx.Graph()
-    #For all points on each dual_lattice, compare with the point at
-    #the previous time step, and add a node to the appropriate 
-    #graph if they differ:
-    for point in dual_lattice_list[0].points:
-        if point.syndrome: #exists
-            if any([ltr in point.syndrome for ltr in 'xX']):
-                x_graph.add_node(point.coords + (0, ))
-            if any([ltr in point.syndrome for ltr in 'zZ']):
-                z_graph.add_node(point.coords + (0, ))
-
-    for idx in range(1, len(dual_lattice_list)):
-        curr_lattice = dual_lattice_list[idx]
-        prev_lattice = dual_lattice_list[idx - 1]
-        for point in curr_lattice.points:
-            crds = point.coords
-            #print "co-ordinates: {0}".format(str(crds))
-            #print "syndrome comparison: {0} vs. {1}".format(point.syndrome, prev_lattice[crds].syndrome)
-            curr_synd = point.syndrome
-            prev_synd = prev_lattice[crds].syndrome
-            if curr_synd != prev_synd:
-                if any([ltr in curr_synd + prev_synd for ltr in 'xX']):
-                    x_graph.add_node(crds + (idx, ))
-                if any([ltr in curr_synd + prev_synd for ltr in 'zZ']):
-                    z_graph.add_node(crds + (idx, ))                    
     
-    #import pdb; pdb.set_trace()
+    x_verts, z_verts = hi_d_verts(dual_lattice_list)
+
+    for graph, v_list in zip([x_graph, z_graph],[x_verts, z_verts]):
+        for elem in v_list:
+            graph.add_node(elem)
+
     #set an additive constant large enough for all weights to be 
     #positive:
     size_constant = 2 * len(primal_lattice.size) * \
@@ -350,32 +331,8 @@ def hi_d_blossom_matching_alg(primal_lattice, dual_lattice_list):
     perfect matching algorithm, hopefully saving a bit of time on the 
     most expensive part of decoding.
     """
-    x_verts = []; z_verts = []
-    
-    #For all points on each dual_lattice, compare with the point at
-    #the previous time step, and add a node to the appropriate 
-    #graph if they differ:
-    for point in dual_lattice_list[0].points:
-        if point.syndrome: #exists
-            if any([ltr in point.syndrome for ltr in 'xX']):
-                x_verts.append(point.coords + (0, ))
-            if any([ltr in point.syndrome for ltr in 'zZ']):
-                z_verts.append(point.coords + (0, ))
 
-    for idx in range(1, len(dual_lattice_list)):
-        curr_lattice = dual_lattice_list[idx]
-        prev_lattice = dual_lattice_list[idx - 1]
-        for point in curr_lattice.points:
-            crds = point.coords
-            #print "co-ordinates: {0}".format(str(crds))
-            #print "syndrome comparison: {0} vs. {1}".format(point.syndrome, prev_lattice[crds].syndrome)
-            curr_synd = point.syndrome
-            prev_synd = prev_lattice[crds].syndrome
-            if curr_synd != prev_synd:
-                if any([ltr in curr_synd + prev_synd for ltr in 'xX']):
-                    x_verts.append(crds + (idx, ))
-                if any([ltr in curr_synd + prev_synd for ltr in 'zZ']):
-                    z_verts.append(crds + (idx, ))
+    x_verts, z_verts = hi_d_verts(dual_lattice_list)
 
     num_x_verts, num_z_verts = len(x_verts), len(z_verts) 
     
@@ -411,7 +368,7 @@ def hi_d_blossom_matching_alg(primal_lattice, dual_lattice_list):
     #Bring in code
     c_code = '''
     int edge_idx, vert_idx;
-    int return_val[num_verts];
+    //int return_val[num_verts];
     PerfectMatching *pm = new PerfectMatching(num_verts, num_edges);
 
     struct PerfectMatching::Options options;
@@ -501,3 +458,35 @@ def hi_d_blossom_matching_alg(primal_lattice, dual_lattice_list):
                     print coord_set
 
     pass #This function is secretly a subroutine
+
+def hi_d_verts(dual_lattice_list):
+    x_verts = []; z_verts = []
+    
+    #For all points on each dual_lattice, compare with the point at
+    #the previous time step, and add a node to the appropriate 
+    #graph if they differ:
+    for point in dual_lattice_list[0].points:
+        if point.syndrome: #exists
+            if any([ltr in point.syndrome for ltr in 'xX']):
+                x_verts.append(point.coords + (0, ))
+            if any([ltr in point.syndrome for ltr in 'zZ']):
+                z_verts.append(point.coords + (0, ))
+
+    for idx in range(1, len(dual_lattice_list)):
+        curr_lattice = dual_lattice_list[idx]
+        prev_lattice = dual_lattice_list[idx - 1]
+        for point in curr_lattice.points:
+            crds = point.coords
+            curr_synd = point.syndrome
+            prev_synd = prev_lattice[crds].syndrome
+            synd_diff = str_diff(curr_synd, prev_synd)
+            if any([ltr in synd_diff for ltr in 'xX']):
+                x_verts.append(crds + (idx, ))
+            if any([ltr in synd_diff for ltr in 'zZ']):
+                z_verts.append(crds + (idx, ))
+
+    return x_verts, z_verts
+
+def str_diff(str1, str2):
+    return ''.join([letter for letter in str1+str2 
+                        if (str1+str2).count(letter)==1])
