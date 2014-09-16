@@ -4,14 +4,25 @@ from simulation import Simulation, FTSimulation
 from lattice import SquareLattice, SquareOctagonLattice, UnionJackLattice
 from error import depolarizing_model
 from decoder import mwpm_decoder, ft_mwpm_decoder
-from code import toric_code, noisy_toric_code, square_octagon_code
+from code import toric_code, noisy_toric_code, square_octagon_code, noisy_squoct_code
 from logical_operators import toric_log_ops, squoct_log_ops
 
 import cPickle as pkl
 
 __all__ = ['sim_from_file', 'square_toric_code_sim', 'error_print',
             'syndrome_print', 'squoct_sim', 'noisy_toric_code_sim',
-            'noisy_squoct_sim']
+            'noisy_squoct_sim', 'n_anyons']
+
+def n_anyons(dual_lattice, anyon_t):
+    if anyon_t not in 'xzXZ':
+        raise ValueError("Unknown anyon type: {0}".format(anyon_t))
+
+    anyon_count = 0
+    for point in dual_lattice.points:
+        if point.syndrome.lower() == anyon_t.lower():
+            anyon_count += 1
+
+    return anyon_count
 
 def error_print(lattice):
     printnone = True
@@ -80,7 +91,7 @@ def square_toric_code_sim(size, error_rate, n_trials, filename):
     sim_model = depolarizing_model(error_rate)
     sim_code = toric_code(sim_lattice, sim_dual_lattice)
     sim_decoder = mwpm_decoder(sim_lattice, sim_dual_lattice)
-    sim_log_ops = toric_log_ops((size,size))
+    sim_log_ops = toric_log_ops(sim_lattice.total_size)
 
     sim_keys = ['lattice', 'dual_lattice', 'error_model', 'code', 
                             'decoder', 'logical_operators', 'n_trials']
@@ -165,7 +176,7 @@ def noisy_squoct_sim(size, error_rate, n_trials, filename):
     sim_model = depolarizing_model(error_rate)
     sim_code_func = noisy_squoct_code
     sim_decoder = ft_mwpm_decoder(sim_lattice, sim_dual_lattice_list)
-    sim_log_ops = squoct_log_ops((size,size))
+    sim_log_ops = squoct_log_ops(sim_lattice.total_size)
 
     sim_keys = ['lattice', 'dual_lattice_list', 'error_model', 
                 'synd_noise', 'code_func', 'decoder', 

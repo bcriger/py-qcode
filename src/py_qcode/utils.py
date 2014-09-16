@@ -11,7 +11,18 @@ import cPickle as pkl
 
 __all__ = ['sim_from_file', 'square_toric_code_sim', 'error_print',
             'syndrome_print', 'squoct_sim', 'noisy_toric_code_sim',
-            'noisy_squoct_sim']
+            'noisy_squoct_sim', 'n_anyons']
+
+def n_anyons(dual_lattice, anyon_t):
+    if anyon_t not in 'xzXZ':
+        raise ValueError("Unknown anyon type: {0}".format(anyon_t))
+
+    anyon_count = 0
+    for point in dual_lattice.points:
+        if point.syndrome.lower() == anyon_t.lower():
+            anyon_count += 1
+
+    return anyon_count
 
 def error_print(lattice):
     printnone = True

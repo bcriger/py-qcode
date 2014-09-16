@@ -235,8 +235,6 @@ def noisy_toric_code(primal_grid, dual_grid, error_rate):
     return ErrorCorrectingCode([star_check, plaq_check], 
                                 name="Noisy Toric Code")
 
-_sum = lambda iterable: reduce(lambda a, b: a + b, iterable)
-
 def noisy_squoct_code(primal_grid, dual_grid, error_rate):
     """
     Uses a few convenience functions to produce the concatenated 
@@ -283,3 +281,5 @@ def letter_flip(synd, letter):
 
 z_flip = lambda synd: letter_flip(synd, 'Z')
 x_flip = lambda synd: letter_flip(synd, 'X')
+
+_sum = lambda iterable: reduce(lambda a, b: a + b, iterable)
