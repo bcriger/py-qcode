@@ -153,7 +153,7 @@ class SquareLattice(Lattice):
                 return sum([min([abs(a - b) % (2 * sz),
                             (2 * sz - abs(a - b)) % (2 * sz)]) 
                             for a, b, sz in 
-                            zip(coord1, coord2, sz_tpl)]) 
+                            zip(coord1, coord2, sz_tpl)])/2
             '''
             def dist(coord1, coord2, synd_type):
                 x1, y1 = map(c_ushort, coord1); x2, y2 = map(c_ushort, coord2)
@@ -597,7 +597,7 @@ def is_sq_cent(coord):
     """
     return bool(sum(map(oct2sq, coord))%2)
 
-#If it's not an square center, it's an octagon center.
+#If it's not a square center, it's an octagon center.
 is_oct_cent = lambda coord: not(is_sq_cent(coord))
 
 def _squoct_affine_map(tpl_lst):
