@@ -1,4 +1,4 @@
-import networkx as nx
+#import networkx as nx
 from qecc import X, Z
 import pdb
 from scipy import weave
