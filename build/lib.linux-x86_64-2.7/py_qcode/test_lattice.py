@@ -95,19 +95,3 @@ def squ_squ_z_test():
 
 #__getitem__ tests, we confirm that, for all points in a lattice, 
 #lattice[(x, y)].coords == (x, y)
-
-def toric_items_test():
-    for pt in g_sq_lat.points:
-        assert g_sq_lat[pt.coords[0], pt.coords[1]] == pt
-
-def dual_toric_items_test():
-    for pt in g_d_sq_lat.points:
-        assert g_d_sq_lat[pt.coords[0], pt.coords[1]] == pt
-
-def squoct_items_test():
-    for pt in g_squoct_lat.points:
-            assert g_squoct_lat[pt.coords[0], pt.coords[1]] == pt
-
-def uj_items_test():
-    for pt in g_uj_lat.points:
-        assert g_uj_lat[pt.coords[0], pt.coords[1]] == pt

@@ -118,15 +118,15 @@ num_t squoct_dist(num_t x1, num_t y1, num_t x2, num_t y2, num_t sz_x, num_t sz_y
     #endif
 
     /*
-    Step two: We compute the neighbouring co-ordinates, of all input coordinates,
+    Step two: We compute the neighbouring co-ordinates of all input coordinates,
     in case some of the inputs represent squares:
     */
     if (x1 % 2){ //x coord is odd
-        if (synd_type == 'X'){
-            x1_u = (x1 + 1) % sz_x; x1_d = (x1 - 1) % sz_x;
+        if (synd_type == 'Z'){
+            x1_u = (x1 + 1) % sz_x; x1_d = (x1 - 1);
             y1_u = y1; y1_d = y1; 
         }
-        else if (synd_type == 'Z'){
+        else if (synd_type == 'X'){
             x1_u = x1; x1_d = x1;
             y1_u = (y1 + 1) % sz_y; if (y1 == 0) y1_d = sz_y - 1; else y1_d = y1 - 1; 
         }
@@ -143,17 +143,17 @@ num_t squoct_dist(num_t x1, num_t y1, num_t x2, num_t y2, num_t sz_x, num_t sz_y
     }
     if (x2 % 2){ //x coord is odd
         if (synd_type == 'X'){
-            y2_u = (y2 + 1) % sz_y; y2_d = (y2 - 1) % sz_y;
+            y2_u = (y2 + 1) % sz_y; if (y2 == 0) y2_d = sz_y - 1; else y2_d = y2 - 1;
             x2_u = x2; x2_d = x2; 
         }
         else if (synd_type == 'Z'){
-            y2_u = y2; y1_d = y2;
-            x2_u = (x2 + 1) % sz_x; if (x2 == 0) x2_d = sz_x - 1; else x2_d = x1 - 1; 
+            y2_u = y2; y2_d = y2;
+            x2_u = (x2 + 1) % sz_x; if (x2 == 0) x2_d = sz_x - 1; else x2_d = x2 - 1; 
         }
     }
     else { //x coord is even
         if (synd_type == 'Z'){
-            y2_u = (y2 + 1) % sz_y; if (y2 == 0) y2_d = sz_y - 1; else y2_d = (y2 - 1);
+            y2_u = (y2 + 1) % sz_y; if (y2 == 0) y2_d = sz_y - 1; else y2_d = y2 - 1;
             x2_u = x2; x2_d = x2; 
         }
         else if (synd_type == 'X'){
