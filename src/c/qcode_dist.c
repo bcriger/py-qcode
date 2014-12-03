@@ -95,6 +95,16 @@ num_t squoct_dist(num_t x1, num_t y1, num_t x2, num_t y2, num_t sz_x, num_t sz_y
     num_t x1_u, x1_d, x2_u, x2_d, y1_u, y1_d, y2_u, y2_d;
 
     /*
+    Step 0: Short circuit for points which are identical:
+    */
+    //
+    if (x1 == x2 && y1 == y2)
+    {
+        return 0;
+    }
+    else
+    {
+    /*
     Step 1: Each of the coordinates of the dual lattice has been 
     subjected to an affine map x -> (3x + 1), so that:
     + the lowest represented coordinate value will be 0
@@ -218,6 +228,7 @@ num_t squoct_dist(num_t x1, num_t y1, num_t x2, num_t y2, num_t sz_x, num_t sz_y
         num_steps += octagonal_dist(x1, y1, x2, y2, sz_x, sz_y);
     }
     return num_steps;
+    }
 }
 
 num_t toric_dist(num_t x1, num_t y1, num_t x2, num_t y2, num_t sz_x, num_t sz_y, char synd_type){
