@@ -1,5 +1,6 @@
 from numpy.random import rand
-from qecc import Pauli
+from qecc import Pauli, pauli_group
+import qecc as q
 from lattice import Lattice, Point #?
 from collections import Iterable
 
@@ -162,6 +163,27 @@ def iidxz_model(px, pz=None):
     return PauliErrorModel([((1. - px) * (1. - pz), 'I'), (px * (1. - pz), 'X'),
                         ((1. - px) * pz, 'Z'), (px * pz, 'Y')])
 
+def two_bit_twirl(p):
+    """
+    With probability p, selects a Pauli at random from the 
+    non-identity Paulis on two qubits.
+    """
+    prob_op_list = [(1. - p, 'II')]
+    for op in map(lambda a: a.op, list(pauli_group(2)))[1:]:
+        prob_op_list.append((p / 15., op))
+    
+    return PauliErrorModel(prob_op_list)
+
+def css_meas_model(stab_type, nq, err_1, err_2, prep_p):
+    """
+    Given a description of a circuit which measures a stabilizer of a 
+    CSS code, an error model for one- and two-qubit operations, and a 
+    preparation error probability, returns a multi-qubit error model to
+    be applied after ideal measurement.
+    """
+
+    return err_out, synd_prob
+
 rolling_sum = lambda lst: [sum(lst[:idx+1]) for idx in range(len(lst))]
 
 def _action(prob_op_list, sample):
@@ -188,3 +210,24 @@ def _whitelist_string(whitelist, string):
                                 "not found in whitelist {2}")\
                                     .format(string, letter, whitelist))
     pass
+
+def css_meas_circuit(stab_type, nq):
+    """
+    Produces a circuit which measures a CSS stabilizer of the required 
+    type, acting on a given number of bits. 
+    """
+    
+    if not isinstance(nq, int):
+        raise ValueError("nq must be integer")
+    elif nq < 0:
+        raise ValueError("nq must be positive")
+    
+    if stab_type == 'X':
+        cnot_pairs = [(idx, nq) for idx in range(len(nq))]
+    elif stab_type == 'Z':
+        cnot_pairs = [(nq, idx) for idx in range(len(nq))]
+    else:
+        raise ValueError("stab_type must be X or Z")
+
+    circ = q.Circuit(map(lambda pr: ('CNOT', pr[0], pr[1]), cnot_pairs))
+    return circ.pad_with_waits()
