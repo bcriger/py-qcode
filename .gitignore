@@ -10,7 +10,12 @@
 *.pyo
 *.egg
 *.a
- 
+
+# Other Compiled Source #
+#########################
+build/*.*
+src/c/test_program
+
 # Packages #
 ############
 # it's better to unpack these files and commit the raw source
