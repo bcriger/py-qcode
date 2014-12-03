@@ -788,6 +788,11 @@ def square_square_path(sq_1, sq_2, synd_type, total_size):
     intersection_1 = sq_oct_shift(sq_1, oct_1, total_size)
     intersection_2 = sq_oct_shift(sq_2, oct_2, total_size)
 
+    #short circuit to avoid length 2 paths which hit the same point 
+    #twice:
+    if intersection_1 == intersection_2:
+        return []
+
     oct_path = octagon_octagon_path(oct_1, oct_2, total_size)
     
     return [intersection_1] + oct_path + [intersection_2]
