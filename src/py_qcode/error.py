@@ -92,6 +92,9 @@ class PauliErrorModel(ErrorModel):
 
         super(PauliErrorModel, self).__init__(prob_op_list)
 
+    def __len__(self):
+        return len(self.prob_op_list[0][1])
+
     def act_on(self, register):
         
         ops = zip(*self.prob_op_list)[1]
@@ -156,6 +159,31 @@ class PauliErrorModel(ErrorModel):
 
         self.prob_op_list = zip(unique_probs, unique_ops)
     
+    def pad(self, idx_set, nq):
+        """
+        Given a PauliErrorModel, an index set and a number of qubits, 
+        pads the operators of the PauliErrorModel with 'I's, returning
+        a copy.
+        """
+        #Sanitize input
+        if len(self) != len(idx_set):
+            raise ValueError("the PauliErrorModel must act on the "+\
+                "same number of qubits as are in the index set.")
+        for idx in idx_set:
+            if not (0 <= idx < nq):
+                raise ValueError("All indices must be between 0 "+\
+                                    "and nq, including 0")
+        new_prob_ops=[]
+        
+        for prob, op in self.prob_op_list:
+            new_op = ['I'] * nq
+            for idx_idx, idx in enumerate(idx_set):
+                new_op[idx] = op[idx_idx]
+
+            new_prob_ops.append((prob, ''.join(new_op)))
+
+        return PauliErrorModel(new_prob_ops)
+
     def __mul__(self, other):
         """
         Given two error models, returns the error model resulting from
@@ -166,7 +194,7 @@ class PauliErrorModel(ErrorModel):
             raise ValueError("PauliErrorModel instances can only be "+\
                 "multiplied with each other.")
         
-        new_prob_ops=[]
+        new_prob_ops = []
         for self_p, self_o in self.prob_op_list:
             for oth_p, oth_o in other.prob_op_list:
                 new_prob_ops.append((self_p * oth_p, 
@@ -236,40 +264,34 @@ def fowler_meas_model(stab_type, nq, p):
     ident = q.Pauli('I' * (nq + 1))
     meas_circ = css_meas_circuit(stab_type, nq)
     err_dict = {}
-
     #State preparation flip
-    flip_type = 'X' if stab_type == 'Z' else 'Z'
+    flip_op = 'X' if stab_type == 'Z' else 'Z'
     
-    prep_fault = q.propagate_fault(meas_circ, 
-                    q.Pauli.from_sparse({nq: flip_type}, nq = nq + 1))
-    
-    err_dict_update(err_dict, prep_fault, p)
-    #err_dict_update(err_dict, ident, (1. - p))
-    
-    #Faults resulting from wait locations and CNOTs, provided by QuaEC:
-    for idx, sub_circuit in enumerate(meas_circ):
-        faults = q.possible_faults(sub_circuit)
-        for fault in faults:
-            if fault.wt == 0:
-                #identity
-                pass
-                #err_dict_update(err_dict, fault, (1. - p))
-            elif fault.wt == 1:
-                end_fault = q.propagate_fault(meas_circ[idx + 1:], fault)
-                err_dict_update(err_dict, end_fault, p / (3.))
-            elif fault.wt == 2:
-                end_fault = q.propagate_fault(meas_circ[idx + 1:], fault)
-                err_dict_update(err_dict, end_fault, p / (15.))
+    #error models to be propagated and multiplied:
+    mod_1 = depolarizing_model(p)
+    mod_2 = two_bit_twirl(p)
+    mod_spam = PauliErrorModel([(1. - p, ident.op),
+                                (p, 'I' * nq + flip_op)])
+
+    #initialize output error model
+    err_mod = PauliErrorModel([(1.0, 'I' * (nq + 1))])
+
+    #state prep error
+    err_mod *= mod_spam.propagate(meas_circ)
+    #measurement error
+    err_mod *= mod_spam
+
+    #location-wise error:
+    for idx, sub_circ in enumerate(meas_circ):
+        for loc in sub_circ:
+            if loc.wt == 1:
+                err_mod *= mod_1.propagate(meas_circ[idx + 1 : ])
+            elif loc.wt == 2:
+                err_mod *= mod_2.propagate(meas_circ[idx + 1 : ])
             else:
-                raise ValueError("Something weird has happened.")
+                raise ValueError("Something weird.")
 
-    #measurement fault
-    meas_fault = q.Pauli.from_sparse({nq: flip_type}, nq = nq + 1)
-    err_dict_update(err_dict, meas_fault, p)
-    #err_dict_update(err_dict, ident, (1. - p) )
-
-    return [(tpl[1], tpl[0]) for tpl in err_dict.items()]
-
+    return err_mod
 rolling_sum = lambda lst: [sum(lst[:idx+1]) for idx in range(len(lst))]
 
 def _action(prob_op_list, sample):
