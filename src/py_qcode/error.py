@@ -157,7 +157,11 @@ class PauliErrorModel(ErrorModel):
         self.prob_op_list = zip(unique_probs, unique_ops)
     
     def __mul__(self, other):
-        
+        """
+        Given two error models, returns the error model resulting from
+        the application of both to the same register.
+        """
+
         if not isinstance(other, PauliErrorModel):
             raise ValueError("PauliErrorModel instances can only be "+\
                 "multiplied with each other.")
@@ -170,7 +174,22 @@ class PauliErrorModel(ErrorModel):
 
         new_model = PauliErrorModel(new_prob_ops)
         new_model.compress()
-        return new_model 
+        return new_model
+
+    def propagate(self, circuit_list):
+        """
+        Given a PauliErrorModel and a list of `qecc.Circuit`s, 
+        propagates the operators  
+        """
+        probs, ops = zip(*self.prob_op_list)
+        new_ops = map(q.Pauli, ops)
+
+        new_ops = map(lambda p: q.propagate_fault(circuit_list, p), 
+                                                            new_ops) 
+
+        new_ops = map(lambda p: p.op, new_ops)
+        return PauliErrorModel(zip(probs, new_ops))
+
 
 #Convenience functions
 
