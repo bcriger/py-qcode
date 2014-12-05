@@ -212,8 +212,8 @@ class PauliErrorModel(ErrorModel):
         probs, ops = zip(*self.prob_op_list)
         new_ops = map(q.Pauli, ops)
 
-        new_ops = map(lambda p: q.propagate_fault(circuit_list, p), 
-                                                            new_ops) 
+        for idx, op in enumerate(new_ops):
+            new_ops[idx] = q.propagate_fault(circuit_list, op) 
 
         new_ops = map(lambda p: p.op, new_ops)
         return PauliErrorModel(zip(probs, new_ops))
@@ -274,7 +274,7 @@ def fowler_meas_model(stab_type, nq, p):
                                 (p, 'I' * nq + flip_op)])
 
     #initialize output error model
-    err_mod = PauliErrorModel([(1.0, 'I' * (nq + 1))])
+    err_mod = PauliErrorModel([(1.0, ident.op)])
 
     #state prep error
     err_mod *= mod_spam.propagate(meas_circ)
@@ -285,13 +285,16 @@ def fowler_meas_model(stab_type, nq, p):
     for idx, sub_circ in enumerate(meas_circ):
         for loc in sub_circ:
             if loc.wt == 1:
-                err_mod *= mod_1.propagate(meas_circ[idx + 1 : ])
+                big_mod = mod_1.pad(loc.qubits, nq + 1)
+                err_mod *= big_mod.propagate(meas_circ[idx + 1 : ])
             elif loc.wt == 2:
-                err_mod *= mod_2.propagate(meas_circ[idx + 1 : ])
+                big_mod = mod_2.pad(loc.qubits, nq + 1)
+                err_mod *= big_mod.propagate(meas_circ[idx + 1 : ])
             else:
                 raise ValueError("Something weird.")
 
     return err_mod
+
 rolling_sum = lambda lst: [sum(lst[:idx+1]) for idx in range(len(lst))]
 
 def _action(prob_op_list, sample):
