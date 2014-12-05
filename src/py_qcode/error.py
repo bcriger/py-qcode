@@ -1,7 +1,7 @@
 from numpy.random import rand
 from qecc import Pauli, pauli_group
 import qecc as q
-from lattice import Lattice, Point #?
+#from lattice import Lattice, Point #?
 from collections import Iterable
 
 ## ALL ##
@@ -140,6 +140,38 @@ class PauliErrorModel(ErrorModel):
 
         pass
 
+    def compress(self):
+        """
+        If `self` has non-unique operators, this method sums the 
+        probabilities of those operators and assigns the sum to the 
+        operator.  
+        """
+        probs, ops = zip(*self.prob_op_list)
+        unique_ops = list(set(ops))
+        unique_probs = [0 for elem in unique_ops]
+        for idx, unique_op in enumerate(unique_ops):
+            unique_probs[idx] = sum(probs[jdx] 
+                                    for jdx in range(len(ops))
+                                        if ops[jdx] == unique_op) 
+
+        self.prob_op_list = zip(unique_probs, unique_ops)
+    
+    def __mul__(self, other):
+        
+        if not isinstance(other, PauliErrorModel):
+            raise ValueError("PauliErrorModel instances can only be "+\
+                "multiplied with each other.")
+        
+        new_prob_ops=[]
+        for self_p, self_o in self.prob_op_list:
+            for oth_p, oth_o in other.prob_op_list:
+                new_prob_ops.append((self_p * oth_p, 
+                                (q.Pauli(self_o) * q.Pauli(oth_o)).op))
+
+        new_model = PauliErrorModel(new_prob_ops)
+        new_model.compress()
+        return new_model 
+
 #Convenience functions
 
 def depolarizing_model(p):
@@ -174,15 +206,50 @@ def two_bit_twirl(p):
     
     return PauliErrorModel(prob_op_list)
 
-def css_meas_model(stab_type, nq, err_1, err_2, prep_p):
+def fowler_meas_model(stab_type, nq, p):
     """
     Given a description of a circuit which measures a stabilizer of a 
-    CSS code, an error model for one- and two-qubit operations, and a 
-    preparation error probability, returns a multi-qubit error model to
-    be applied after ideal measurement.
+    CSS code and an error probability, returns the error model on 
+    `nq + 1` bits that results from conjugating all the wait location 
+    faults and CNOT faults as well as a measurement fault and a state 
+    preparation fault, which are determined by the stabilizer type.  
     """
+    ident = q.Pauli('I' * (nq + 1))
+    meas_circ = css_meas_circuit(stab_type, nq)
+    err_dict = {}
 
-    return err_out, synd_prob
+    #State preparation flip
+    flip_type = 'X' if stab_type == 'Z' else 'Z'
+    
+    prep_fault = q.propagate_fault(meas_circ, 
+                    q.Pauli.from_sparse({nq: flip_type}, nq = nq + 1))
+    
+    err_dict_update(err_dict, prep_fault, p)
+    #err_dict_update(err_dict, ident, (1. - p))
+    
+    #Faults resulting from wait locations and CNOTs, provided by QuaEC:
+    for idx, sub_circuit in enumerate(meas_circ):
+        faults = q.possible_faults(sub_circuit)
+        for fault in faults:
+            if fault.wt == 0:
+                #identity
+                pass
+                #err_dict_update(err_dict, fault, (1. - p))
+            elif fault.wt == 1:
+                end_fault = q.propagate_fault(meas_circ[idx + 1:], fault)
+                err_dict_update(err_dict, end_fault, p / (3.))
+            elif fault.wt == 2:
+                end_fault = q.propagate_fault(meas_circ[idx + 1:], fault)
+                err_dict_update(err_dict, end_fault, p / (15.))
+            else:
+                raise ValueError("Something weird has happened.")
+
+    #measurement fault
+    meas_fault = q.Pauli.from_sparse({nq: flip_type}, nq = nq + 1)
+    err_dict_update(err_dict, meas_fault, p)
+    #err_dict_update(err_dict, ident, (1. - p) )
+
+    return [(tpl[1], tpl[0]) for tpl in err_dict.items()]
 
 rolling_sum = lambda lst: [sum(lst[:idx+1]) for idx in range(len(lst))]
 
@@ -204,11 +271,10 @@ def _whitelist_string(whitelist, string):
     Common pattern throughout this file, test a string to see if all 
     its letters are members of a whitelist. 
     """
-    for letter in string:
-        if letter not in whitelist:
-            raise ValueError(("Input string {0} contains letter {1} "+\
-                                "not found in whitelist {2}")\
-                                    .format(string, letter, whitelist))
+    if not all(letter in whitelist for letter in string):
+        raise ValueError(("Input string {0} contains letter {1} "+\
+                            "not found in whitelist {2}")\
+                                .format(string, letter, whitelist))
     pass
 
 def css_meas_circuit(stab_type, nq):
@@ -222,12 +288,30 @@ def css_meas_circuit(stab_type, nq):
     elif nq < 0:
         raise ValueError("nq must be positive")
     
-    if stab_type == 'X':
-        cnot_pairs = [(idx, nq) for idx in range(len(nq))]
-    elif stab_type == 'Z':
-        cnot_pairs = [(nq, idx) for idx in range(len(nq))]
+    if stab_type == 'Z':
+        cnot_pairs = [(idx, nq) for idx in range(nq)]
+    elif stab_type == 'X':
+        cnot_pairs = [(nq, idx) for idx in range(nq)]
     else:
         raise ValueError("stab_type must be X or Z")
 
-    circ = q.Circuit(map(lambda pr: ('CNOT', pr[0], pr[1]), cnot_pairs))
-    return circ.pad_with_waits()
+    pr_to_cnot = lambda pr: ('CNOT', pr[0], pr[1])
+
+    circ = q.Circuit(*map(pr_to_cnot, cnot_pairs))
+    
+    return list(circ.group_by_time(pad_with_waits=True))
+
+def err_dict_update(err_dict, pauli, prob):
+    """
+    Takes a dictionary of the form {qecc.Pauli: float}, and performs 
+    an update. To do this, it checks whether the input pauli is in the
+    dictionary already. If so, it adds `prob` to the value of `pauli`,
+    if not it adds `pauli` to the dictionary with value `prob`.
+    """
+
+    if pauli.op in err_dict.keys():
+        err_dict[pauli.op] += prob
+    else:
+        err_dict[pauli.op] = prob
+    
+    return err_dict
