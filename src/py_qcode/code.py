@@ -39,7 +39,7 @@ class ErrorCheck(object):
     :type noise_model: tuple
     """
     def __init__(self, primal_sets, dual_points, rule,
-                    noise_model=(0., lambda a: a), fault_model=None):
+                    noise_model=(0., lambda a: a)):
 
         self.primal_sets = primal_sets
         self.dual_points = dual_points
@@ -90,7 +90,8 @@ class StabilizerCheck(ErrorCheck):
     commutation to determine the syndrome. 
     """
     def __init__(self, primal_sets, dual_points, stabilizer,
-                     noise_model=(0., lambda a: a), fault_model=None, indy_css=False):
+                 noise_model=(0., lambda a: a), fault_model=None,
+                 indy_css=False):
         
         if type(stabilizer) is str:
             stabilizer = Pauli(stabilizer)
@@ -113,9 +114,9 @@ class StabilizerCheck(ErrorCheck):
                 elif all([ltr in 'zZ' for ltr in stabilizer.op]):
                     syn_str = 'X'
                 else:
-                    raise ValueError("CSS Stabilizers must be all-X or all-Z; you entered: {0}".format(stabilizer))
+                    raise ValueError("CSS Stabilizers must be all-X "+\
+                        "or all-Z; you entered: {0}".format(stabilizer))
 
-                #print stabilizer, err_pauli, syn_str
                 if not(commutes_with(stabilizer)(err_pauli)):
                     return syn_str
                 else:
@@ -124,6 +125,7 @@ class StabilizerCheck(ErrorCheck):
         super(StabilizerCheck, self).__init__(primal_sets, dual_points, stab_rule, noise_model)
 
         self.stabilizer = stabilizer
+        self.indy_css = indy_css
         
     def evaluate(self):
         #Use error on first point to typecheck
@@ -132,12 +134,40 @@ class StabilizerCheck(ErrorCheck):
             super(StabilizerCheck, self).evaluate()
         elif type(test_error) is Pauli:
             for idx, point in enumerate(self.dual_points):
+                
                 multi_bit_error = reduce(lambda p1, p2: p1.tens(p2),
                             [pt.error for pt in self.primal_sets[idx]])
+                
+                if fault_model:
+                    #Generate Sample, switch syndrome if sample causes
+                    #syndrome error
+                    if not self.indy_css:
+                        raise NotImplementedError("Only CSS")
+                    try:
+                        big_pauli = fault_model.sample()
+                    except:
+                        raise NotImplementedError("Use DensePauliErrorModel")
+                    
+                    synd_err = big_pauli[-1]
+                    if not(commutes_with(self.stabilizer)(synd_err)):
+                        stab_type = self.stabilizer.op[0]
+                        flip_type = 'X' if stab_type == 'Z' else 'Z'
+                        self.noise_func = lambda synd: letter_flip(synd, flip_type)
+                    else:
+                        self.noise_func = lambda synd: synd       
+                
+                #Collect syndrome with updated noise function
                 if point.syndrome == None:
                     point.syndrome = self.noise_func(self.rule(multi_bit_error))
                 else:
                     point.syndrome += self.noise_func(self.rule(multi_bit_error))
+
+                #Record remainder of error onto lattice, where it will 
+                #be picked up in the next time step.
+                if fault_model: 
+                    multi_bit_error *= big_pauli[:-1]
+                    for jdx, pt in enumerate(self.primal_sets[idx]):
+                        pt.error = multi_bit_error[jdx]
 
 class ErrorCorrectingCode():
     """
@@ -148,11 +178,23 @@ class ErrorCorrectingCode():
     :class:`py_qcode.ErrorCheck`.
 
     :type parity_check_list: list  
+
+    :param fault_model: a map from :math:`n+1` - bit Pauli operators to
+    probabilities, sampled in order to determine whether the syndrome
+    is to be flipped, and what the post-measurement error is.
+    
+    :type fault_model: :class:`py_qcode.DensePauliErrorModel`
+
+    :param name: a title for the error-correcting code, saved as part
+    of simulation logging.
+    
+    :type name: str
     """
     def __init__(self, parity_check_list, name='Un-named'):
         
         self.parity_check_list = parity_check_list
         self.name = name
+        self.fault_model = fault_model
 
     def measure(self):
         """
