@@ -10,7 +10,6 @@ src/py_qcode/lattice.py
 src/py_qcode/libqcode_dist.so
 src/py_qcode/logical_operators.py
 src/py_qcode/simulation.py
-src/py_qcode/test.py
 src/py_qcode/test_lattice.py
 src/py_qcode/utils.py
 src/py_qcode.egg-info/PKG-INFO
