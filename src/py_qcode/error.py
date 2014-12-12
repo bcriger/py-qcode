@@ -194,6 +194,19 @@ class DensePauliErrorModel(object):
             self.vec[0] = 1.
             self.nq = nq
 
+    def sample(self):
+        """
+        Lazily selects a Pauli at random from the vector.
+        """
+        prob = rand()
+        idx = 0
+        for elem in np.nditer(self.vec):
+            if prob < elem:
+                return pauli_from_int(idx, self.nq)
+            else:
+                prob -= elem
+                idx += 1
+
     def __mul__(self, other):
         
         if not isinstance(other, DensePauliErrorModel):
@@ -433,11 +446,11 @@ class DensePauliErrorModel(object):
                                 (nq - 1 - cnot_idx)).vec[0]
         output_model.depolarize(cnot_idx, dep_p_after)
         
-    #measurement error    
+    #measurement error  
     output_model.flip(nq, p, flip_type)
     return output_model
 
-#------------------------Convenience Functions------------------------#
+#---------------------------Bit Manipulation--------------------------#
 
 def xz_split(num, nb):
     """
@@ -489,6 +502,21 @@ def pad_int(num, locs, old_n, new_n):
 
 def mask_from_bits(bit_tpl, nb):
     return pad_int(2**len(bit_tpl) - 1, bit_tpl, len(bit_tpl), nb)
+
+def pauli_from_int(p_int, nq):
+    """
+    Field-expedient function, splits an integer into two n-bit halves, 
+    then produces a phase-free Pauli from them.
+    """
+    x_half, z_half = xz_split(p_int, nq)
+    x_half = int_to_str(x_half, nq)
+    z_half = int_to_str(z_half, nq)
+    output_pauli = Pauli.from_string(x_half,'X') *\
+                     Pauli.from_string(z_half,'Z')
+    output_pauli.ph = 0
+    return output_pauli
+
+int_to_str = lambda n_int, nb: bin(n_int).lstrip('0b').zfill(nb)
 
 #---------------------------------------------------------------------#
 
