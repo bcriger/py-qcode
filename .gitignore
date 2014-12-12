@@ -10,7 +10,13 @@
 *.pyo
 *.egg
 *.a
- 
+
+# Compiled Source, Jr. #
+########################
+./src/c/test_program
+./src/py_qcode.egg-info/*.*
+./build/*.*
+
 # Packages #
 ############
 # it's better to unpack these files and commit the raw source
