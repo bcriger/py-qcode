@@ -191,4 +191,3 @@ def noisy_squoct_sim(size, error_rate, n_trials, filename):
     sim = FTSimulation(**sim_dict)
     sim.run()
     sim.save(filename + '.sim')
-
