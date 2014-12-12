@@ -19,7 +19,7 @@ class Decoder():
     """
     The role of a decoder is to infer an error given a syndrome. This 
     requires the presence of the dual lattice (where the syndromes are
-    stored), the primal lattice (where the real error is stored)
+    stored), the primal lattice (where the real error is stored).
     """
     def __init__(self, algorithm, primal_lattice, dual_lattice, name='Un-named'):
         self.algorithm = algorithm
@@ -175,14 +175,15 @@ def blossom_matching_alg(primal_lattice, dual_lattice):
 
     struct PerfectMatching::Options options;
     options.verbose = false; //suppress printing from c++
-
     pm->options = options;
 
     for ( edge_idx = 0; edge_idx < num_edges; edge_idx++ )
     {
         pm->AddEdge(edges(edge_idx,0), edges(edge_idx,1), edges(edge_idx,2));
     }
+    
     pm->Solve();
+    
     for (vert_idx = 0; vert_idx < num_verts; ++vert_idx)
         {
             int partner = pm->GetMatch(vert_idx);
