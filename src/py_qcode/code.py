@@ -39,7 +39,7 @@ class ErrorCheck(object):
     :type noise_model: tuple
     """
     def __init__(self, primal_sets, dual_points, rule,
-                    noise_model=(0., lambda a: a)):
+                    noise_model=(0., lambda a: a), fault_model=None):
 
         self.primal_sets = primal_sets
         self.dual_points = dual_points
@@ -79,7 +79,9 @@ class ErrorCheck(object):
                     point.syndrome += \
                             self.noise_func(self.rule(error_str))
             else:
-                raise TypeError("Rule used by error check must be a function or dict, you entered a value of type: " + type(self.rule))
+                raise TypeError("Rule used by error check must be a "+\
+                    "function or dict, you entered a value of type: "\
+                     + type(self.rule))
 
 class StabilizerCheck(ErrorCheck):
     """
@@ -88,7 +90,7 @@ class StabilizerCheck(ErrorCheck):
     commutation to determine the syndrome. 
     """
     def __init__(self, primal_sets, dual_points, stabilizer,
-                     noise_model=(0., lambda a: a), indy_css=False):
+                     noise_model=(0., lambda a: a), fault_model=None, indy_css=False):
         
         if type(stabilizer) is str:
             stabilizer = Pauli(stabilizer)
@@ -141,7 +143,9 @@ class ErrorCorrectingCode():
     """
     Wraps a bunch of parity checks. 
 
-    :param parity_check_list: A list of :class:`py_qcode.ErrorCheck` objects, which can be a mix of any subclass of :class:`py_qcode.ErrorCheck`.
+    :param parity_check_list: A list of :class:`py_qcode.ErrorCheck` 
+    objects, which can be a mix of any subclass of 
+    :class:`py_qcode.ErrorCheck`.
 
     :type parity_check_list: list  
     """

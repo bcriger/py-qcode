@@ -1,8 +1,9 @@
 from numpy.random import rand
-from qecc import Pauli, pauli_group
+from qecc import Pauli, pauli_group, I, X, Y, Z
 import qecc as q
 #from lattice import Lattice, Point #?
 from collections import Iterable
+from math import fsum
 
 ## ALL ##
 __all__ = ['ErrorModel', 'PauliErrorModel', 'depolarizing_model', 'iidxz_model']
@@ -11,45 +12,62 @@ __all__ = ['ErrorModel', 'PauliErrorModel', 'depolarizing_model', 'iidxz_model']
 PAULIS = ['I', 'X', 'Y', 'Z']
 ACCEPTABLE_OPERATORS = PAULIS + ['H', 'P']
 
-class ErrorModel(object):
+class ErrorModel(dict):
     """
-    Wraps a list of tuples corresponding to a discrete probability and 
-    an operator. This assumes independent identically-distributed 
-    noise, though not necessarily Pauli.
+    Dictionary with operator objects as keys and floating- point 
+    probabilites as values. 
 
-    :param prob_op_list: A list of probabilites and associated 
-    operators. The probabilites are floats which must sum to 1 to 
-    within :math:`10^{-12}`. The operators are represented by strings
-    which must be drawn from the list of acceptable operators 
-    `['I','X','Y','Z','H','P']` Each pair (a probability and its 
-    associated operator) is stored in a tuple.
+    :param op_pr_dict: A dictionary. The probabilites are floats which 
+    must sum to 1 to within :math:`10^{-12}`. The operators are 
+    represented by arbitrary objects (so that either strings or 
+    :class:`qecc.Pauli` objects can be used). 
 
-    :type prob_op_list: list
+    :type op_pr_dict: dict
     """
     #Magic Methods
-    def __init__(self, prob_op_list):
-        #Sanitize input
-        probs, ops = zip(*prob_op_list)
-        
-        if abs(1. - sum(probs)) > 10. ** -12:
-            raise ValueError('The probabilites of different errors'+\
-                ' must sum to 1, the probabilites entered here sum'+\
-                 ' to {0}'.format(sum(probs)))
-        
-        test_len = len(ops[0])
-        for string in ops:
-            _whitelist_string(ACCEPTABLE_OPERATORS, string)
-            if len(string) != test_len:
-                raise ValueError("All errors must act on registers "+\
-                    ("of the same size, operators {0} and {1} act on"+\
-                        " registers of different size")\
-                            .format(ops[0], string))
+    def __init__(self, op_pr_dict={}):
+        #Sanitize optional input
+        if op_pr_dict:
+            ops, probs = zip(*op_pr_dict.items())
+            
+            if not all([0. <= p <= 1. for p in probs]):
+                raise ValueError("All input probabilites must be "+\
+                    "between 0 and 1, you entered: {}".format(probs))
 
-        self.prob_op_list = prob_op_list
+            if abs(1. - fsum(probs)) > 10. ** -12:
+                raise ValueError('The probabilites of different errors'+\
+                    ' must sum to 1, the probabilites entered here sum'+\
+                     ' to {0}'.format(sum(probs)))
+            
+            test_len = len(ops[0])
+            for operator in ops:
+                #FIXME: Find out what methods an object must support in 
+                #order to be a valid key in an error model dict and 
+                #sanitize accordingly:
+                #_whitelist_string(ACCEPTABLE_OPERATORS, string)
+                if len(operator) != test_len:
+                    raise ValueError("All errors must act on registers "+\
+                        ("of the same size, operators {0} and {1} act on"+\
+                            " registers of different size")\
+                                .format(ops[0], operator))
+
+        #Initialize a dict
+        super(ErrorModel, self).__init__()
+        self.update(op_pr_dict)
+        
+
+    #Convenience Properties
+    @property
+    def ops(self):
+        return self.keys()
     
-    def __repr__(self):
-        return ', '.join(['{1} with probability {0}'.format(*prob_op)
-                            for prob_op in self.prob_op_list])
+    @property
+    def probs(self):
+        return self.values()
+
+    @property
+    def o_p_pairs(self):
+        return self.items()
 
     #Other Methods
     def act_on(self, register):
@@ -62,7 +80,7 @@ class ErrorModel(object):
         if isinstance(register, Lattice):
 
             #Check that model has single-qubit errors
-            for op in zip(*self.prob_op_list)[1]:
+            for op in self.ops:
                 if len(op) != 1:
                     raise ValueError("Length of operators applied "+\
                         "to lattice must be 1, operator "+\
@@ -71,7 +89,7 @@ class ErrorModel(object):
             for point in register.points:
                 #FIXME: Needs to update the error, not assign a new value
                 # see PauliErrorModel.act_on
-                point.error = _action(self.prob_op_list, rand())
+                point.error = _action(self, rand())
         
         elif isinstance(register, Iterable):
             #TODO: provide support for multi-qubit non-pauli errors
@@ -85,19 +103,29 @@ class ErrorModel(object):
                 "You entered: {}".format(register))
 
 class PauliErrorModel(ErrorModel):
-    def __init__(self, prob_op_list):
+    """
+    subclass of ErrorModel, restricts the keys of the optional input 
+    to be :class:`qecc.Pauli` objects 
+    """
+    def __init__(self, op_pr_dict={}):
+        """
+        Sanitizes the optional input dictionary, and initializes the
+        superclass object. 
+        """
+        if op_pr_dict:
+            for pauli in op_pr_dict.keys():
+                if not isinstance(pauli, Pauli):
+                    raise ValueError("Input keys to PauliErrorModel "+\
+                        "must be Paulis.")
 
-        for string in zip(*prob_op_list)[1]:
-            _whitelist_string(PAULIS, string)
-
-        super(PauliErrorModel, self).__init__(prob_op_list)
+        super(PauliErrorModel, self).__init__(op_pr_dict)
 
     def __len__(self):
-        return len(self.prob_op_list[0][1])
+        return len(self.ops[0])
 
     def act_on(self, register):
         
-        ops = zip(*self.prob_op_list)[1]
+        ops = self.ops
         
         if isinstance(register, Lattice):
             
@@ -107,11 +135,11 @@ class PauliErrorModel(ErrorModel):
                                         "used on whole Lattices")
             
             for point in register.points:
-                new_pauli = Pauli(_action(self.prob_op_list, rand()))
+                new_pauli = _action(self.op_pr_dict, rand())
                 if point.error is None:
-                    point.error = new_pauli
+                    point.error = new_pauli.op
                 else:
-                    point.error *= new_pauli
+                    point.error = (Pauli(point.error) * new_pauli).op
         
         elif isinstance(register, Iterable):
             #Test register to see that it contains points
@@ -129,13 +157,13 @@ class PauliErrorModel(ErrorModel):
 
             for pt in register:
                 if pt.error is None:
-                    pt.error = I
+                    pt.error = 'I'
             
             error = Pauli("".join(pt.error for pt in register))
-            error = Pauli(_action(self.prob_op_list , rand())) * error
+            error = _action(self.op_pr_dict , rand()) * error
 
             for idx, pt in enumerate(register):
-                pt.error = error[idx]
+                pt.error = error.op[idx]
         
         else:
             raise ValueError("register must be either Lattice or "+\
@@ -143,81 +171,326 @@ class PauliErrorModel(ErrorModel):
 
         pass
 
-    def compress(self):
-        """
-        If `self` has non-unique operators, this method sums the 
-        probabilities of those operators and assigns the sum to the 
-        operator.  
-        """
-        probs, ops = zip(*self.prob_op_list)
-        unique_ops = list(set(ops))
-        unique_probs = [0 for elem in unique_ops]
-        for idx, unique_op in enumerate(unique_ops):
-            unique_probs[idx] = sum(probs[jdx] 
-                                    for jdx in range(len(ops))
-                                        if ops[jdx] == unique_op) 
-
-        self.prob_op_list = zip(unique_probs, unique_ops)
-    
-    def pad(self, idx_set, nq):
-        """
-        Given a PauliErrorModel, an index set and a number of qubits, 
-        pads the operators of the PauliErrorModel with 'I's, returning
-        a copy.
-        """
-        #Sanitize input
-        if len(self) != len(idx_set):
-            raise ValueError("the PauliErrorModel must act on the "+\
-                "same number of qubits as are in the index set.")
-        for idx in idx_set:
-            if not (0 <= idx < nq):
-                raise ValueError("All indices must be between 0 "+\
-                                    "and nq, including 0")
-        new_prob_ops=[]
+class DensePauliErrorModel(object):
+    """
+    When an error model acts on a large number of qubits, and has a 
+    non-negligible probability of producing any Pauli in the group, 
+    dictionaries are an extremely slow way to store and manipulate the 
+    error model. Here, I store an array, called `vec`, whose indices 
+    correspond to Paulis by the binary symplectic mapping 
+    (where [001101] corresponds to ZIY, etc.), and each value is a 
+    probability.
+    """
+    def __init__(self, optional_vec=None, nq=1):
         
-        for prob, op in self.prob_op_list:
-            new_op = ['I'] * nq
-            for idx_idx, idx in enumerate(idx_set):
-                new_op[idx] = op[idx_idx]
-
-            new_prob_ops.append((prob, ''.join(new_op)))
-
-        return PauliErrorModel(new_prob_ops)
+        if optional_vec is not None:
+            #ensure 1d array of probabilities
+            optional_vec = sanitize_vector(optional_vec)
+            ensure_probabilities(optional_vec)
+            self.vec = optional_vec
+            self.nq = int(log(len(optional_vec), 4))
+        else:
+            self.vec = np.zeros((4**nq,), dtype=float_type)
+            self.vec[0] = 1.
+            self.nq = nq
 
     def __mul__(self, other):
-        """
-        Given two error models, returns the error model resulting from
-        the application of both to the same register.
-        """
-
-        if not isinstance(other, PauliErrorModel):
-            raise ValueError("PauliErrorModel instances can only be "+\
-                "multiplied with each other.")
         
-        new_prob_ops = []
-        for self_p, self_o in self.prob_op_list:
-            for oth_p, oth_o in other.prob_op_list:
-                new_prob_ops.append((self_p * oth_p, 
-                                (q.Pauli(self_o) * q.Pauli(oth_o)).op))
+        if not isinstance(other, DensePauliErrorModel):
+            try:
+                other = DensePauliErrorModel(other)
+            except Exception, e:
+                raise TypeError("You can only multiply DensePauliErrorModels"+\
+                    " by other DensePauliErrorModels")
+        if self.nq != other.nq:
+            raise ValueError("self and other must have the same "+\
+                "number of qubits")
+        
+        new_vec = np.empty((4**self.nq,), dtype=float_type)
+        c_code = """
+        int s_idx, out_idx;
+        double temp_p;
 
-        new_model = PauliErrorModel(new_prob_ops)
-        new_model.compress()
-        return new_model
+        for (int out_idx = 0; out_idx < vec_len; out_idx++)
+        {
+            temp_p = 0;
+            for (int s_idx = 0; s_idx < vec_len; s_idx++)
+            {
+                temp_p += s_vec[s_idx] * o_vec[s_idx ^ out_idx]; 
+            }
+            new_vec[out_idx] = temp_p;
+        }
 
-    def propagate(self, circuit_list):
         """
-        Given a PauliErrorModel and a list of `qecc.Circuit`s, 
-        propagates the operators  
+        vec_len = 4**self.nq
+        s_vec = self.vec
+        o_vec = other.vec
+        arg_names = ['vec_len', 's_vec', 'o_vec', 'new_vec']
+        inline(c_code, arg_names=arg_names, compiler='gcc', 
+            extra_compile_args=['-Ofast'])
+        return DensePauliErrorModel(new_vec)
+
+    def __pow__(self, exponent):
+        if not isinstance(exponent, int):
+            raise TypeError("Exponent must be int")
+        
+        if exponent == 0:
+            return DensePauliErrorModel(nq = self.nq)
+        
+        if exponent == 1:
+            return self
+
+        model_copy = self
+        for idx in range(exponent - 1):
+            model_copy *= self
+        
+        return model_copy
+
+    def cnot(self, ctrl, targ):
         """
-        probs, ops = zip(*self.prob_op_list)
-        new_ops = map(q.Pauli, ops)
+        The action of any Clifford on a Pauli probability vector can be
+        expressed as a permutation. This function permutes the elements
+        of the vector according to a CNOT acting on two qubits. 
+        """
+        
+        nq = self.nq
 
-        for idx, op in enumerate(new_ops):
-            new_ops[idx] = q.propagate_fault(circuit_list, op) 
+        if any([ ctrl > nq - 1, targ > nq - 1, ctrl < 0,
+                                     targ < 0, targ == ctrl ]):
+            raise ValueError("ctrl and/or targ unsuitable: "+\
+                "{} {}".format(ctrl, targ))
 
-        new_ops = map(lambda p: p.op, new_ops)
-        return PauliErrorModel(zip(probs, new_ops))
+        for idx in xrange(4**nq):
+            #split index into x and z portions
+            x_int, z_int = xz_split(idx, nq)
 
+            #act cnot on each portion
+            new_x_int = c_xor_int(x_int, ctrl, targ, nq)
+            new_z_int = c_xor_int(z_int, targ, ctrl, nq)
+            
+            #rejoin and assign
+            if (new_x_int != x_int) or (new_z_int != z_int):
+                new_idx = xz_join(new_x_int, new_z_int, nq)
+                self.vec[new_idx], self.vec[idx] = \
+                        self.vec[idx], self.vec[new_idx]
+
+        pass
+
+    def depolarize(self, q, p):
+        """
+        For something a little faster than __mul__, I hard-code 
+        multiplication by a depolarizing model on a select qubit.
+        """
+        nq = self.nq
+        new_vec = np.empty(len(self.vec), dtype=float_type)
+        c_code = '''
+        int mask_01 = 1 << (nq - q - 1);
+        int mask_10 = 1 << (2 * nq - q - 1);
+        int mask_11 = mask_10 + mask_01; 
+        for (int idx = 0; idx < vec_len; ++idx)
+        {
+            new_vec[idx] = (1. - double(p)) * s_vec[idx] + \
+                           double(p) / 3. * (s_vec[idx ^ mask_01] + 
+                                     s_vec[idx ^ mask_10] + 
+                                     s_vec[idx ^ mask_11]);
+        }
+        '''
+        s_vec = self.vec
+        vec_len = len(self.vec)
+        arg_names = ['s_vec', 'new_vec', 'vec_len', 'nq', 'p', 'q']
+        inline(c_code, arg_names=arg_names, compiler='gcc', 
+            extra_compile_args=['-Ofast'])
+        self = DensePauliErrorModel(new_vec) 
+        pass
+
+    def twirl(self, q1, q2, p):
+        """
+        For something a little faster than __mul__, I hard-code 
+        multiplication by a full twirl on two qubits.
+        """
+        nq = self.nq
+        new_vec = np.zeros((len(self.vec),), dtype=float_type)
+        c_code = '''
+        
+        int mask_0001 = 1 <<  (nq - q2 - 1);
+        int mask_0010 = 1 <<  (nq - q1 - 1);
+        int mask_0100 = 1 <<  (2 * nq - q2 - 1);
+        int mask_1000 = 1 <<  (2 * nq - q1 - 1);
+
+        int masks[15] = {mask_0001, mask_0010, mask_0010 + mask_0001, 
+                         mask_0100, mask_0100 + mask_0001,
+                         mask_0100 + mask_0010,
+                         mask_0100 + mask_0010 + mask_0001, mask_1000,
+                         mask_1000 + mask_0001, 
+                         mask_1000 + mask_0010,
+                         mask_1000 + mask_0010 + mask_0001, 
+                         mask_1000 + mask_0100,
+                         mask_1000 + mask_0100 + mask_0001,
+                         mask_1000 + mask_0100 + mask_0010,
+                         mask_1000 + mask_0100 + mask_0010 + mask_0001};
+
+        for (int idx = 0; idx < vec_len; ++idx)
+        {
+            new_vec[idx] = (1. - double(p)) * s_vec[idx];
+            for (int mask_dx = 0; mask_dx < 15; ++mask_dx)
+            {
+                new_vec[idx] += double(p) / 15. * s_vec[idx ^ mask_dx];
+            }
+        }
+        '''
+        
+        s_vec = self.vec
+        vec_len = len(self.vec)
+        arg_names = ['s_vec', 'new_vec', 'vec_len',
+                                 'nq', 'p', 'q1', 'q2']
+        
+        inline(c_code, arg_names=arg_names, compiler='gcc', 
+            extra_compile_args=['-Ofast'])
+        
+        self = DensePauliErrorModel(new_vec)
+        pass
+
+    def flip(self, q, p, flip_type):
+        """
+        Applies a bit or phase flip (depending on 'flip_type') to qubit
+        q with probability p.
+        """
+        nq = self.nq
+
+        if flip_type == 'X':
+            mask = 1 << 2 * nq - q - 1
+        else:
+            mask = 1 << nq - q - 1
+        pass
+        new_vec = np.empty((len(self.vec)), dtype=float_type)
+        for idx in xrange(len(new_vec)):
+            new_vec[idx] = (1. - p) * self.vec[idx] +\
+                             p * self.vec[idx ^ mask]
+
+        self = DensePauliErrorModel(new_vec)
+
+    @staticmethod
+    def x_flip(p):
+        vec = np.zeros((4,), dtype=float_type)
+        vec[0] = 1. - p 
+        vec[2] = p 
+        return DensePauliErrorModel(vec)
+
+    @staticmethod
+    def z_flip(p):
+        vec = np.zeros((4,), dtype=float_type)
+        vec[0] = 1. - p 
+        vec[1] = p 
+        return DensePauliErrorModel(vec)
+
+    @staticmethod
+    def depolarizing_model(p):
+        vec = np.empty((4,), dtype=float_type)
+        vec[0] = 1. - p
+        vec[1:] = p / 3.
+        return DensePauliErrorModel(vec)
+
+    @staticmethod
+    def two_bit_twirl(p):
+        vec = np.empty((16,), dtype=float_type)
+        vec[0] = 1. - p
+        vec[1:] = p / 15.
+        return DensePauliErrorModel(vec)
+
+    @staticmethod
+    def fowler_meas_model(p, nq, stab_type):
+    """
+    produces an `nq + 1` - qubit error model representing the output 
+    from independent 1- and 2-qubit pauli noise after each gate in the
+    measurement of a CSS stabilizer on `nq` bits.
+    """
+    if stab_type not in 'xzXZ':
+        raise ValueError("stab_type is not in 'xzXZ'")
+    stab_type = stab_type.upper()
+    
+    flip_type = 'Z' if stab_type == 'X' else 'X'
+
+    output_model = DensePauliErrorModel(nq=nq + 1)
+    #state prep error
+    output_model.flip(nq, p, flip_type)
+    for cnot_idx in range(nq):
+        
+        #All wait locations prior to CNOT
+        dep_p_before = 1. - (depolarizing_model(p)**cnot_idx).vec[0]
+        output_model.depolarize(cnot_idx, dep_p_before)
+        
+        #act CNOT
+        if stab_type == 'X':
+            output_model.cnot(nq, cnot_idx)
+        elif stab_type == 'Z':
+            output_model.cnot(cnot_idx, nq)
+
+        #Two-qubit noise after CNOT
+        output_model.twirl(nq, cnot_idx, p)
+
+        #All wait locations after CNOT
+        dep_p_after = 1. - (depolarizing_model(p) ** 
+                                (nq - 1 - cnot_idx)).vec[0]
+        output_model.depolarize(cnot_idx, dep_p_after)
+        
+    #measurement error    
+    output_model.flip(nq, p, flip_type)
+    return output_model
+
+#------------------------Convenience Functions------------------------#
+
+def xz_split(num, nb):
+    """
+    Splits an integer into two, each on `nb` bits.
+    """
+    x_int = num >> nb
+    z_int = num - (x_int << nb)
+    return x_int, z_int
+
+def xz_join(x_num, z_num, nb):
+    """
+    Joins two `nb`-bit bitstrings.
+    """
+    return (x_num << nb) + z_num
+
+def bit_of(num, k, nb):
+    """
+    Returns the `k`th bit of some `nb`-bit integer, treating the 
+    leftmost bit as the 0'th.
+    """
+    return (num >> (nb - k - 1)) & 1
+
+def bits(n):
+    """
+    Iterator of length 2**n. If a negative n is given, returns an empty
+    iterator.
+    """
+    return xrange(int(2 ** n))
+
+def c_xor_int(num, i, o, nb):
+    """
+    Performs an XOR on the `o`'th bit of an n-bit integer if the `i`'th
+    bit is equal to 1. 
+    """
+    ith_bit = bit_of(num, i, nb)
+    if ith_bit:
+        return num ^ (1 << (nb - 1 - o))
+    else:
+        return num
+    pass
+
+def pad_int(num, locs, old_n, new_n):
+    """
+    Places the bits of an integer into specific locations in a larger
+    register. 
+    """
+    return sum(((num >> (old_n - k - 1)) & 1) << (new_n - locs[k] - 1)
+                             for k in range(len(locs)))
+
+def mask_from_bits(bit_tpl, nb):
+    return pad_int(2**len(bit_tpl) - 1, bit_tpl, len(bit_tpl), nb)
+
+#---------------------------------------------------------------------#
 
 #Convenience functions
 
@@ -228,7 +501,8 @@ def depolarizing_model(p):
     :math:`X`, :math:`Y`, and :math:`Z` with probability 
     :math:`\dfrac{p}{3}`. 
     """
-    return PauliErrorModel([(1. - p, 'I'), (p / 3., 'X'), (p / 3., 'Y'), (p / 3., 'Z')])
+    return PauliErrorModel({I : 1. - p, X : p / 3.,
+                            Y : p / 3., Z : p / 3.})
 
 def iidxz_model(px, pz=None):
     """
@@ -239,76 +513,35 @@ def iidxz_model(px, pz=None):
     if pz is None:
         pz = px
 
-    return PauliErrorModel([((1. - px) * (1. - pz), 'I'), (px * (1. - pz), 'X'),
-                        ((1. - px) * pz, 'Z'), (px * pz, 'Y')])
+    return PauliErrorModel({I : (1. - px) * (1. - pz), X : px * (1. - pz),
+                     Z : (1. - px) * pz, Y : px * pz})
 
 def two_bit_twirl(p):
     """
     With probability p, selects a Pauli at random from the 
     non-identity Paulis on two qubits.
     """
-    prob_op_list = [(1. - p, 'II')]
-    for op in map(lambda a: a.op, list(pauli_group(2)))[1:]:
-        prob_op_list.append((p / 15., op))
+    err_dict ={Pauli('II') : 1. - p}
+    err_dict.update({pauli : p / 15. for pauli in list(pauli_group(2))[1:]})
     
-    return PauliErrorModel(prob_op_list)
+    return PauliErrorModel(err_dict)
 
-def fowler_meas_model(stab_type, nq, p):
+def _action(err_mod, sample):
     """
-    Given a description of a circuit which measures a stabilizer of a 
-    CSS code and an error probability, returns the error model on 
-    `nq + 1` bits that results from conjugating all the wait location 
-    faults and CNOT faults as well as a measurement fault and a state 
-    preparation fault, which are determined by the stabilizer type.  
+    returns the operator from an :class:`ErrorModel` corresponding to a
+    number between 0 and 1. 
     """
-    ident = q.Pauli('I' * (nq + 1))
-    meas_circ = css_meas_circuit(stab_type, nq)
-    err_dict = {}
-    #State preparation flip
-    flip_op = 'X' if stab_type == 'Z' else 'Z'
-    
-    #error models to be propagated and multiplied:
-    mod_1 = depolarizing_model(p)
-    mod_2 = two_bit_twirl(p)
-    mod_spam = PauliErrorModel([(1. - p, ident.op),
-                                (p, 'I' * nq + flip_op)])
+    if not (0. <= sample <= 1.) :
+        raise ValueError("`sample` must be between 0 and 1, "+\
+                            "preferably uniform.")
 
-    #initialize output error model
-    err_mod = PauliErrorModel([(1.0, ident.op)])
-
-    #state prep error
-    err_mod *= mod_spam.propagate(meas_circ)
-    #measurement error
-    err_mod *= mod_spam
-
-    #location-wise error:
-    for idx, sub_circ in enumerate(meas_circ):
-        for loc in sub_circ:
-            if loc.wt == 1:
-                big_mod = mod_1.pad(loc.qubits, nq + 1)
-                err_mod *= big_mod.propagate(meas_circ[idx + 1 : ])
-            elif loc.wt == 2:
-                big_mod = mod_2.pad(loc.qubits, nq + 1)
-                err_mod *= big_mod.propagate(meas_circ[idx + 1 : ])
-            else:
-                raise ValueError("Something weird.")
-
-    return err_mod
-
-rolling_sum = lambda lst: [sum(lst[:idx+1]) for idx in range(len(lst))]
-
-def _action(prob_op_list, sample):
-    """
-    returns the operator from a prob_op_list corresponding to a number between 0 and 1. 
-    """
-    if (sample < 0.) or (sample > 1.):
-        raise ValueError("`sample` must be between 0 and 1, preferably uniform.")
-
-    probs, ops = zip(*prob_op_list)
-    cum_probs = rolling_sum(probs)
-    for idx in range(len(cum_probs)):
-        if sample < cum_probs[idx]:
+    probs, ops = err_mod.probs, err_mod.ops
+    for idx, prob in enumerate(probs):
+        if sample > prob:
+            sample -= prob
+        else:
             return ops[idx]
+    raise Exception("No operator was selected during sampling.")
 
 def _whitelist_string(whitelist, string):
     """
@@ -321,41 +554,42 @@ def _whitelist_string(whitelist, string):
                                 .format(string, letter, whitelist))
     pass
 
-def css_meas_circuit(stab_type, nq):
-    """
-    Produces a circuit which measures a CSS stabilizer of the required 
-    type, acting on a given number of bits. 
-    """
+#-------------------------Exception Handling--------------------------#
+def sanitize_vector(vector):
     
-    if not isinstance(nq, int):
-        raise ValueError("nq must be integer")
-    elif nq < 0:
-        raise ValueError("nq must be positive")
-    
-    if stab_type == 'Z':
-        cnot_pairs = [(idx, nq) for idx in range(nq)]
-    elif stab_type == 'X':
-        cnot_pairs = [(nq, idx) for idx in range(nq)]
-    else:
-        raise ValueError("stab_type must be X or Z")
+    if not isinstance(vector, np.ndarray):
+        try:
+            vector = np.array(vector, dtype=float_type)
+        except Exception, e:
+            raise TypeError("Input vector must cast to 1d array, you"+\
+                " entered {}".format(type(vector)))
 
-    pr_to_cnot = lambda pr: ('CNOT', pr[0], pr[1])
+    if len(vector.shape) is not 1:
+        raise ValueError("Vector must be 1d, vector has shape"+\
+            " {}".format(vector.shape))
 
-    circ = q.Circuit(*map(pr_to_cnot, cnot_pairs))
-    
-    return list(circ.group_by_time(pad_with_waits=True))
+    if not np.issubdtype(vector.dtype, np.float):
+        raise TypeError("Only floating-point data accepted, you "+\
+            "entered {}".format(vector.dtype))
 
-def err_dict_update(err_dict, pauli, prob):
+    return vector
+
+def ensure_probabilities(vec, tol = 10**(-12)):
     """
-    Takes a dictionary of the form {qecc.Pauli: float}, and performs 
-    an update. To do this, it checks whether the input pauli is in the
-    dictionary already. If so, it adds `prob` to the value of `pauli`,
-    if not it adds `pauli` to the dictionary with value `prob`.
+    Assuming that the input is a 1d array, checks that the elements 
+    are probabilities; their minimum is greater than 0, their maximum 
+    is less than 1, and their sum is close to 1.
     """
-
-    if pauli.op in err_dict.keys():
-        err_dict[pauli.op] += prob
-    else:
-        err_dict[pauli.op] = prob
+    minn, maxx, total = np.amin(vec), np.amax(vec), fsum(vec)
     
-    return err_dict
+    if minn < 0.:
+        raise ValueError("Minimum {} should be > 0".format(minn))
+
+    if maxx > 1.:
+        raise ValueError("Maximum {} should be < 1".format(maxx))
+
+    if np.abs(total - 1.) > tol:
+        raise ValueError("Total {} should == 1".format(total))
+
+    pass
+#---------------------------------------------------------------------#
