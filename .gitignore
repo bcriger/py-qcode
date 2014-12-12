@@ -13,8 +13,9 @@
 
 # Other Compiled Source #
 #########################
-build/*.*
-src/c/test_program
+./src/c/test_program
+./src/py_qcode.egg-info/*.*
+./build/*.*
 
 # Packages #
 ############
