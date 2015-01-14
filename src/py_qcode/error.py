@@ -137,9 +137,9 @@ class PauliErrorModel(ErrorModel):
             for point in register.points:
                 new_pauli = _action(self.op_pr_dict, rand())
                 if point.error is None:
-                    point.error = new_pauli.op
+                    point.error = new_pauli
                 else:
-                    point.error = (Pauli(point.error) * new_pauli).op
+                    point.error = Pauli(point.error) * new_pauli
         
         elif isinstance(register, Iterable):
             #Test register to see that it contains points
@@ -157,13 +157,15 @@ class PauliErrorModel(ErrorModel):
 
             for pt in register:
                 if pt.error is None:
-                    pt.error = 'I'
+                    pt.error = Pauli('I')
             
-            error = Pauli("".join(pt.error for pt in register))
+            error = reduce(lambda a, b: a.tens(b),
+                            [pt.error.op for pt in register])
+            
             error = _action(self.op_pr_dict , rand()) * error
 
             for idx, pt in enumerate(register):
-                pt.error = error.op[idx]
+                pt.error = error[idx]
         
         else:
             raise ValueError("register must be either Lattice or "+\
