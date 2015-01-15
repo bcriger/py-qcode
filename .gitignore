@@ -15,7 +15,14 @@
 #########################
 ./src/c/test_program
 ./src/py_qcode.egg-info/*.*
-./build/*.*
+./build/
+./build/*
+./build/**
+build/
+build/*
+build/**
+build*
+build
 
 # Packages #
 ############
