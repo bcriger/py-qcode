@@ -98,14 +98,14 @@ class StabilizerCheck(ErrorCheck):
         
         #returns 0 if error commutes with stabilizer, 1 if it anti-commutes
         if indy_css == False:
-            stab_rule = lambda err_str: 1 - int(commutes_with(stabilizer)(Pauli(err_str)))
+            stab_rule = lambda err_obj: 1 - int(commutes_with(stabilizer)(Pauli(err_obj)))
         else:
             #Returns the appropriate letter, X or Z
-            def stab_rule(err_str):
-                if type(err_str) is str:
-                    err_pauli = Pauli(err_str)
-                elif type(err_str) is Pauli:
-                    err_pauli = err_str #Not legible, but works
+            def stab_rule(err_obj):
+                if type(err_obj) is str:
+                    err_pauli = Pauli(err_obj)
+                elif type(err_obj) is Pauli:
+                    err_pauli = err_obj
                 else:
                     raise TypeError("Input type to stabilizer rule not understood.")
                 
@@ -142,7 +142,8 @@ class StabilizerCheck(ErrorCheck):
                     #Generate Sample, switch syndrome if sample causes
                     #syndrome error
                     if not self.indy_css:
-                        raise NotImplementedError("Only CSS")
+                        raise NotImplementedError("Only CSS "+\
+                                        "stabilizers are permitted.")
                     try:
                         big_pauli = fault_model.sample()
                     except:

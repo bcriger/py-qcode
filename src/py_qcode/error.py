@@ -251,15 +251,14 @@ class DensePauliErrorModel(object):
         
         if exponent == 0:
             return DensePauliErrorModel(nq = self.nq)
-        
-        if exponent == 1:
+        elif exponent == 1:
             return self
-
-        model_copy = self
-        for idx in range(exponent - 1):
-            model_copy *= self
+        else:
+            model_copy = self
+            for idx in range(exponent - 1):
+                model_copy *= self
         
-        return model_copy
+            return model_copy
 
     def cnot(self, ctrl, targ):
         """
@@ -414,43 +413,43 @@ class DensePauliErrorModel(object):
 
     @staticmethod
     def fowler_meas_model(p, nq, stab_type):
-    """
-    produces an `nq + 1` - qubit error model representing the output 
-    from independent 1- and 2-qubit pauli noise after each gate in the
-    measurement of a CSS stabilizer on `nq` bits.
-    """
-    if stab_type not in 'xzXZ':
-        raise ValueError("stab_type is not in 'xzXZ'")
-    stab_type = stab_type.upper()
-    
-    flip_type = 'Z' if stab_type == 'X' else 'X'
-
-    output_model = DensePauliErrorModel(nq=nq + 1)
-    #state prep error
-    output_model.flip(nq, p, flip_type)
-    for cnot_idx in range(nq):
+        """
+        produces an `nq + 1` - qubit error model representing the output 
+        from independent 1- and 2-qubit pauli noise after each gate in the
+        measurement of a CSS stabilizer on `nq` bits.
+        """
+        if stab_type not in 'xzXZ':
+            raise ValueError("stab_type is not in 'xzXZ'")
+        stab_type = stab_type.upper()
         
-        #All wait locations prior to CNOT
-        dep_p_before = 1. - (depolarizing_model(p)**cnot_idx).vec[0]
-        output_model.depolarize(cnot_idx, dep_p_before)
-        
-        #act CNOT
-        if stab_type == 'X':
-            output_model.cnot(nq, cnot_idx)
-        elif stab_type == 'Z':
-            output_model.cnot(cnot_idx, nq)
+        flip_type = 'Z' if stab_type == 'X' else 'X'
 
-        #Two-qubit noise after CNOT
-        output_model.twirl(nq, cnot_idx, p)
+        output_model = DensePauliErrorModel(nq=nq + 1)
+        #state prep error
+        output_model.flip(nq, p, flip_type)
+        for cnot_idx in range(nq):
+            
+            #All wait locations prior to CNOT
+            dep_p_before = 1. - (depolarizing_model(p)**cnot_idx).vec[0]
+            output_model.depolarize(cnot_idx, dep_p_before)
+            
+            #act CNOT
+            if stab_type == 'X':
+                output_model.cnot(nq, cnot_idx)
+            elif stab_type == 'Z':
+                output_model.cnot(cnot_idx, nq)
 
-        #All wait locations after CNOT
-        dep_p_after = 1. - (depolarizing_model(p) ** 
-                                (nq - 1 - cnot_idx)).vec[0]
-        output_model.depolarize(cnot_idx, dep_p_after)
-        
-    #measurement error  
-    output_model.flip(nq, p, flip_type)
-    return output_model
+            #Two-qubit noise after CNOT
+            output_model.twirl(nq, cnot_idx, p)
+
+            #All wait locations after CNOT
+            dep_p_after = 1. - (depolarizing_model(p) ** 
+                                    (nq - 1 - cnot_idx)).vec[0]
+            output_model.depolarize(cnot_idx, dep_p_after)
+            
+        #measurement error  
+        output_model.flip(nq, p, flip_type)
+        return output_model
 
 #---------------------------Bit Manipulation--------------------------#
 
