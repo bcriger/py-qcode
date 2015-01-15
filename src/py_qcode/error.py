@@ -1,16 +1,20 @@
 from numpy.random import rand
+import numpy as np 
 from qecc import Pauli, pauli_group, I, X, Y, Z
 import qecc as q
 #from lattice import Lattice, Point #?
 from collections import Iterable
-from math import fsum
+from math import fsum, log
+from scipy.weave import inline
 
 ## ALL ##
-__all__ = ['ErrorModel', 'PauliErrorModel', 'depolarizing_model', 'iidxz_model']
+__all__ = ['ErrorModel', 'PauliErrorModel', 'depolarizing_model', 
+            'iidxz_model', 'DensePauliErrorModel']
 
 ## CONSTANTS ##
 PAULIS = ['I', 'X', 'Y', 'Z']
 ACCEPTABLE_OPERATORS = PAULIS + ['H', 'P']
+float_type = np.float64
 
 class ErrorModel(dict):
     """
@@ -398,7 +402,7 @@ class DensePauliErrorModel(object):
         return DensePauliErrorModel(vec)
 
     @staticmethod
-    def depolarizing_model(p):
+    def dense_dep_model(p):
         vec = np.empty((4,), dtype=float_type)
         vec[0] = 1. - p
         vec[1:] = p / 3.
@@ -430,7 +434,9 @@ class DensePauliErrorModel(object):
         for cnot_idx in range(nq):
             
             #All wait locations prior to CNOT
-            dep_p_before = 1. - (depolarizing_model(p)**cnot_idx).vec[0]
+            dep_p_before = (1. - 
+                (DensePauliErrorModel.dense_dep_model(p) ** 
+                    cnot_idx).vec[0])
             output_model.depolarize(cnot_idx, dep_p_before)
             
             #act CNOT
@@ -443,8 +449,9 @@ class DensePauliErrorModel(object):
             output_model.twirl(nq, cnot_idx, p)
 
             #All wait locations after CNOT
-            dep_p_after = 1. - (depolarizing_model(p) ** 
-                                    (nq - 1 - cnot_idx)).vec[0]
+            dep_p_after = (1. - 
+                (DensePauliErrorModel.dense_dep_model(p) ** 
+                    (nq - 1 - cnot_idx)).vec[0])
             output_model.depolarize(cnot_idx, dep_p_after)
             
         #measurement error  
