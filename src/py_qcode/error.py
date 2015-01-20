@@ -16,6 +16,10 @@ PAULIS = ['I', 'X', 'Y', 'Z']
 ACCEPTABLE_OPERATORS = PAULIS + ['H', 'P']
 float_type = np.float64
 
+#TODO: Refactor ErrorModel to contain a BackActionModel and a 
+#NoiseModel, so that corruption of syndromes and back-action on the 
+#lattice can be treated separately.
+
 class ErrorModel(dict):
     """
     Dictionary with operator objects as keys and floating- point 

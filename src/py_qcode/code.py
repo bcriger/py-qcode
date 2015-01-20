@@ -4,8 +4,7 @@ from types import FunctionType
 from numpy.random import rand
 
 __all__ = ['ErrorCorrectingCode', 'ErrorCheck', 'StabilizerCheck', 
-            'toric_code', 'square_octagon_code', 'noisy_toric_code', 
-            'noisy_squoct_code']
+            'toric_code', 'square_octagon_code', 'noisy_squoct_code']
 
 class ErrorCheck(object):
     """
@@ -90,9 +89,14 @@ class StabilizerCheck(ErrorCheck):
     commutation to determine the syndrome. 
     """
     def __init__(self, primal_sets, dual_points, stabilizer,
-                 noise_model=(0., lambda a: a), fault_model=None,
+                 noise_model=None, fault_model=None,
                  indy_css=False):
         
+        if noise_model and fault_model:
+            raise SyntaxWarning("Presence of argument 'fault_model' " +
+                                "over-rides the argument " + 
+                                "'noise_model'.")
+
         if type(stabilizer) is str:
             stabilizer = Pauli(stabilizer)
         
@@ -195,8 +199,7 @@ class ErrorCorrectingCode():
         
         self.parity_check_list = parity_check_list
         self.name = name
-        self.fault_model = fault_model
-
+        
     def measure(self):
         """
         Evaluates all the parity checks.
@@ -205,27 +208,72 @@ class ErrorCorrectingCode():
             check.evaluate()
 
 #UTILITY FUNCTIONS
-def toric_code(primal_grid, dual_grid):
+def toric_code(primal_grid, dual_grid, error_rate=None, 
+                star_fault_mod=None, plaq_fault_mod=None):
     """
     Uses a few convenience functions to produce the toric code on a set
-    of square lattices.
+    of square lattices. 
+
+    Necessary arguments are primal_grid and dual_grid, errors from 
+    primal_grid will be read onto dual_grid.
+
+    If none of error_rate, star_fault_mod, or plaq_fault_mod are 
+    specified, this function returns a 'clean' toric code, with perfect
+    certainty in the results of the measurement and no back-action on 
+    the lattice. 
+
+    Of the optional arguments, two configurations are permitted. Either
+     + error_rate is specified, and neither of the fault models are, or
+     + *both* fault models are specified and no error_rate is.
+
+    This is to avoid confusion between situations in which the syndrome
+    can be corrupted without back-action, and the action of a fault
+    model, which affects both the state of the grid and the syndrome.
     """
+    #Check for permissible input
+    if error_rate and (star_fault_mod or plaq_fault_mod):
+        raise NotImplementedError("If error_rate is specified, " +
+                                    "no fault model can be.")
+    elif not(star_fault_mod and plaq_fault_mod):
+        raise NotImplementedError("If one fault model is specified, " +
+                                    "they must both be.")
+    
+    #The basics: Where to locate the star/plaquette checks
     star_coords = _even_evens(*dual_grid.size)    
     star_duals = [dual_grid[coord] for coord in star_coords]
     star_primal = [primal_grid.neighbours(coord) 
                     for coord in star_coords]
-    star_check = StabilizerCheck(star_primal, star_duals, 'XXXX',
-                                                    indy_css=True)
     
     plaq_coords = _odd_odds(*dual_grid.size)    
     plaq_duals = [dual_grid[coord] for coord in plaq_coords]
     plaq_primal = [primal_grid.neighbours(coord) 
                     for coord in plaq_coords]
+
+    #noise models
+    star_noise_mod = (error_rate, z_flip) if error_rate else None
+    plaq_noise_mod = (error_rate, x_flip) if error_rate else None
+
+    #sanitize inputs that are false-like but not None
+    star_fault_mod = star_fault_mod if star_fault_mod else None
+    plaq_fault_mod = plaq_fault_mod if plaq_fault_mod else None
+
+    star_check = StabilizerCheck(star_primal, star_duals, 'XXXX',
+                                 star_noise_mod, star_fault_mod, 
+                                 indy_css=True)
+    
     plaq_check = StabilizerCheck(plaq_primal, plaq_duals, 'ZZZZ', 
-                                                    indy_css=True)
+                                 star_noise_mod, star_fault_mod,
+                                 indy_css=True)
 
-    return ErrorCorrectingCode([star_check, plaq_check], name="Toric Code")
+    name = ""
+    name += "Faulty " if star_fault_mod else ""
+    name += "Noisy " if error_rate else ""
+    name += "Toric Code"
 
+    return ErrorCorrectingCode([star_check, plaq_check], name=name)
+
+#TODO: Refactor Square-Octagon Codes to match single Toric Code 
+#function above.
 def square_octagon_code(primal_grid, dual_grid):
     """
     Uses a few convenience functions to produce the concatenated 
@@ -257,30 +305,6 @@ def square_octagon_code(primal_grid, dual_grid):
     return ErrorCorrectingCode([sq_check_Z, sq_check_X,
                                 x_oct_check, z_oct_check], 
                                 name="Square-Octagon Code")
-
-def noisy_toric_code(primal_grid, dual_grid, error_rate):
-    """
-    Uses a few convenience functions to produce the toric code on a set
-    of square lattices, this time with noisy syndrome checks.
-    """
-    star_coords = _even_evens(*dual_grid.size)    
-    star_duals = [dual_grid[coord] for coord in star_coords]
-    star_primal = [primal_grid.neighbours(coord) 
-                    for coord in star_coords]
-    
-    star_check = StabilizerCheck(star_primal, star_duals, 'XXXX',
-        (error_rate, z_flip), indy_css=True)
-    
-    plaq_coords = _odd_odds(*dual_grid.size)    
-    plaq_duals = [dual_grid[coord] for coord in plaq_coords]
-    plaq_primal = [primal_grid.neighbours(coord) 
-                    for coord in plaq_coords]
-    
-    plaq_check = StabilizerCheck(plaq_primal, plaq_duals, 'ZZZZ', 
-        (error_rate, x_flip), indy_css=True)
-
-    return ErrorCorrectingCode([star_check, plaq_check], 
-                                name="Noisy Toric Code")
 
 def noisy_squoct_code(primal_grid, dual_grid, error_rate):
     """
