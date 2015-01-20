@@ -131,8 +131,9 @@ class FTSimulation():
     `FTSimulation` is the class for representing simulations of fault-tolerant error-correction protocols.
     """
     #Magic Methods
-    def __init__(self, lattice, dual_lattice_list, error_model, synd_noise, code_func, 
-                                decoder, logical_operators, n_trials):
+    def __init__(self, lattice, dual_lattice_list, error_model, 
+                 synd_noise, code_func, decoder, logical_operators,
+                 n_trials):
 
         #Defined objects
         self.lattice = lattice
@@ -176,8 +177,7 @@ class FTSimulation():
             for dual_lattice in self.dual_lattice_list[:-1]:
                 self.error_model.act_on(self.lattice)
                 #New code object created for every iteration:
-                current_code = self.code_func(self.lattice, 
-                    dual_lattice, self.synd_noise)
+                current_code = self.code_func(dual_lattice)
                 current_code.measure()
             
             #In order to guarantee that the resulting lattice operator 
