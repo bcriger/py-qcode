@@ -1,4 +1,4 @@
-from qecc import Pauli, commutes_with
+from qecc import Pauli, commutes_with, eye_p
 from lattice import _even_evens, _odd_odds, _squoct_affine_map, skew_coords
 from types import FunctionType
 from numpy.random import rand
@@ -38,7 +38,7 @@ class ErrorCheck(object):
     :type noise_model: tuple
     """
     def __init__(self, primal_sets, dual_points, rule,
-                    noise_model=(0., lambda a: a)):
+                    noise_model=(0., lambda a: a), fault_model=None):
 
         self.primal_sets = primal_sets
         self.dual_points = dual_points
@@ -52,6 +52,7 @@ class ErrorCheck(object):
             return syndrome
         
         self.noise_func = noise_func
+        self.fault_model = fault_model
 
     def evaluate(self):
         for idx, point in enumerate(self.dual_points):
@@ -126,7 +127,9 @@ class StabilizerCheck(ErrorCheck):
                 else:
                     return ''
 
-        super(StabilizerCheck, self).__init__(primal_sets, dual_points, stab_rule, noise_model)
+        super(StabilizerCheck, self).__init__(primal_sets, dual_points,
+                                              stab_rule, noise_model,
+                                              fault_model)
 
         self.stabilizer = stabilizer
         self.indy_css = indy_css
@@ -142,18 +145,19 @@ class StabilizerCheck(ErrorCheck):
                 multi_bit_error = reduce(lambda p1, p2: p1.tens(p2),
                             [pt.error for pt in self.primal_sets[idx]])
                 
-                if fault_model:
+                if self.fault_model:
                     #Generate Sample, switch syndrome if sample causes
                     #syndrome error
                     if not self.indy_css:
                         raise NotImplementedError("Only CSS "+\
                                         "stabilizers are permitted.")
                     try:
-                        big_pauli = fault_model.sample()
+                        big_pauli = self.fault_model.sample()
                     except:
                         raise NotImplementedError("Use DensePauliErrorModel")
                     
-                    synd_err = big_pauli[-1]
+                    nq = self.stabilizer.nq
+                    synd_err = eye_p(nq - 1).tens(big_pauli[-1])
                     if not(commutes_with(self.stabilizer)(synd_err)):
                         stab_type = self.stabilizer.op[0]
                         flip_type = 'X' if stab_type == 'Z' else 'Z'
@@ -169,7 +173,7 @@ class StabilizerCheck(ErrorCheck):
 
                 #Record remainder of error onto lattice, where it will 
                 #be picked up in the next time step.
-                if fault_model: 
+                if self.fault_model: 
                     multi_bit_error *= big_pauli[:-1]
                     for jdx, pt in enumerate(self.primal_sets[idx]):
                         pt.error = multi_bit_error[jdx]
@@ -199,7 +203,7 @@ class ErrorCorrectingCode():
         
         self.parity_check_list = parity_check_list
         self.name = name
-        
+
     def measure(self):
         """
         Evaluates all the parity checks.

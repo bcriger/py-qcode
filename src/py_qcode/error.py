@@ -6,7 +6,6 @@ import qecc as q
 from collections import Iterable
 from math import fsum, log
 from scipy.weave import inline
-from lattice import Lattice
 
 ## ALL ##
 __all__ = ['ErrorModel', 'PauliErrorModel', 'depolarizing_model', 
@@ -86,7 +85,7 @@ class ErrorModel(dict):
         single-qubit, or the model has operations the same size as the
         register. 
         """
-        if isinstance(register, Lattice):
+        if hasattr(register, 'points'):
 
             #Check that model has single-qubit errors
             for op in self.ops:
@@ -136,14 +135,14 @@ class PauliErrorModel(ErrorModel):
         
         ops = self.ops
         
-        if isinstance(register, Lattice):            
+        if hasattr(register, 'points'):            
             for op in ops:
                 if len(op) != 1:
                     raise ValueError("Only weight-1 Paulis may be "+\
                                         "used on whole Lattices")
             
             for point in register.points:
-                new_pauli = _action(self.op_pr_dict, rand())
+                new_pauli = _action(self, rand())
                 if point.error is None:
                     point.error = new_pauli
                 else:
@@ -170,7 +169,7 @@ class PauliErrorModel(ErrorModel):
             error = reduce(lambda a, b: a.tens(b),
                             [pt.error.op for pt in register])
             
-            error = _action(self.op_pr_dict , rand()) * error
+            error = _action(self , rand()) * error
 
             for idx, pt in enumerate(register):
                 pt.error = error[idx]
