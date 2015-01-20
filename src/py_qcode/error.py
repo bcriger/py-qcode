@@ -6,6 +6,7 @@ import qecc as q
 from collections import Iterable
 from math import fsum, log
 from scipy.weave import inline
+from lattice import Lattice
 
 ## ALL ##
 __all__ = ['ErrorModel', 'PauliErrorModel', 'depolarizing_model', 
@@ -135,8 +136,7 @@ class PauliErrorModel(ErrorModel):
         
         ops = self.ops
         
-        if isinstance(register, Lattice):
-            
+        if isinstance(register, Lattice):            
             for op in ops:
                 if len(op) != 1:
                     raise ValueError("Only weight-1 Paulis may be "+\
@@ -176,8 +176,10 @@ class PauliErrorModel(ErrorModel):
                 pt.error = error[idx]
         
         else:
-            raise ValueError("register must be either Lattice or "+\
-                                "iterable of points")
+            raise ValueError("register must be either Lattice or "
+                                "iterable of points, "
+                                "type entered: {}".format(
+                                    type(register)))
 
         pass
 

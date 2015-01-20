@@ -7,7 +7,8 @@ from itertools import product
 from math import floor
 from ctypes import c_ushort, c_char, cdll
 import os.path
-path_to_lib = os.path.join(os.path.dirname(__file__), 'libqcode_dist.so')
+#path_to_lib = os.path.join(os.path.dirname(__file__), 'libqcode_dist.so')
+path_to_lib = os.path.abspath('libqcode_dist.so')
 #libqcode_dist = cdll.LoadLibrary(os.path.join(me, 'libqcode_dist.so'))
 libqcode_dist = cdll.LoadLibrary(path_to_lib)
 #import qcode_dist
