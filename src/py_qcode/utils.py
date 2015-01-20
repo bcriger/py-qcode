@@ -4,7 +4,7 @@ from simulation import Simulation, FTSimulation
 from lattice import SquareLattice, SquareOctagonLattice, UnionJackLattice
 from error import depolarizing_model
 from decoder import mwpm_decoder, ft_mwpm_decoder
-from code import toric_code, noisy_toric_code, square_octagon_code, noisy_squoct_code
+from code import toric_code, square_octagon_code, noisy_squoct_code
 from logical_operators import toric_log_ops, squoct_log_ops
 
 import cPickle as pkl
@@ -118,6 +118,9 @@ def noisy_toric_code_sim(size, error_rate, n_trials, filename):
     for idx in xrange(size):
         sim_dual_lattice_list.append(SquareLattice((size,size), is_dual=True))
     sim_model = depolarizing_model(error_rate)
+    
+    #FIXME: Change to partial evaluation to match refactor in 
+    #convenience functions in code.py
     sim_code_func = noisy_toric_code
     sim_decoder = ft_mwpm_decoder(sim_lattice, sim_dual_lattice_list)
     sim_log_ops = toric_log_ops((size,size))
