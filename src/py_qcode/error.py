@@ -142,12 +142,19 @@ class PauliErrorModel(ErrorModel):
                                         "used on whole Lattices")
             
             for point in register.points:
-                new_pauli = _action(self, rand())
+                nu_pauli = _action(self, rand())
                 if point.error is None:
-                    point.error = new_pauli
+                    point.error = nu_pauli
                 else:
-                    point.error = Pauli(point.error) * new_pauli
-        
+                    try:
+                        if isinstance(point.error, Pauli):
+                            point.error = point.error * nu_pauli
+                        else:
+                            point.error = Pauli(point.error) * nu_pauli
+                    except ValueError as e:
+                        e.args += (" (pauli: {})".format(point.error),)
+                        raise e
+
         elif isinstance(register, Iterable):
             #Test register to see that it contains points
             for point in register:
@@ -251,7 +258,7 @@ class DensePauliErrorModel(object):
         o_vec = other.vec
         arg_names = ['vec_len', 's_vec', 'o_vec', 'new_vec']
         inline(c_code, arg_names=arg_names, compiler='gcc', 
-            extra_compile_args=['-Ofast'])
+            extra_compile_args=['-O3'])
         return DensePauliErrorModel(new_vec)
 
     def __pow__(self, exponent):
@@ -322,8 +329,9 @@ class DensePauliErrorModel(object):
         vec_len = len(self.vec)
         arg_names = ['s_vec', 'new_vec', 'vec_len', 'nq', 'p', 'q']
         inline(c_code, arg_names=arg_names, compiler='gcc', 
-            extra_compile_args=['-Ofast'])
-        self = DensePauliErrorModel(new_vec) 
+            extra_compile_args=['-O3'])
+        #self = DensePauliErrorModel(new_vec) 
+        self.vec = new_vec
         pass
 
     def twirl(self, q1, q2, p):
@@ -335,10 +343,10 @@ class DensePauliErrorModel(object):
         new_vec = np.zeros((len(self.vec),), dtype=float_type)
         c_code = '''
         
-        int mask_0001 = 1 <<  (nq - q2 - 1);
-        int mask_0010 = 1 <<  (nq - q1 - 1);
-        int mask_0100 = 1 <<  (2 * nq - q2 - 1);
-        int mask_1000 = 1 <<  (2 * nq - q1 - 1);
+        int mask_0001 = 1 << (nq - q2 - 1);
+        int mask_0010 = 1 << (nq - q1 - 1);
+        int mask_0100 = 1 << (2 * nq - q2 - 1);
+        int mask_1000 = 1 << (2 * nq - q1 - 1);
 
         int masks[15] = {mask_0001, mask_0010, mask_0010 + mask_0001, 
                          mask_0100, mask_0100 + mask_0001,
@@ -368,9 +376,10 @@ class DensePauliErrorModel(object):
                                  'nq', 'p', 'q1', 'q2']
         
         inline(c_code, arg_names=arg_names, compiler='gcc', 
-            extra_compile_args=['-Ofast'])
+            extra_compile_args=['-O3'])
         
-        self = DensePauliErrorModel(new_vec)
+        #self = DensePauliErrorModel(new_vec)
+        self.vec = new_vec
         pass
 
     def flip(self, q, p, flip_type):
@@ -390,7 +399,8 @@ class DensePauliErrorModel(object):
             new_vec[idx] = (1. - p) * self.vec[idx] +\
                              p * self.vec[idx ^ mask]
 
-        self = DensePauliErrorModel(new_vec)
+        #self = DensePauliErrorModel(new_vec)
+        self.vec = new_vec
 
     @staticmethod
     def x_flip(p):
