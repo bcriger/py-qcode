@@ -180,7 +180,10 @@ class FTSimulation():
 
             # The bulk of the work
             for dual_lattice in self.dual_lattice_list[:-1]:
-                self.error_model.act_on(self.lattice)
+                #No new memory errors, just errors from code 
+                #back-action
+                #self.error_model.act_on(self.lattice)
+                
                 # New code object created for every iteration:
                 current_code = self.code_func(dual_lattice)
                 current_code.measure()
