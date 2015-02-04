@@ -132,14 +132,15 @@ class FTSimulation():
     """
     #Magic Methods
     def __init__(self, lattice, dual_lattice_list, error_model, 
-                 synd_noise, code_func, decoder, logical_operators,
-                 n_trials):
+                 synd_noise, code_func, last_code_func, decoder,
+                 logical_operators, n_trials):
 
         #Defined objects
         self.lattice = lattice
         self.dual_lattice_list = dual_lattice_list
         self.error_model = error_model
         self.code_func = code_func
+        self.last_code_func = last_code_func
         self.decoder = decoder
         self.synd_noise = synd_noise
         
@@ -185,8 +186,8 @@ class FTSimulation():
             #error correction is perfect. Theoretically, errors hidden
             #by this round survive to the next. In practice, thus far,
             #These errors are cleared.  
-            noiseless_code = self.code_func(self.lattice, 
-                                    self.dual_lattice_list[-1], 0.0)
+            noiseless_code = self.last_code_func(
+                                            self.dual_lattice_list[-1])
             noiseless_code.measure()
 
             self.decoder.infer()
