@@ -88,24 +88,34 @@ class Point(object):
 
 class Lattice(object):
     """
-    A collection of points. Superclass to ``SquareLattice``, ``SquareOctagonLattice``, ``UnionJackLattice``, whatever other convenient lattices I put in. 
+    A collection of points. Superclass to ``SquareLattice``, 
+    ``SquareOctagonLattice``, ``UnionJackLattice``, whatever other 
+    convenient lattices I put in. 
 
-    Represents a arbitrary-dimensional lattice of points with integer co-ordinates on which a stabilizer code can be defined. Note that, although the word "lattice" is used to describe these objects, the only requirement is that its constituent points have co-ordinates. No property of the graph structure is assumed, especially planarity. 
+    Represents a arbitrary-dimensional lattice of points with integer 
+    co-ordinates on which a stabilizer code can be defined. Note that,
+    although the word "lattice" is used to describe these objects, the 
+    only requirement is that its constituent points have co-ordinates. 
+    No property of the graph structure is assumed, especially planarity. 
 
     :param points: collection of points on the lattice.
     
     :type points: list of :class:`py_qcode.Point` objects
     
-    :param dist: Returns the distance between two points. Note: In order to perform MWPM decoding, only the dual lattice needs a distance function. 
+    :param dist: Returns the distance between two points. Note: In 
+    order to perform MWPM decoding, only the dual lattice needs a 
+    distance function. 
 
     :type dist: function
 
-    :param closed_boundary: Indicates whether to identify the Nth co-ordinate with the zeroth co-ordinate in every dimension.
+    :param closed_boundary: Indicates whether to identify the Nth co-
+    ordinate with the zeroth co-ordinate in every dimension.
 
     :type closed_boundary: bool
     """
     #Magic Methods
-    def __init__(self, points, dim, dist=None, size = None, is_dual = False):
+    def __init__(self, points, dim, dist=None, size = None, 
+                    is_dual = False):
         
         self.points = points
         self.dim = dim
@@ -115,7 +125,8 @@ class Lattice(object):
 
     def __getitem__(self, key):
         if len(key) != len(self.points[0]):
-            raise ValueError("key must be length: " + str(len(self.points[0])))
+            raise ValueError("key must be length: " + \
+                str(len(self.points[0])))
         for point in self.points:
             if point.coords == tuple(key):
                 return point
@@ -132,13 +143,19 @@ class Lattice(object):
 
 class SquareLattice(Lattice):
     """
-    Represents a lattice in which qubits are placed on the edges of a grid of squares with size given by `sz_tpl`. 
+    Represents a lattice in which qubits are placed on the edges of a 
+    grid of squares with size given by `sz_tpl`. 
 
-    :param rough_sides: Denotes which, if any, of the sides of the lattice are to have 'rough' boundary conditions. Values in ``rough_sides`` must be drawn from ``['u', 'd', 'r', 'l', 'f', 'b']`` (up, down, left, right, front, back). Default is `('u','r')`.
+    :param rough_sides: Denotes which, if any, of the sides of the 
+    lattice are to have 'rough' boundary conditions. Values in 
+    ``rough_sides`` must be drawn from 
+    ``['u', 'd', 'r', 'l', 'f', 'b']`` (up, down, left, right, front,
+    back). Default is `('u','r')`.
 
     :type rough_sides: tuple of strings
     """
-    def __init__(self, sz_tpl, is_dual = False, closed_boundary = True, rough_sides = ('u', 'r')):
+    def __init__(self, sz_tpl, is_dual = False, closed_boundary = True,
+                    rough_sides = ('u', 'r')):
         
         dim = len(sz_tpl)
         x_len, y_len = sz_tpl[:2] 
@@ -146,10 +163,12 @@ class SquareLattice(Lattice):
         if is_dual:
             points_2d = map(Point, sym_coords(x_len, y_len))
             """
-            dist = lambda coord1, coord2, synd_type: sum([min([abs(a - b) % (2 * sz),
-                                                    (2 * sz - abs(a - b)) % (2 * sz)]) 
-                                                for a, b, sz in 
-                                                zip(coord1, coord2, sz_tpl)])
+            dist = lambda coord1, coord2, synd_type: \
+                    sum([
+                        min([abs(a - b) % (2 * sz), 
+                            (2 * sz - abs(a - b)) % (2 * sz)])
+                                        for a, b, sz in 
+                                        zip(coord1, coord2, sz_tpl)])
             """
             def dist(coord1, coord2, synd_type):
                 return sum([min([abs(a - b) % (2 * sz),
@@ -158,17 +177,19 @@ class SquareLattice(Lattice):
                             zip(coord1, coord2, sz_tpl)])/2
             '''
             def dist(coord1, coord2, synd_type):
-                x1, y1 = map(c_ushort, coord1); x2, y2 = map(c_ushort, coord2)
+                x1, y1 = map(c_ushort, coord1)
+                x2, y2 = map(c_ushort, coord2)
                 sz_x, sz_y = map(c_ushort, [x_len, y_len])
-                return libqcode_dist.toric_dist(x1, y1, x2, y2, sz_x, sz_y, 
-                                                        c_char(synd_type))
+                return libqcode_dist.toric_dist(x1, y1, x2, y2, 
+                    sz_x, sz_y, c_char(synd_type))
             '''
         else:
             points_2d = map(Point, skew_coords(x_len, y_len))
             dist = None
 
         if len(sz_tpl) != 2:
-            raise ValueError("Square lattices for non-fault-tolerant simulations must be 2D.")
+            raise ValueError("Square lattices for "+\
+                "non-fault-tolerant simulations must be 2D.")
         points = points_2d
 
         super(SquareLattice, self).__init__(points, dim, dist)
