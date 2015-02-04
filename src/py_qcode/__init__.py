@@ -19,5 +19,5 @@ from decoder import *
 from utils import *
 from logical_operators import *
 
-__all__ = reduce(lambda a, b: a+b, map(lambda mod: mod.__all__,
-                                     __modules)) + ['__version__']
+__all__ = reduce(lambda a, b: a + b, map(lambda mod: mod.__all__,
+                                         __modules)) + ['__version__']
