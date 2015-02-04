@@ -38,11 +38,14 @@ class ErrorCheck(object):
     :type noise_model: tuple
     """
     def __init__(self, primal_sets, dual_points, rule,
-                    noise_model=(0., lambda a: a), fault_model=None):
+                    noise_model=None, fault_model=None):
 
         self.primal_sets = primal_sets
         self.dual_points = dual_points
         self.rule = rule
+        
+        if noise_model is None:
+            noise_model = (0., lambda a: a)
         
         def noise_func(syndrome):
             prob, func = noise_model
@@ -238,7 +241,7 @@ def toric_code(primal_grid, dual_grid, error_rate=None,
     if error_rate and (star_fault_mod or plaq_fault_mod):
         raise NotImplementedError("If error_rate is specified, " +
                                     "no fault model can be.")
-    elif not(star_fault_mod and plaq_fault_mod):
+    elif not(bool(star_fault_mod) == bool(plaq_fault_mod)):
         raise NotImplementedError("If one fault model is specified, " +
                                     "they must both be.")
     
