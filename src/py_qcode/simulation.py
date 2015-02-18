@@ -134,16 +134,17 @@ class FTSimulation():
     """
     `FTSimulation` is the class for representing simulations of fault-tolerant error-correction protocols.
     """
-    # Magic Methods
-    def __init__(self, lattice, dual_lattice_list, error_model,
-                 synd_noise, code_func, decoder, logical_operators,
-                 n_trials):
+    #Magic Methods
+    def __init__(self, lattice, dual_lattice_list, error_model, 
+                 synd_noise, code_func, last_code_func, decoder,
+                 logical_operators, n_trials):
 
         # Defined objects
         self.lattice = lattice
         self.dual_lattice_list = dual_lattice_list
         self.error_model = error_model
         self.code_func = code_func
+        self.last_code_func = last_code_func
         self.decoder = decoder
         self.synd_noise = synd_noise
 
@@ -179,18 +180,22 @@ class FTSimulation():
 
             # The bulk of the work
             for dual_lattice in self.dual_lattice_list[:-1]:
-                self.error_model.act_on(self.lattice)
+                #No new memory errors, just errors from code 
+                #back-action
+                #self.error_model.act_on(self.lattice)
+                
                 # New code object created for every iteration:
                 current_code = self.code_func(dual_lattice)
                 current_code.measure()
+            
+            #In order to guarantee that the resulting lattice operator 
+            #is in the normalizer, we assume that the final round of 
+            #error correction is perfect. Theoretically, errors hidden
+            #by this round survive to the next. In practice, thus far,
+            #These errors are cleared.  
+            noiseless_code = self.last_code_func(
+                                            self.dual_lattice_list[-1])
 
-            # In order to guarantee that the resulting lattice operator
-            # is in the normalizer, we assume that the final round of
-            # error correction is perfect. Theoretically, errors hidden
-            # by this round survive to the next. In practice, thus far,
-            # These errors are cleared.
-            noiseless_code = self.code_func(self.lattice,
-                                            self.dual_lattice_list[-1], 0.0)
             noiseless_code.measure()
 
             self.decoder.infer()
