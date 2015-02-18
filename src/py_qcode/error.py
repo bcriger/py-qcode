@@ -397,6 +397,15 @@ class DensePauliErrorModel(object):
 
         self = DensePauliErrorModel(new_vec)
 
+    def net_prob(self, qubit=None):
+        """
+        Returns the total probability that an error occurs on a given 
+        bit. Default qubit is the last bit in the error model (for 
+        syndrome flips).
+        """
+        if qubit is None:
+            qubit = self.nq - 1
+
     @staticmethod
     def x_flip(p):
         vec = np.zeros((4,), dtype=float_type)
