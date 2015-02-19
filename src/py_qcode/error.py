@@ -11,6 +11,9 @@ from scipy.weave import inline
 __all__ = ['ErrorModel', 'PauliErrorModel', 'depolarizing_model',
            'iidxz_model', 'DensePauliErrorModel']
 
+##TEMPORARY ADDITIONS TO ALL##
+__all__.extend(['ensure_probabilities'])
+
 # CONSTANTS ##
 PAULIS = ['I', 'X', 'Y', 'Z']
 ACCEPTABLE_OPERATORS = PAULIS + ['H', 'P']
@@ -18,7 +21,8 @@ float_type = np.float64
 
 # TODO: Refactor ErrorModel to contain a BackActionModel and a
 # NoiseModel, so that corruption of syndromes and back-action on the
-# lattice can be treated separately.
+# lattice can be treated separately. All defaults should be do-nothing
+# short-circuit maps.
 
 
 class ErrorModel(dict):
@@ -373,7 +377,7 @@ class DensePauliErrorModel(object):
             new_vec[idx] = (1. - double(p)) * s_vec[idx];
             for (int mask_dx = 0; mask_dx < 15; ++mask_dx)
             {
-                new_vec[idx] += double(p) / 15. * s_vec[idx ^ mask_dx];
+                new_vec[idx] += double(p) / 15. * s_vec[idx ^ (mask_dx + 1)];
             }
         }
         '''
@@ -411,14 +415,43 @@ class DensePauliErrorModel(object):
         #self = DensePauliErrorModel(new_vec)
         self.vec = new_vec
 
-    def net_prob(self, qubit=None):
+    def net_prob(self, qubit=None, err_type=None):
         """
-        Returns the total probability that an error occurs on a given 
-        bit. Default qubit is the last bit in the error model (for 
-        syndrome flips).
+        Returns the total probability that an error of a given type 
+        occurs on a given bit. Default qubit is the last bit in the
+        error model (for syndrome flips). Default error type is 'any',
+        note that this does not make sense for syndrome flips.
         """
+        
         if qubit is None:
             qubit = self.nq - 1
+        
+        if not(err_type is None):
+            if err_type not in 'xyzXYZ':
+                raise ValueError(("Error type '{}' should be "+\
+                    "X, Y, Z, or None").format(err_type))
+            err_type = err_type.lower()
+
+        qubit_mask = (1 << qubit) + (1 << (self.nq + qubit))
+
+        if err_type == 'x':
+            pauli_val = 1 << (self.nq + qubit)
+        if err_type == 'y':
+            pauli_val = (1 << (self.nq + qubit)) + (1 << qubit)
+        if err_type == 'z':
+            pauli_val = 1 << qubit
+        
+        output_prob = 0.
+        if err_type is None:
+            for idx, prob in enumerate(self.vec):
+                if idx & qubit_mask != 0:
+                    output_prob += prob
+        else:
+            for idx, prob in enumerate(self.vec):
+                if idx & qubit_mask == pauli_val:
+                    output_prob += prob
+
+        return output_prob
 
     @staticmethod
     def x_flip(p):
