@@ -273,6 +273,10 @@ class DensePauliErrorModel(object):
         return DensePauliErrorModel(new_vec)
 
     def __pow__(self, exponent):
+        """
+        Exponentiates an error model. model**n is equivalent to acting 
+        a model n times in a row.
+        """
         if not isinstance(exponent, int):
             raise TypeError("Exponent must be int")
 
@@ -452,6 +456,12 @@ class DensePauliErrorModel(object):
                     output_prob += prob
 
         return output_prob
+    
+    def av_weight(self):
+        """
+        
+        """
+        return mean
 
     @staticmethod
     def x_flip(p):
@@ -489,7 +499,8 @@ class DensePauliErrorModel(object):
         measurement of a CSS stabilizer on `nq` bits.
         """
         if stab_type not in 'xzXZ':
-            raise ValueError("stab_type is not in 'xzXZ'")
+            raise ValueError(("stab_type '{}' " + \
+                                "is not in 'xzXZ'").format(stab_type))
         stab_type = stab_type.upper()
 
         flip_type = 'Z' if stab_type == 'X' else 'X'
@@ -599,6 +610,15 @@ def pauli_from_int(p_int, nq):
     return output_pauli
 
 int_to_str = lambda n_int, nb: bin(n_int).lstrip('0b').zfill(nb)
+
+def weight_from_idx(idx):
+    """
+    Given an integer index, returns the weight of a Pauli assuming that
+    the index, read as a bitstring, is a binary symplectic vector for 
+    that Pauli.
+    """
+    #total hamming weight - number of pauli-Ys (double counting)
+    pass
 
 # ---------------------------------------------------------------------#
 

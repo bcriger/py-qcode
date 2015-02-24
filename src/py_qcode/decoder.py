@@ -10,9 +10,9 @@ install_path = abspath(install_path[0]) # str instead of str list.
 
 __all__ = ['Decoder', 'mwpm_decoder', 'ft_mwpm_decoder']
 
-"""
-__all__.extend(['matching_alg'])
-"""
+#"""
+__all__.extend(['matching_alg', 'addl_dist'])
+#"""
 
 
 class Decoder():
@@ -264,7 +264,9 @@ def hi_d_matching_alg(primal_lattice, dual_lattice_list):
     # positive:
     size_constant = 2 * len(primal_lattice.size) * \
                 max(primal_lattice.size) + len(dual_lattice_list)
-
+    
+    height = len(dual_lattice_list)
+    
     for g, synd_type in zip([x_graph, z_graph], ['X', 'Z']):
         for node in g.nodes():
             other_nodes = g.nodes()
@@ -273,7 +275,7 @@ def hi_d_matching_alg(primal_lattice, dual_lattice_list):
                 # Negative weights are no good for networkx
                 edge_tuple = (node, other_node,
                     size_constant - dual_lattice_list[0].dist(node, other_node, synd_type)
-                    - abs(node[-1]-other_node[-1]))
+                    - addl_dist(node, other_node, height))
                 g.add_weighted_edges_from([edge_tuple])
 
 
@@ -358,7 +360,7 @@ def hi_d_blossom_matching_alg(primal_lattice, dual_lattice_list):
     height = len(dual_lattice_list)
     dist = lambda v, o_v, s_t : \
         dual_lattice_list[0].dist(v[:-1], o_v[:-1], s_t) + \
-        min([abs(v[-1] - o_v[-1]), abs(height - abs(v[-1] - o_v[-1]))])
+        addl_dist(v, o_v, height)
     
     for verts, edges, synd_type in zip([x_verts, z_verts],
                                          [x_edges, z_edges], 'XZ'):
@@ -493,6 +495,16 @@ def hi_d_verts(dual_lattice_list):
 
     return x_verts, z_verts
 
+#-----------------------------Convenience Functions-------------------#
+
 def str_diff(str1, str2):
     return ''.join([letter for letter in str1+str2 
                         if (str1+str2).count(letter) == 1])
+
+def addl_dist(pt_1, pt_2, height):
+    """
+    Additional N+1-dimension distance used in fault-tolerant decoding. 
+    """
+    inner_dist = abs(pt_1[-1] - pt_2[-1])
+    return min([inner_dist, abs(height - inner_dist)])
+
