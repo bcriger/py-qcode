@@ -49,8 +49,8 @@ def mwpm_decoder(primal_lattice, dual_lattice, blossom=True):
 def ft_mwpm_decoder(primal_lattice, dual_lattice_list, blossom=True):
     """
     Fault-tolerant decoder based on minimum-weight perfect matching 
-    using the blossom algorithm, implemented in networkx. This decoder 
-    follows the scheme in Dennis/Kitaev/Landahl/Preskill.
+    using the blossom algorithm, implemented in networkx/Kolmogorov. 
+    This decoder follows the scheme in Dennis/Kitaev/Landahl/Preskill.
     Key Points:
     -----------
      + We treat X and Z syndromes as being completely independent.
@@ -355,9 +355,10 @@ def hi_d_blossom_matching_alg(primal_lattice, dual_lattice_list):
     z_partners = zeros((num_z_verts,), dtype = int16)
     
     # dist = dual_lattice.dist
+    height = len(dual_lattice_list)
     dist = lambda v, o_v, s_t : \
         dual_lattice_list[0].dist(v[:-1], o_v[:-1], s_t) + \
-        abs(v[-1] - o_v[-1])
+        min([abs(v[-1] - o_v[-1]), abs(height - abs(v[-1] - o_v[-1]))])
     
     for verts, edges, synd_type in zip([x_verts, z_verts],
                                          [x_edges, z_edges], 'XZ'):

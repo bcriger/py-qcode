@@ -101,7 +101,7 @@ class StabilizerCheck(ErrorCheck):
                  noise_model=None, fault_model=None,
                  indy_css=False):
 
-        if noise_model and fault_model:
+        if (noise_model and fault_model):
             raise SyntaxWarning("Presence of argument 'fault_model' " +
                                 "over-rides the argument " +
                                 "'noise_model'.")
