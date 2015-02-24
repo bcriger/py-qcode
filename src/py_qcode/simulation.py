@@ -1,5 +1,6 @@
 import cPickle as pkl
 from collections import Iterable
+from qecc import I
 # from utils import syndrome_print, error_print
 
 __all__ = ['Simulation', 'FTSimulation']
@@ -179,6 +180,11 @@ class FTSimulation():
                 dual_lattice.clear()
 
             # The bulk of the work
+            #self.error_model.act_on(self.lattice)
+            #Begin in code state
+            for point in self.lattice.points:
+                point.error = I
+            
             for dual_lattice in self.dual_lattice_list[:-1]:
                 #No new memory errors, just errors from code 
                 #back-action

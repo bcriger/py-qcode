@@ -341,7 +341,7 @@ class DensePauliErrorModel(object):
         arg_names = ['s_vec', 'new_vec', 'vec_len', 'nq', 'p', 'q']
 
         inline(c_code, arg_names=arg_names, compiler='gcc', 
-            extra_compile_args=['-O3'])
+            extra_compile_args=[''])
         #self = DensePauliErrorModel(new_vec) 
         self.vec = new_vec
 
