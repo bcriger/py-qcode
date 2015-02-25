@@ -238,7 +238,8 @@ class SquareLattice(Lattice):
         up = (y + 1) % (2 * y_sz)
         down = (y - 1) % (2 * y_sz)
 
-        return (self[right, y], self[x, up], self[left, y], self[x, down])
+        #This determines gate order during noisy decoding
+        return (self[x, up], self[left, y], self[right, y], self[x, down])
 
     def stars(self):
         return map(self.neighbours, _even_evens(*self.size))
