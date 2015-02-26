@@ -529,7 +529,7 @@ class DensePauliErrorModel(object):
                 output_model.cnot(nq - cnot_idx - 1, nq)
 
             # Two-qubit noise after CNOT
-            output_model.twirl(nq, cnot_idx, p)
+            output_model.twirl(nq, nq - cnot_idx - 1, p)
 
             # All wait locations after CNOT
             dep_p_after = (1. -
@@ -542,7 +542,6 @@ class DensePauliErrorModel(object):
         return output_model
 
 # ---------------------------Bit Manipulation--------------------------#
-
 
 def xz_split(num, nb):
     """
