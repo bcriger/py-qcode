@@ -514,7 +514,7 @@ class DensePauliErrorModel(object):
         output_model = DensePauliErrorModel(nq=nq + 1)
         # state prep error
         output_model.flip(nq, p, flip_type)
-        for cnot_idx in range(nq):
+        for cnot_idx in reversed(range(nq)):
 
             # All wait locations prior to CNOT
             dep_p_before = (1. -
@@ -524,12 +524,12 @@ class DensePauliErrorModel(object):
 
             # act CNOT
             if stab_type == 'X':
-                output_model.cnot(nq, nq - cnot_idx - 1)
+                output_model.cnot(nq, cnot_idx)
             elif stab_type == 'Z':
-                output_model.cnot(nq - cnot_idx - 1, nq)
+                output_model.cnot(cnot_idx, nq)
 
             # Two-qubit noise after CNOT
-            output_model.twirl(nq, nq - cnot_idx - 1, p)
+            output_model.twirl(nq, cnot_idx, p)
 
             # All wait locations after CNOT
             dep_p_after = (1. -
