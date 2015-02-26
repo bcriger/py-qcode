@@ -12,7 +12,8 @@ __all__ = ['ErrorModel', 'PauliErrorModel', 'depolarizing_model',
            'iidxz_model', 'DensePauliErrorModel']
 
 ##TEMPORARY ADDITIONS TO ALL##
-__all__.extend(['ensure_probabilities'])
+__all__.extend(['ensure_probabilities', 'mask_from_bits', 'num_ys', 
+                'hamming_weight', 'weight_from_idx'])
 
 # CONSTANTS ##
 PAULIS = ['I', 'X', 'Y', 'Z']
@@ -457,10 +458,15 @@ class DensePauliErrorModel(object):
 
         return output_prob
     
-    def av_weight(self):
+    def av_weight(self,subset=None):
         """
-        
+        Returns the average weight of a sampled error on a subset of 
+        the qubits. 
         """
+        if subset is None:
+            subset = range(self.nq) #All bits
+        mean = fsum(self.vec[j] * weight_from_idx(j, self.nq, subset) 
+                                            for j in bits(2 * self.nq))
         return mean
 
     @staticmethod
@@ -494,9 +500,9 @@ class DensePauliErrorModel(object):
     @staticmethod
     def fowler_meas_model(p, nq, stab_type):
         """
-        produces an `nq + 1` - qubit error model representing the output
-        from independent 1- and 2-qubit pauli noise after each gate in the
-        measurement of a CSS stabilizer on `nq` bits.
+        produces an `nq + 1` - qubit error model representing the 
+        output from independent 1- and 2-qubit pauli noise after each
+        gate in the measurement of a CSS stabilizer on `nq` bits.
         """
         if stab_type not in 'xzXZ':
             raise ValueError(("stab_type '{}' " + \
@@ -518,9 +524,9 @@ class DensePauliErrorModel(object):
 
             # act CNOT
             if stab_type == 'X':
-                output_model.cnot(nq, cnot_idx)
+                output_model.cnot(nq, nq - cnot_idx - 1)
             elif stab_type == 'Z':
-                output_model.cnot(cnot_idx, nq)
+                output_model.cnot(nq - cnot_idx - 1, nq)
 
             # Two-qubit noise after CNOT
             output_model.twirl(nq, cnot_idx, p)
@@ -593,6 +599,11 @@ def pad_int(num, locs, old_n, new_n):
 
 
 def mask_from_bits(bit_tpl, nb):
+    """
+    Uses the indices in bit_tpl to generate a mask integer on nb bits.
+    Accepts the values on the bits included in bit_tpl under bitwise 
+    AND.
+    """
     return pad_int(2 ** len(bit_tpl) - 1, bit_tpl, len(bit_tpl), nb)
 
 
@@ -611,14 +622,28 @@ def pauli_from_int(p_int, nq):
 
 int_to_str = lambda n_int, nb: bin(n_int).lstrip('0b').zfill(nb)
 
-def weight_from_idx(idx):
+def weight_from_idx(idx, nq, subset):
     """
     Given an integer index, returns the weight of a Pauli assuming that
     the index, read as a bitstring, is a binary symplectic vector for 
     that Pauli.
     """
     #total hamming weight - number of pauli-Ys (double counting)
-    pass
+    return hamming_weight(idx, nq, subset) - num_ys(idx, nq, subset)
+
+def hamming_weight(index, nq, subset):
+    """
+    Given an integer and a list containing bit indices, returns the 
+    Hamming weight of the index restricted to the subset. 
+    """
+    mask = mask_from_bits(subset, nq)
+    mask += mask << nq
+    return bin(index & mask).count('1')
+
+def num_ys(idx, nq, subset):
+    mask = mask_from_bits(subset, nq)
+    x_half, z_half = xz_split(idx, nq)
+    return hamming_weight((x_half & mask) & (z_half & mask), nq, subset)
 
 # ---------------------------------------------------------------------#
 
