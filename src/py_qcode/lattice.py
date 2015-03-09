@@ -47,11 +47,15 @@ class Point(object):
 
     :type coords: tuple of ints
 
-    :param error: A value which denotes an error. An ``ErrorCorrectingCode`` must check that this value corresponds to an operator which can be translated into a syndrome.
+    :param error: A value which denotes an error. An 
+    ``ErrorCorrectingCode`` must check that this value corresponds to 
+    an operator which can be translated into a syndrome.
 
     :type error: any
 
-    :param syndrome: A value which denotes an syndrome. A ``Decoder`` must check that this value corresponds to an operator which can be translated into a syndrome.
+    :param syndrome: A value which denotes an syndrome. A ``Decoder``
+     must check that this value corresponds to an operator which can 
+     be translated into a syndrome.
 
     :type syndrome: any
     """
@@ -900,3 +904,34 @@ def hoelzer_dist(x1, x2, y1, y2, sz_x, sz_y):
         dist += 2 * ((y1 + 1) % 2)
 
     return dist
+
+def nwes_pairs(lattice, dual_lattice, label, odd_even=None):
+    """
+    Lists the pairs corresponding to compass directions on a primal 
+    and dual square lattice, corresponding to gate/twirl locations for
+    the toric code. 
+    """
+
+    if odd_even:
+        if odd_even not in ['odd', 'even']:
+            raise ValueError("odd_even must be odd, even or None."
+                "{} entered.".format(odd_even))
+        elif odd_even = 'odd':
+            dual_coord_set = _odd_odds(*dual_lattice.size)
+        elif odd_even = 'even':
+            dual_coord_set = _even_evens(*dual_lattice.size)
+    else:
+        dual_coord_set = sym_coords(*dual_lattice.size)
+
+    if label not in 'nwes':
+        raise ValueError('label must be n, w, e, or s.'
+            ' {} entered.'.format(label))
+    
+    shift = {'n': [0, 1], 'w': [-1, 0]),
+             'e': [1, 0], 's': [0, -1])}[label]
+    
+    for crds in dual_coord_set:
+        nb_crds = [(crds[k] + shift[k]) % (2 * lattice.size[k])
+                    for k in range(2)]
+        
+        yield [dual_lattice[crds], lattice[nb_crds]]
