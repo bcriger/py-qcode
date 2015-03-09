@@ -1,7 +1,7 @@
 from numpy.random import rand
 import numpy as np
 from qecc import Pauli, pauli_group, I, X, Y, Z
-# from lattice import Lattice, Point #?
+from lattice import Lattice, Point #?
 from collections import Iterable
 from math import fsum, log
 from scipy.weave import inline
@@ -12,7 +12,7 @@ __all__ = ['ErrorModel', 'PauliErrorModel', 'depolarizing_model',
 
 ##TEMPORARY ADDITIONS TO ALL##
 __all__.extend(['ensure_probabilities', 'mask_from_bits', 'num_ys', 
-                'hamming_weight', 'weight_from_idx'])
+                'hamming_weight', 'weight_from_idx', 'two_bit_twirl'])
 
 # CONSTANTS ##
 PAULIS = ['I', 'X', 'Y', 'Z']
@@ -614,9 +614,9 @@ def num_ys(idx, nq, subset):
 
 def _full_lattice_apply(err_mod, register):
     for op in err_mod.ops:
-    if len(op) != 1:
-        raise ValueError("Only weight-1 Paulis may be " +
-                         "used on whole Lattices")
+        if len(op) != 1:
+            raise ValueError("Only weight-1 Paulis may be " +
+                             "used on whole Lattices")
 
     for point in register.points:
         nu_pauli = _action(err_mod, rand())
@@ -673,7 +673,7 @@ def _point_set_iter_apply(err_mod, register):
     for pt_set in register:
         
         error = reduce(lambda a, b: a.tens(b),
-                   [pt.error.op for pt in pt_set])
+                   [pt.error for pt in pt_set])
 
         error = _action(err_mod, rand()) * error
         

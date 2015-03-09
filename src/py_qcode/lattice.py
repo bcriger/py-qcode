@@ -24,7 +24,7 @@ __all__.extend(
      'straight_octagon_path', 'octagon_octagon_path',
      'octagon_octagon_dist', 'square_octagon_dist',
      'square_octagon_path', 'square_square_dist',
-     'square_square_path', 'appropriate_neighbours'])
+     'square_square_path', 'appropriate_neighbours', 'nwes_pairs'])
 #"""
 
 # constants##
@@ -916,9 +916,9 @@ def nwes_pairs(lattice, dual_lattice, label, odd_even=None):
         if odd_even not in ['odd', 'even']:
             raise ValueError("odd_even must be odd, even or None."
                 "{} entered.".format(odd_even))
-        elif odd_even = 'odd':
+        elif odd_even == 'odd':
             dual_coord_set = _odd_odds(*dual_lattice.size)
-        elif odd_even = 'even':
+        elif odd_even == 'even':
             dual_coord_set = _even_evens(*dual_lattice.size)
     else:
         dual_coord_set = sym_coords(*dual_lattice.size)
@@ -927,11 +927,14 @@ def nwes_pairs(lattice, dual_lattice, label, odd_even=None):
         raise ValueError('label must be n, w, e, or s.'
             ' {} entered.'.format(label))
     
-    shift = {'n': [0, 1], 'w': [-1, 0]),
-             'e': [1, 0], 's': [0, -1])}[label]
+    shift = {'n': [0, 1], 'w': [-1, 0],
+             'e': [1, 0], 's': [0, -1]}[label]
     
+    output = []
     for crds in dual_coord_set:
         nb_crds = [(crds[k] + shift[k]) % (2 * lattice.size[k])
                     for k in range(2)]
-        
-        yield [dual_lattice[crds], lattice[nb_crds]]
+        #output order: [primal, dual]
+        output.append([lattice[nb_crds], dual_lattice[crds]])
+
+    return output
