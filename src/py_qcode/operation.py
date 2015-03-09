@@ -2,6 +2,8 @@ from qecc import Clifford, Pauli, com
 #circular dep below?
 from lattice import Lattice
 
+__all__ = ['Clifford', 'Measurement']
+
 class Clifford(object):
     """
     a `py_qcode.Clifford` is a wrapper for a `qecc.Clifford` of one of
