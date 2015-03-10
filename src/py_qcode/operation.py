@@ -30,7 +30,7 @@ class Clifford(object):
         self.gate = gate
         self.point_sets = point_sets
 
-    def apply(self, length=1):
+    def apply(self, length=None):
         """
         Transforms a Pauli error on a lattice or pair of lattices. 
         This is made possible by the fact that a `py_qcode.Point` can 
@@ -40,11 +40,16 @@ class Clifford(object):
         sets of two points, this should be refactored if three-qubit 
         Cliffords become elements of the fundamental gate set. 
         """
+        if not(length):
+            length = self.gate.nq
+            
         if length == 1:
             for point in self.point_sets:
                 point.error = self.gate(point.error)
         elif length == 2:
             for lst in self.point_sets:
+                #print lst[0].coords, lst[1].coords
+                #print self.gate(lst[0].error & lst[1].error)
                 lst[0].error, lst[1].error = \
                     self.gate(lst[0].error & lst[1].error)
         else:
@@ -55,9 +60,9 @@ class Measurement():
     """
     Pauli measurements to be done on `py_qcode.Point`s. Each object 
     consists of a Pauli type, which it will measure, and a set of 
-    coordinates on which the measurement will take place.  
+    `py_qcode.Point`s on which the measurement will take place.  
     """
-    def __init__(self, pauli, coord_set):
+    def __init__(self, pauli, point_set):
         
         #sanity chex
         if not(isinstance(pauli, Pauli)):
@@ -65,13 +70,11 @@ class Measurement():
                 "{} entered.".format(pauli))
         
         self.pauli = pauli
-        self.coord_set = coord_set
+        self.point_set = point_set
     
-    def apply(self, dual_lat):
-        _check_lat(dual_lat, dual=True)
-        
-        for x in self.coord_set:
-            dual_lat[x].syndrome = com(self.pauli, dual_lat[x].error)
+    def apply(self):
+        for pt in self.point_set:
+            pt.syndrome = com(self.pauli, pt.error)
 
 #Convenience Functions
 def _check_lengths(coord_sets, length):
