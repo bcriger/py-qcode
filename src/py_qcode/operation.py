@@ -1,5 +1,5 @@
 from qecc import Pauli, com
-from qecc import Clifford as clfrd
+from qecc import Clifford as clfrd #collision avoidance
 #circular dep below?
 from lattice import Lattice
 
@@ -48,8 +48,6 @@ class Clifford(object):
                 point.error = self.gate(point.error)
         elif length == 2:
             for lst in self.point_sets:
-                #print lst[0].coords, lst[1].coords
-                #print self.gate(lst[0].error & lst[1].error)
                 lst[0].error, lst[1].error = \
                     self.gate(lst[0].error & lst[1].error)
         else:
