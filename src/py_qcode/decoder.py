@@ -11,7 +11,7 @@ install_path = abspath(install_path[0]) # str instead of str list.
 __all__ = ['Decoder', 'mwpm_decoder', 'ft_mwpm_decoder']
 
 #"""
-__all__.extend(['matching_alg', 'addl_dist'])
+__all__.extend(['matching_alg', 'addl_dist', 'str_diff'])
 #"""
 
 
