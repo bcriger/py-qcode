@@ -7,15 +7,15 @@ from collections import Iterable
 from math import fsum, log
 from scipy.weave import inline
 
-# ALL ##
+## ALL ##
 __all__ = ['ErrorModel', 'PauliErrorModel', 'depolarizing_model',
            'iidxz_model', 'DensePauliErrorModel']
 
-##TEMPORARY ADDITIONS TO ALL##
+## TEMPORARY ADDITIONS TO ALL ##
 __all__.extend(['ensure_probabilities', 'mask_from_bits', 'num_ys', 
                 'hamming_weight', 'weight_from_idx'])
 
-# CONSTANTS ##
+## CONSTANTS ##
 PAULIS = ['I', 'X', 'Y', 'Z']
 ACCEPTABLE_OPERATORS = PAULIS + ['H', 'P']
 float_type = np.float64
