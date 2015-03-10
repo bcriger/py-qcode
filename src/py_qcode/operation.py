@@ -42,7 +42,7 @@ class Clifford(object):
         """
         if not(length):
             length = self.gate.nq
-            
+
         if length == 1:
             for point in self.point_sets:
                 point.error = self.gate(point.error)
@@ -62,7 +62,9 @@ class Measurement():
     consists of a Pauli type, which it will measure, and a set of 
     `py_qcode.Point`s on which the measurement will take place.  
     """
-    def __init__(self, pauli, point_set):
+    #TODO: Change this to have a callback function with Pauli
+    #measurement as a subclass
+    def __init__(self, pauli, outputs, point_set):
         
         #sanity chex
         if not(isinstance(pauli, Pauli)):
@@ -70,11 +72,12 @@ class Measurement():
                 "{} entered.".format(pauli))
         
         self.pauli = pauli
+        self.outputs = outputs
         self.point_set = point_set
     
     def apply(self):
         for pt in self.point_set:
-            pt.syndrome = com(self.pauli, pt.error)
+            pt.syndrome = self.outputs[com(self.pauli, pt.error)]
 
 #Convenience Functions
 def _check_lengths(coord_sets, length):

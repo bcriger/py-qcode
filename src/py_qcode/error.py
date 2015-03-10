@@ -111,9 +111,10 @@ class ErrorModel(dict):
             pass
 
         else:
-            raise ValueError("ErrorModel objects must act on a " +
-                             "Lattice object or an iterable of Point objects. " +
-                             "You entered: {}".format(register))
+            raise ValueError("ErrorModel objects must act on a "
+                             "Lattice object or an iterable of Point"
+                             " objects. You entered: "
+                             "{}".format(register))
 
 
 class PauliErrorModel(ErrorModel):
