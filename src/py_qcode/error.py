@@ -1,8 +1,7 @@
 from numpy.random import rand
 import numpy as np
 from qecc import Pauli, pauli_group, I, X, Y, Z
-import qecc as q
-# from lattice import Lattice, Point #?
+from lattice import Lattice, Point #?
 from collections import Iterable
 from math import fsum, log
 from scipy.weave import inline
@@ -13,7 +12,7 @@ __all__ = ['ErrorModel', 'PauliErrorModel', 'depolarizing_model',
 
 ## TEMPORARY ADDITIONS TO ALL ##
 __all__.extend(['ensure_probabilities', 'mask_from_bits', 'num_ys', 
-                'hamming_weight', 'weight_from_idx'])
+                'hamming_weight', 'weight_from_idx', 'two_bit_twirl'])
 
 ## CONSTANTS ##
 PAULIS = ['I', 'X', 'Y', 'Z']
@@ -98,7 +97,7 @@ class ErrorModel(dict):
                 if len(op) != 1:
                     raise ValueError("Length of operators applied " +
                                      "to lattice must be 1, operator " +
-                                     "{0} has length {1}.".format(op, len(op)))
+                                     "{} has length {}.".format(op, len(op)))
 
             for point in register.points:
                 # FIXME: Needs to update the error, not assign a new value
@@ -112,9 +111,10 @@ class ErrorModel(dict):
             pass
 
         else:
-            raise ValueError("ErrorModel objects must act on a " +
-                             "Lattice object or an iterable of Point objects. " +
-                             "You entered: {}".format(register))
+            raise ValueError("ErrorModel objects must act on a "
+                             "Lattice object or an iterable of Point"
+                             " objects. You entered: "
+                             "{}".format(register))
 
 
 class PauliErrorModel(ErrorModel):
@@ -141,60 +141,25 @@ class PauliErrorModel(ErrorModel):
 
     def act_on(self, register):
 
-        ops = self.ops
-
         if hasattr(register, 'points'):
-            for op in ops:
-                if len(op) != 1:
-                    raise ValueError("Only weight-1 Paulis may be " +
-                                     "used on whole Lattices")
-
-            for point in register.points:
-                nu_pauli = _action(self, rand())
-                if point.error is None:
-                    point.error = nu_pauli
-                else:
-                    try:
-                        if isinstance(point.error, Pauli):
-                            point.error = point.error * nu_pauli
-                        else:
-                            point.error = Pauli(point.error) * nu_pauli
-                    except ValueError as e:
-                        e.args += (" (pauli: {})".format(point.error),)
-                        raise e
-
+            _full_lattice_apply(self, register)
+        
         elif isinstance(register, Iterable):
-            # Test register to see that it contains points
-            for point in register:
-                if not isinstance(point, Point):
-                    raise ValueError("Registers which are not " +
-                                     "entire lattices must be iterables of " +
-                                     "points, this input contains non-points.")
-
-            # Test model to see if ops are same len as register
-            for op in ops:
-                if len(op) != len(register):
-                    raise ValueError("Pauli must be same length " +
-                                     "as register")
-
-            for pt in register:
-                if pt.error is None:
-                    pt.error = Pauli('I')
-
-            error = reduce(lambda a, b: a.tens(b),
-                           [pt.error.op for pt in register])
-
-            error = _action(self, rand()) * error
-
-            for idx, pt in enumerate(register):
-                pt.error = error[idx]
-
+            if isinstance(register[0], Point):
+                _point_iter_apply(self, register)
+        
+            elif isinstance(register[0], Iterable):
+                #iterable of point sets
+                _point_set_iter_apply(self, register)
+        
+            else:
+                pass #to error below
+        
         else:
             raise ValueError("register must be either Lattice or "
-                             "iterable of points, "
+                             "iterable of (iterable of) points, "
                              "type entered: {}".format(
                              type(register)))
-
         pass
 
 
@@ -648,6 +613,74 @@ def num_ys(idx, nq, subset):
 
 # Convenience functions
 
+def _full_lattice_apply(err_mod, register):
+    for op in err_mod.ops:
+        if len(op) != 1:
+            raise ValueError("Only weight-1 Paulis may be " +
+                             "used on whole Lattices")
+
+    for point in register.points:
+        nu_pauli = _action(err_mod, rand())
+        if point.error is None:
+            point.error = nu_pauli
+        else:
+            try:
+                if isinstance(point.error, Pauli):
+                    point.error = point.error * nu_pauli
+                else:
+                    point.error = Pauli(point.error) * nu_pauli
+            except ValueError as e:
+                e.args += (" (pauli: {})".format(point.error),)
+                raise e
+    pass
+
+def _point_iter_apply(err_mod, register):
+
+    #TODO: Determine if this is used anywhere, because it looks like 
+    #weird garbage.
+
+    # Test register to see that it contains points
+    for point in register:
+        if not isinstance(point, Point):
+            raise ValueError("Registers which are not "
+                             "entire lattices must be iterables of "
+                             "points, this input contains non-points.")
+
+    # Test model to see if ops are same len as register
+    for op in err_mod.ops:
+        if len(op) != len(register):
+            raise ValueError("Pauli must be same length " +
+                             "as register")
+
+    for pt in register:
+        if pt.error is None:
+            pt.error = Pauli('I')
+
+    error = reduce(lambda a, b: a.tens(b),
+                   [pt.error.op for pt in register])
+
+    error = _action(err_mod, rand()) * error
+
+    for idx, pt in enumerate(register):
+        pt.error = error[idx]
+
+def _point_set_iter_apply(err_mod, register):
+    
+    for pt_set in register:
+        for pt in pt_set:
+            if pt.error is None:
+                pt.error = I
+
+    for pt_set in register:
+        
+        error = reduce(lambda a, b: a.tens(b),
+                   [pt.error for pt in pt_set])
+
+        error = _action(err_mod, rand()) * error
+        
+        for idx, pt in enumerate(pt_set):
+            pt.error = error[idx]
+    pass
 
 def depolarizing_model(p):
     """

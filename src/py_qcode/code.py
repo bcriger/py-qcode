@@ -6,7 +6,6 @@ from numpy.random import rand
 __all__ = ['ErrorCorrectingCode', 'ErrorCheck', 'StabilizerCheck',
            'toric_code', 'square_octagon_code', 'noisy_squoct_code']
 
-
 class ErrorCheck(object):
 
     """
