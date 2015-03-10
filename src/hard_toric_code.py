@@ -25,36 +25,40 @@ class HardCodeToricSim():
 
         log_ops = pq.toric_log_ops((sz, sz))
         
-        x_flip = pq.PauliErrorModel({q.I : 1. - p, q.X : p})
-        z_flip = pq.PauliErrorModel({q.I : 1. - p, q.Z : p})
-        twirl = pq.two_bit_twirl(p)
+        x_flip = pq.PauliErrorModel({q.I : 1. - self.p, q.X : self.p})
+        z_flip = pq.PauliErrorModel({q.I : 1. - self.p, q.Z : self.p})
+        twirl = pq.two_bit_twirl(self.p)
 
         odd_prs = {drctn : pq.nwes_pairs(lat, d_lat, drctn, 'odd') 
                     for drctn in 'nwes'}
-        even_prs = {drctn : pq.nwes_pairs(lat, d_lat, drctn, 'odd') 
+        even_prs = {drctn : pq.nwes_pairs(lat, d_lat, drctn, 'even') 
                     for drctn in 'nwes'}
         cnot = {drctn : pq.Clifford(q.cnot(2,0,1), odd_prs[drctn])
                 for drctn in 'nwes'}
         notc = {drctn : pq.Clifford(q.cnot(2,1,0), even_prs[drctn])
                 for drctn in 'nwes'}
         
-        x_meas = pq.Measurement(q.X, ['I', 'Z'], d_lat.star_centers())
-        z_meas = pq.Measurement(q.X, ['I', 'X'], d_lat.plaq_centers())
-
-        for _ in self.n_trials:
+        x_meas = pq.Measurement(q.X, ['', 'Z'], d_lat.star_centers())
+        z_meas = pq.Measurement(q.Z, ['', 'X'], d_lat.plaq_centers())
+        
+        noiseless_code = pq.toric_code(lat, d_lat_lst[-1])
+        
+        for _ in range(self.n_trials):
             #clear last sim
             pq.error_fill(lat, q.I)
-            pq.error_fill(d_lat, q.I)
-            pq.syndrome_fill(d_lat, 0)
+            d_lat.clear()
             for ltc in d_lat_lst:
-                pq.syndrome_fill(ltc, 0) #may break
+                ltc.clear() #may break
+            pq.error_fill(d_lat, q.I)
             
             #fill d_lat_lst with syndromes by copying
-            for idx in range(sz):
+            for idx in range(sz - 1):
                 meas_cycle(lat, d_lat, x_flip, z_flip, twirl, odd_prs,
                              even_prs, cnot, notc, x_meas, z_meas)
                 pq.syndrome_copy(d_lat, d_lat_lst[idx])
 
+            #print d_lat 
+            noiseless_code.measure()
             #run decoder, with no final lattice check (laaaaater)
             decoder.infer()
 

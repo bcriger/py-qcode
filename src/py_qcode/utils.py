@@ -11,7 +11,8 @@ import cPickle as pkl
 
 __all__ = ['sim_from_file', 'square_toric_code_sim', 'error_print',
            'syndrome_print', 'squoct_sim', 'noisy_toric_code_sim',
-           'noisy_squoct_sim', 'n_anyons', 'error_fill']
+           'noisy_squoct_sim', 'n_anyons', 'error_fill', 'error_copy',
+           'syndrome_fill', 'syndrome_copy']
 
 def error_fill(lattice, err):
     for pt in lattice.points:
