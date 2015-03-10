@@ -11,8 +11,23 @@ import cPickle as pkl
 
 __all__ = ['sim_from_file', 'square_toric_code_sim', 'error_print',
            'syndrome_print', 'squoct_sim', 'noisy_toric_code_sim',
-           'noisy_squoct_sim', 'n_anyons']
+           'noisy_squoct_sim', 'n_anyons', 'error_fill']
 
+def error_fill(lattice, err):
+    for pt in lattice.points:
+        pt.error = err
+
+def syndrome_fill(lattice, synd):
+    for pt in lattice.points:
+        pt.syndrome = synd
+
+def error_copy(lat_1, lat_2):
+    for pt in lat_2.points:
+        pt.error = lat_1[pt.coords].error
+
+def syndrome_copy(lat_1, lat_2):
+    for pt in lat_2.points:
+        pt.syndrome = lat_1[pt.coords].syndrome
 
 def n_anyons(dual_lattice, anyon_t):
     if anyon_t not in 'xzXZ':

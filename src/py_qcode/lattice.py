@@ -251,6 +251,12 @@ class SquareLattice(Lattice):
     def plaquettes(self):
         return map(self.neighbours, _odd_odds(*self.size))
 
+    def star_centers(self):
+        return [self[crd] for crd in _even_evens(*self.size)]
+    
+    def plaq_centers(self):
+        return [self[crd] for crd in _odd_odds(*self.size)]
+
     def min_distance_path(self, dual_start, dual_end, synd_type=None):
         """
         Returns a canonical minimum distance path on the _primal_ lattice
