@@ -1,4 +1,6 @@
-import py_qcode as pq, qecc as q
+import py_qcode as pq, qecc as q, cPickle as pkl
+
+drctns = 'nwes'
 
 class HardCodeToricSim():
     """
@@ -30,13 +32,13 @@ class HardCodeToricSim():
         twirl = pq.two_bit_twirl(self.p)
 
         odd_prs = {drctn : pq.nwes_pairs(lat, d_lat, drctn, 'odd') 
-                    for drctn in 'nwes'}
+                    for drctn in drctns}
         even_prs = {drctn : pq.nwes_pairs(lat, d_lat, drctn, 'even') 
-                    for drctn in 'nwes'}
-        cnot = {drctn : pq.Clifford(q.cnot(2,0,1), odd_prs[drctn])
-                for drctn in 'nwes'}
-        notc = {drctn : pq.Clifford(q.cnot(2,1,0), even_prs[drctn])
-                for drctn in 'nwes'}
+                    for drctn in drctns}
+        cx = {drctn : pq.Clifford(q.cnot(2,0,1), odd_prs[drctn])
+                for drctn in drctns}
+        xc = {drctn : pq.Clifford(q.cnot(2,1,0), even_prs[drctn])
+                for drctn in drctns}
         
         x_meas = pq.Measurement(q.X, ['', 'Z'], d_lat.star_centers())
         z_meas = pq.Measurement(q.Z, ['', 'X'], d_lat.plaq_centers())
@@ -54,7 +56,7 @@ class HardCodeToricSim():
             #fill d_lat_lst with syndromes by copying
             for idx in range(sz - 1):
                 meas_cycle(lat, d_lat, x_flip, z_flip, twirl, odd_prs,
-                             even_prs, cnot, notc, x_meas, z_meas)
+                             even_prs, cx, xc, x_meas, z_meas)
                 pq.syndrome_copy(d_lat, d_lat_lst[idx])
 
             #print d_lat 
@@ -85,7 +87,7 @@ class HardCodeToricSim():
             pkl.dump(big_dict, phil)
 
 def meas_cycle(lat, d_lat, x_flip, z_flip, twirl, odd_prs, even_prs, 
-                cnot, notc, x_meas, z_meas):
+                cx, xc, x_meas, z_meas):
     
     """
     Does one cycle of measurement for the toric code on a SquareLattice
@@ -101,14 +103,17 @@ def meas_cycle(lat, d_lat, x_flip, z_flip, twirl, odd_prs, even_prs,
     + Flip syndrome qubits with appropriate error type
     + Measure syndrome qubits.
     """
-
+    d_lat.clear()
+    pq.error_fill(d_lat, q.I)
+    
     x_flip.act_on(d_lat.plaq_centers())
     z_flip.act_on(d_lat.star_centers())
 
-    for drctn in 'nwes':
-        cnot[drctn].apply()
-        notc[drctn].apply()
+    for drctn in drctns:
+        cx[drctn].apply()
         twirl.act_on(odd_prs[drctn])
+        
+        xc[drctn].apply()
         twirl.act_on(even_prs[drctn])
     
     x_flip.act_on(d_lat.plaq_centers())

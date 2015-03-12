@@ -75,7 +75,11 @@ class Measurement():
     
     def apply(self):
         for pt in self.point_set:
-            pt.syndrome = self.outputs[com(self.pauli, pt.error)]
+            symbol = self.outputs[com(self.pauli, pt.error)]
+            if pt.syndrome:
+                pt.syndrome += symbol
+            else:
+                pt.syndrome = symbol
 
 #Convenience Functions
 def _check_lengths(coord_sets, length):

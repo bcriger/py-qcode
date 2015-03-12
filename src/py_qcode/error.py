@@ -12,18 +12,13 @@ __all__ = ['ErrorModel', 'PauliErrorModel', 'depolarizing_model',
 
 ## TEMPORARY ADDITIONS TO ALL ##
 __all__.extend(['ensure_probabilities', 'mask_from_bits', 'num_ys', 
-                'hamming_weight', 'weight_from_idx', 'two_bit_twirl'])
+                'hamming_weight', 'weight_from_idx', 'two_bit_twirl',
+                '_action'])
 
 ## CONSTANTS ##
 PAULIS = ['I', 'X', 'Y', 'Z']
 ACCEPTABLE_OPERATORS = PAULIS + ['H', 'P']
 float_type = np.float64
-
-# TODO: Refactor ErrorModel to contain a BackActionModel and a
-# NoiseModel, so that corruption of syndromes and back-action on the
-# lattice can be treated separately. All defaults should be do-nothing
-# short-circuit maps.
-
 
 class ErrorModel(dict):
 
