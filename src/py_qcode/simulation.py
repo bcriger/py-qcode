@@ -13,19 +13,24 @@ class Simulation():
     for py_qcode, the user is meant to set up, execute and save results
     using these objects.
 
-    :param lattice: a set of points, identified with :math:`n`-dimensional co-ordinates, each corresponding to a physical qubit.
+    :param lattice: a set of points, identified with 
+    :math:`n`-dimensional co-ordinates, each corresponding to a 
+    physical qubit.
 
     :type lattice: :class:`py_qcode.Lattice`
 
-    :param dual_lattice: a second set of :math:`n`-dimensional points, corresponding to check operators.
+    :param dual_lattice: a second set of :math:`n`-dimensional points,
+    corresponding to check operators.
 
     :type dual_lattice: :class:`py_qcode.Lattice`
 
-    :param error_model: A description of the errors to be applied independently to the qubits of `lattice`.
+    :param error_model: A description of the errors to be applied 
+    independently to the qubits of `lattice`.
 
     :type error_model: :class:`py_qcode:ErrorModel`
 
-    :param code: An error-correcting code which translates errors on a lattice to syndromes on the dual lattice.
+    :param code: An error-correcting code which translates errors on a 
+    lattice to syndromes on the dual lattice.
 
     :type code: :class:`py_qcode.ErrorCorrectingCode`
 
@@ -33,11 +38,15 @@ class Simulation():
 
     :type decoder: :class:`py_qcode.Decoder`
 
-    :param n_trials: a number of simulations to be performed in series. This can be used to organize batch jobs so that one can submit more than one simulation per job.
+    :param n_trials: a number of simulations to be performed in series.
+    This can be used to organize batch jobs so that one can submit more
+    than one simulation per job.
 
     :type n_trials: integer
 
-    :param logical_error: Commutation relations between the logical operators and the product of the guessed error and the actual error.
+    :param logical_error: Commutation relations between the logical 
+    operators and the product of the guessed error and the actual 
+    error.
 
     :type logical_error: list
     """
@@ -65,17 +74,25 @@ class Simulation():
 
     def run(self):
         """
-        The main routine in this library, follows the recipe `n_trials` times in series:
+        The main routine in this library, follows the recipe `n_trials` 
+        times in series:
 
-        + Apply the error model to the primary lattice, assigning values to the `error` attributes of the :class:`py_qcode.Point` objects within.
+        + Apply the error model to the primary lattice, assigning 
+          values to the `error` attributes of the 
+          :class:`py_qcode.Point` objects within.
 
-        + Obtain the true coset of the error with respect to the :class:`py_qcode.ErrorCorrectingCode` being used.
+        + Obtain the true coset of the error with respect to the 
+          :class:`py_qcode.ErrorCorrectingCode` being used.
 
-        + Perform a measurement, using the attributes of the error-correcting code to generate syndromes on the dual lattice.
+        + Perform a measurement, using the attributes of the 
+          error-correcting code to generate syndromes on the dual 
+          lattice.
 
-        + Infer the error by acting the decoder on the dual lattice, applying the resulting operator to the primary lattice.
+        + Infer the error by acting the decoder on the dual lattice, 
+          applying the resulting operator to the primary lattice.
 
-        + Record the commutation relations of the resulting operator with the logical operators.
+        + Record the commutation relations of the resulting operator
+          with the logical operators.
         """
         self.logical_error = []
         for idx in range(self.n_trials):
@@ -98,9 +115,9 @@ class Simulation():
 
             for point in self.dual_lattice.points:
                 if point.syndrome:
-                    raise ValueError('Product of "inferred error"' +
-                                     ' with actual error anticommutes with some' +
-                                     ' stabilizers.')
+                    raise ValueError('Product of "inferred error"'
+                                     ' with actual error anticommutes'
+                                     'with some stabilizers.')
 
             com_relation_list = []
             for operator in self.logical_operators:
@@ -133,7 +150,8 @@ class Simulation():
 class FTSimulation():
 
     """
-    `FTSimulation` is the class for representing simulations of fault-tolerant error-correction protocols.
+    `FTSimulation` is the class for representing simulations of 
+    fault-tolerant error-correction protocols.
     """
     #Magic Methods
     def __init__(self, lattice, dual_lattice_list, error_model, 
@@ -162,7 +180,8 @@ class FTSimulation():
 
     def run(self):
         """
-        The main routine in this library, follows the recipe `n_trials` times in series:
+        The main routine in this library, follows the recipe 
+        `n_trials` times in series:
 
         + For every dual lattice provided:
           - Apply the error map to the primary lattice
@@ -214,9 +233,9 @@ class FTSimulation():
             noiseless_code.measure()
             for point in self.dual_lattice_list[-1].points:
                 if point.syndrome:
-                    raise ValueError('Product of "inferred error"' +
-                                     ' with actual error anticommutes with some' +
-                                     ' stabilizers.')
+                    raise ValueError('Product of "inferred error"' 
+                                     ' with actual error anticommutes'
+                                     'with some stabilizers.')
 
             com_relation_list = []
             for operator in self.logical_operators:
