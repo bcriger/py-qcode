@@ -1,5 +1,5 @@
 import py_qcode as pq
-import networkx as nx
+#import networkx as nx
 from qecc import X, Z, I
 
 from time import sleep
@@ -14,7 +14,7 @@ n_trials = 1
 test_lattice = pq.SquareLattice(size)
 test_dual_lattice = pq.SquareLattice(size, is_dual=True)
 test_model = pq.depolarizing_model(0.05)
-test_code = pq.noisy_toric_code(test_lattice, test_dual_lattice, 0.05)
+test_code = pq.toric_code(test_lattice, test_dual_lattice)
 test_decoder = pq.mwpm_decoder(test_lattice, test_dual_lattice)
 test_logical_ops = pq.toric_log_ops(test_lattice.size)
 '''
