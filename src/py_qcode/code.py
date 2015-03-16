@@ -71,8 +71,8 @@ class ErrorCheck(object):
                             self.noise_func(self.rule[error_str])
 
                 except KeyError:
-                    raise KeyError(
-                        "There is no entry in the lookup table for the error " + error_str)
+                    raise KeyError("There is no entry in the lookup "
+                        "table for the error " + error_str)
                 finally:
                     pass
 
@@ -254,10 +254,10 @@ def toric_code(primal_grid, dual_grid, error_rate=None,
     """
     # Check for permissible input
     if error_rate and (star_fault_mod or plaq_fault_mod):
-        raise NotImplementedError("If error_rate is specified, " +
+        raise NotImplementedError("If error_rate is specified, "
                                     "no fault model can be.")
     elif not(bool(star_fault_mod) == bool(plaq_fault_mod)):
-        raise NotImplementedError("If one fault model is specified, " +
+        raise NotImplementedError("If one fault model is specified, "
                                   "they must both be.")
 
     # The basics: Where to locate the star/plaquette checks
@@ -284,7 +284,7 @@ def toric_code(primal_grid, dual_grid, error_rate=None,
                                  indy_css=True)
 
     plaq_check = StabilizerCheck(plaq_primal, plaq_duals, 'ZZZZ',
-                                 star_noise_mod, star_fault_mod,
+                                 plaq_noise_mod, plaq_fault_mod,
                                  indy_css=True)
 
     name = ""

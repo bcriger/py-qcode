@@ -70,7 +70,7 @@ class Simulation():
         self.n_trials = n_trials
 
         # Final Values
-        self.logical_error = None
+        self.logical_error = []
 
     def run(self):
         """
@@ -94,7 +94,6 @@ class Simulation():
         + Record the commutation relations of the resulting operator
           with the logical operators.
         """
-        self.logical_error = []
         for idx in range(self.n_trials):
             # Clean up results from previous simulation
             self.lattice.clear()
@@ -176,7 +175,7 @@ class FTSimulation():
         self.n_trials = n_trials
 
         # Final Values
-        self.logical_error = None
+        self.logical_error = []
 
     def run(self):
         """
@@ -191,7 +190,7 @@ class FTSimulation():
         + Measure commutation relations with the logical operators
         + Record the results.
         """
-        self.logical_error = []
+        
         for idx in range(self.n_trials):
             # Clean up results from previous simulation
             self.lattice.clear()
@@ -205,10 +204,7 @@ class FTSimulation():
                 point.error = I
             
             for dual_lattice in self.dual_lattice_list[:-1]:
-                #No new memory errors, just errors from code 
-                #back-action
-                #self.error_model.act_on(self.lattice)
-                
+                self.error_model.act_on(self.lattice)
                 # New code object created for every iteration:
                 current_code = self.code_func(dual_lattice)
                 current_code.measure()
@@ -235,7 +231,7 @@ class FTSimulation():
                 if point.syndrome:
                     raise ValueError('Product of "inferred error"' 
                                      ' with actual error anticommutes'
-                                     'with some stabilizers.')
+                                     ' with some stabilizers.')
 
             com_relation_list = []
             for operator in self.logical_operators:
