@@ -24,7 +24,8 @@ __all__.extend(
      'straight_octagon_path', 'octagon_octagon_path',
      'octagon_octagon_dist', 'square_octagon_dist',
      'square_octagon_path', 'square_square_dist',
-     'square_square_path', 'appropriate_neighbours', 'nwes_pairs'])
+     'square_square_path', 'appropriate_neighbours', 'nwes_pairs',
+     '_odd_odds', '_odd_evens', '_even_evens', '_even_odds'])
 #"""
 
 # constants##

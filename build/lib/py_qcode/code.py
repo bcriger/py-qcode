@@ -4,7 +4,8 @@ from types import FunctionType
 from numpy.random import rand
 
 __all__ = ['ErrorCorrectingCode', 'ErrorCheck', 'StabilizerCheck',
-           'toric_code', 'square_octagon_code', 'noisy_squoct_code']
+           'toric_code', 'square_octagon_code', 'noisy_squoct_code',
+           'x_flip', 'z_flip']
 
 class ErrorCheck(object):
 
@@ -284,7 +285,7 @@ def toric_code(primal_grid, dual_grid, error_rate=None,
                                  indy_css=True)
 
     plaq_check = StabilizerCheck(plaq_primal, plaq_duals, 'ZZZZ',
-                                 star_noise_mod, star_fault_mod,
+                                 plaq_noise_mod, plaq_fault_mod,
                                  indy_css=True)
 
     name = ""
@@ -292,7 +293,7 @@ def toric_code(primal_grid, dual_grid, error_rate=None,
     name += "Noisy " if error_rate else ""
     name += "Toric Code"
 
-    return ErrorCorrectingCode([star_check, plaq_check], name=name)
+    return ErrorCorrectingCode([plaq_check, star_check], name=name)
 
 # TODO: Refactor Square-Octagon Codes to match single Toric Code
 # function above.
