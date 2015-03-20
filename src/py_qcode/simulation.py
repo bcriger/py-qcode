@@ -217,6 +217,7 @@ class FTSimulation():
             noiseless_code = self.last_code_func(
                                             self.dual_lattice_list[-1])
 
+            self.error_model.act_on(self.lattice)
             noiseless_code.measure()
 
             self.decoder.infer()
