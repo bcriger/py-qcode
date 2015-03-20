@@ -505,6 +505,8 @@ def addl_dist(pt_1, pt_2, height):
     """
     Additional N+1-dimension distance used in fault-tolerant decoding. 
     """
+    # FIXME TODO 
+    #March 18, testing open BC in third dimension
     inner_dist = abs(pt_1[-1] - pt_2[-1])
-    return min([inner_dist, abs(height - inner_dist)])
-
+    #return min([inner_dist, abs(height - inner_dist)])
+    return inner_dist
