@@ -122,6 +122,9 @@ def meas_cycle(lat, d_lat, x_flip, z_flip, twirl, odd_prs, even_prs,
     if sim_type == 'cb':
         x_flip.act_on(d_lat.plaq_centers())
         z_flip.act_on(d_lat.star_centers())
+    elif sim_type == 'pq':
+        x_flip.act_on(lat)
+        z_flip.act_on(lat)
 
     for drctn in DRCTNS:
         cx[drctn].apply()
