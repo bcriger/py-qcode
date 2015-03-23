@@ -1,6 +1,7 @@
 import py_qcode as pq, qecc as q, cPickle as pkl
 
-drctns = 'nwes'
+DRCTNS = 'nwes'
+SIM_TYPES = ['cb', 'pq']
 
 class HardCodeToricSim():
     """
@@ -14,7 +15,9 @@ class HardCodeToricSim():
         self.n_trials = n_trials
         self.logical_error = []
     
-    def run(self):
+    def run(self, sim_type='cb'):
+        #sanitize input
+        _sanitize_sim_type(sim_type)
         sz = self.size
 
         lat = pq.SquareLattice((sz, sz))
@@ -32,13 +35,13 @@ class HardCodeToricSim():
         twirl = pq.two_bit_twirl(self.p)
 
         odd_prs = {drctn : pq.nwes_pairs(lat, d_lat, drctn, 'odd') 
-                    for drctn in drctns}
+                    for drctn in DRCTNS}
         even_prs = {drctn : pq.nwes_pairs(lat, d_lat, drctn, 'even') 
-                    for drctn in drctns}
+                    for drctn in DRCTNS}
         cx = {drctn : pq.Clifford(q.cnot(2,0,1), odd_prs[drctn])
-                for drctn in drctns}
-        xc = {drctn : pq.Clifford(q.cnot(2,1,0), even_prs[drctn])
-                for drctn in drctns}
+                for drctn in DRCTNS}
+        xc = {drctn : pq.Clifford(q.cnot(2, 1, 0), even_prs[drctn])
+                for drctn in DRCTNS}
         
         x_meas = pq.Measurement(q.X, ['', 'Z'], d_lat.star_centers())
         z_meas = pq.Measurement(q.Z, ['', 'X'], d_lat.plaq_centers())
@@ -56,7 +59,8 @@ class HardCodeToricSim():
             #fill d_lat_lst with syndromes by copying
             for idx in range(sz - 1):
                 meas_cycle(lat, d_lat, x_flip, z_flip, twirl, odd_prs,
-                             even_prs, cx, xc, x_meas, z_meas)
+                            even_prs, cx, xc, x_meas, z_meas, 
+                            sim_type=sim_type)
                 pq.syndrome_copy(d_lat, d_lat_lst[idx])
 
             #print d_lat 
@@ -87,10 +91,11 @@ class HardCodeToricSim():
             pkl.dump(big_dict, phil)
 
 def meas_cycle(lat, d_lat, x_flip, z_flip, twirl, odd_prs, even_prs, 
-                cx, xc, x_meas, z_meas):
+                cx, xc, x_meas, z_meas, sim_type):
     
     """
-    Does one cycle of measurement for the toric code on a SquareLattice
+    Does one cycle of measurement for the toric code on a
+    SquareLattice. If the error model is circuit-based, that's: 
     + Flip syndrome qubits with appropriate error type
     + Apply north-facing CNots
     + Two-qubit twirl on north links
@@ -102,19 +107,30 @@ def meas_cycle(lat, d_lat, x_flip, z_flip, twirl, odd_prs, even_prs,
     + Two-qubit twirl on south links
     + Flip syndrome qubits with appropriate error type
     + Measure syndrome qubits.
+
+    If the model is an RPGM, that's:
+    + Apply north-facing CNots
+    + Apply west-facing CNots
+    + Apply east-facing CNots
+    + Apply south-facing CNots
+    + Flip syndrome qubits with appropriate error type
+    + Measure syndrome qubits. 
     """
     d_lat.clear()
     pq.error_fill(d_lat, q.I)
     
-    x_flip.act_on(d_lat.plaq_centers())
-    z_flip.act_on(d_lat.star_centers())
+    if sim_type == 'cb':
+        x_flip.act_on(d_lat.plaq_centers())
+        z_flip.act_on(d_lat.star_centers())
 
-    for drctn in drctns:
+    for drctn in DRCTNS:
         cx[drctn].apply()
-        twirl.act_on(odd_prs[drctn])
+        if sim_type == 'cb':
+            twirl.act_on(odd_prs[drctn])
         
         xc[drctn].apply()
-        twirl.act_on(even_prs[drctn])
+        if sim_type == 'cb':
+            twirl.act_on(even_prs[drctn])
     
     x_flip.act_on(d_lat.plaq_centers())
     z_flip.act_on(d_lat.star_centers())
@@ -122,3 +138,8 @@ def meas_cycle(lat, d_lat, x_flip, z_flip, twirl, odd_prs, even_prs,
     x_meas.apply()
     z_meas.apply()
 
+def _sanitize_sim_type(sim_type):
+    if sim_type not in SIM_TYPES:
+        raise ValueError("Simulation type (sim_type) must be "
+            "either 'cb' (circuit-based) or 'pq' (3D Z2 RPGM). "
+            "{} entered.".format(sim_type))
