@@ -1,7 +1,7 @@
 import py_qcode as pq, qecc as q, cPickle as pkl
 
 DRCTNS = 'nwes'
-SIM_TYPES = ['cb', 'pq']
+SIM_TYPES = ['cb', 'pq', 'p']
 
 class HardCodeToricSim():
     """
@@ -68,6 +68,17 @@ class HardCodeToricSim():
             #run decoder, with no final lattice check (laaaaater)
             decoder.infer()
 
+            # Error checking, if the resulting Pauli is not in the
+            # normalizer, chuck an error:
+
+            d_lat_lst[-1].clear()
+            noiseless_code.measure()
+            for point in d_lat_lst[-1].points:
+                if point.syndrome:
+                    raise ValueError('Product of "inferred error"' 
+                                     ' with actual error anticommutes'
+                                     ' with some stabilizers.')
+            
             com_relation_list = []
             for operator in log_ops:
                 com_relation_list.append(operator.test(lat))
@@ -122,7 +133,7 @@ def meas_cycle(lat, d_lat, x_flip, z_flip, twirl, odd_prs, even_prs,
     if sim_type == 'cb':
         x_flip.act_on(d_lat.plaq_centers())
         z_flip.act_on(d_lat.star_centers())
-    elif sim_type == 'pq':
+    elif sim_type in ['pq', 'p']:
         x_flip.act_on(lat)
         z_flip.act_on(lat)
 
@@ -135,8 +146,11 @@ def meas_cycle(lat, d_lat, x_flip, z_flip, twirl, odd_prs, even_prs,
         if sim_type == 'cb':
             twirl.act_on(even_prs[drctn])
     
-    x_flip.act_on(d_lat.plaq_centers())
-    z_flip.act_on(d_lat.star_centers())
+    if sim_type in ['cb', 'pq']:
+        x_flip.act_on(d_lat.plaq_centers())
+        z_flip.act_on(d_lat.star_centers())
+    elif sim_type == 'p':
+        pass
 
     x_meas.apply()
     z_meas.apply()
@@ -144,5 +158,5 @@ def meas_cycle(lat, d_lat, x_flip, z_flip, twirl, odd_prs, even_prs,
 def _sanitize_sim_type(sim_type):
     if sim_type not in SIM_TYPES:
         raise ValueError("Simulation type (sim_type) must be "
-            "either 'cb' (circuit-based) or 'pq' (3D Z2 RPGM). "
-            "{} entered.".format(sim_type))
+            "either 'cb' (circuit-based), 'pq' (3D Z2 RPGM), or 'p' "
+            "(no syndrome errors). {} entered.".format(sim_type))
