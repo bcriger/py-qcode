@@ -238,7 +238,7 @@ def toric_code(primal_grid, dual_grid, error_rate=None,
     if error_rate and (star_fault_mod or plaq_fault_mod):
         raise NotImplementedError("If error_rate is specified, " +
                                     "no fault model can be.")
-    elif not(star_fault_mod and plaq_fault_mod):
+    elif bool(star_fault_mod) != bool(plaq_fault_mod):
         raise NotImplementedError("If one fault model is specified, " +
                                     "they must both be.")
     
