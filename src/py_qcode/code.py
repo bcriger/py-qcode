@@ -266,7 +266,7 @@ def toric_code(primal_grid, dual_grid, error_rate=None,
                                  indy_css=True)
     
     plaq_check = StabilizerCheck(plaq_primal, plaq_duals, 'ZZZZ', 
-                                 star_noise_mod, star_fault_mod,
+                                 plaq_noise_mod, plaq_fault_mod,
                                  indy_css=True)
 
     name = ""
