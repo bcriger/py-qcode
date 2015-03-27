@@ -44,7 +44,7 @@ class ErrorCheck(object):
         self.dual_points = dual_points
         self.rule = rule
         
-        if !noise_model:
+        if noise_model is None:
             noise_model=(0., lambda a: a)
 
         def noise_func(syndrome):
