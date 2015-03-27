@@ -146,7 +146,10 @@ class PauliErrorModel(ErrorModel):
                 if point.error is None:
                     point.error = new_pauli
                 else:
-                    point.error = Pauli(point.error) * new_pauli
+                    if type(point.error) != Pauli:
+                        point.error = Pauli(point.error) * new_pauli
+                    else:
+                        point.error *= new_pauli
         
         elif isinstance(register, Iterable):
             #Test register to see that it contains points
