@@ -265,7 +265,7 @@ def hi_d_matching_alg(primal_lattice, dual_lattice_list, vert_dist):
                 max(primal_lattice.size) + len(dual_lattice_list)
 
     if vert_dist is None:
-        vert_dist = lambda n, o_n, s_t: abs(n[-1] - o_n[-1]))
+        vert_dist = lambda n, o_n, s_t: abs(n[-1] - o_n[-1])
 
     for g, synd_type in zip([x_graph, z_graph], ['X','Z']):
         for node in g.nodes():
