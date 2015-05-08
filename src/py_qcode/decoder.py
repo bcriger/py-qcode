@@ -358,7 +358,7 @@ def hi_d_blossom_matching_alg(primal_lattice, dual_lattice_list, vert_dist):
     
 
     if vert_dist is None:
-        vert_dist = lambda: v, o_v, s_t: abs(v[-1] - o_v[-1])
+        vert_dist = lambda v, o_v, s_t: abs(v[-1] - o_v[-1])
 
     #dist = dual_lattice.dist
     dist = lambda v, o_v, s_t : \
