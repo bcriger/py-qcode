@@ -21,18 +21,19 @@ class Decoder():
     requires the presence of the dual lattice (where the syndromes are
     stored), the primal lattice (where the real error is stored).
     """
-    def __init__(self, algorithm, primal_lattice, dual_lattice, name='Un-named'):
+    def __init__(self, algorithm, primal_lattice, dual_lattice, name='Un-named', vert_dist=None):
         self.algorithm = algorithm
         self.primal_lattice = primal_lattice
         self.dual_lattice = dual_lattice
         self.name = name
+        self.vert_dist = vert_dist
 
     def infer(self):
         """
         Uses `self.algorithm` to update the error on the primal_lattice,
         given the syndromes on the dual lattice.
         """
-        self.algorithm(self.primal_lattice, self.dual_lattice)
+        self.algorithm(self.primal_lattice, self.dual_lattice, self.vert_dist)
 
 def mwpm_decoder(primal_lattice, dual_lattice, blossom=True):
     """
@@ -46,7 +47,8 @@ def mwpm_decoder(primal_lattice, dual_lattice, blossom=True):
         return Decoder(matching_alg, primal_lattice, dual_lattice, 
                                         name='Minimum-Weight Matching')
 
-def ft_mwpm_decoder(primal_lattice, dual_lattice_list, blossom=True):
+def ft_mwpm_decoder(primal_lattice, dual_lattice_list, blossom=True, 
+                    vert_dist=None):
     """
     Fault-tolerant decoder based on minimum-weight perfect matching 
     using the blossom algorithm, implemented in networkx/Kolmogorov. 
@@ -58,14 +60,12 @@ def ft_mwpm_decoder(primal_lattice, dual_lattice_list, blossom=True):
        object, recording differences between the syndromes as vertices 
        on the graph.
     """
-    if blossom:
-        return Decoder(hi_d_blossom_matching_alg, primal_lattice, dual_lattice_list, 
-                    name = '(n+1)-dimensional Minimum-Weight Matching')
-    else:
-        return Decoder(hi_d_matching_alg, primal_lattice, dual_lattice_list, 
-                    name = '(n+1)-dimensional Minimum-Weight Matching')
+    alg = hi_d_blossom_matching_alg if blossom else hi_d_matching_alg
+    return Decoder(alg, primal_lattice, dual_lattice_list, 
+                    name = '(n+1)-dimensional Minimum-Weight Matching',
+                    vert_dist = vert_dist)
 
-def matching_alg(primal_lattice, dual_lattice):
+def matching_alg(primal_lattice, dual_lattice, vert_dist):
     """
     There are two steps to this algorithm. First, we solve the
     matching problem on the dual lattice, identifying pairs of
@@ -76,13 +76,14 @@ def matching_alg(primal_lattice, dual_lattice):
     This decoder is only implemented with toric codes in mind.
     It treats X and Z errors as completely independent.
     """
-    
-    # First, construct a pair of graphs given syndrome data:
-    x_graph = nx.Graph()
-    z_graph = nx.Graph()
-    # For all points on the dual lattice, add a vertex to the
-    # appropriate graph and weighted edges connecting it to 
-    # every prior vertex.
+    vert_dist = None #unused
+
+    #First, construct a pair of graphs given syndrome data:
+    x_graph = nx.Graph(); z_graph = nx.Graph()
+    #For all points on the dual lattice, add a vertex to the
+    #appropriate graph and weighted edges connecting it to 
+    #every prior vertex.
+
 
     for point in dual_lattice.points:
         if point.syndrome: #exists
@@ -134,14 +135,15 @@ def matching_alg(primal_lattice, dual_lattice):
 
     pass #This function is secretly a subroutine
 
-def blossom_matching_alg(primal_lattice, dual_lattice):
+def blossom_matching_alg(primal_lattice, dual_lattice, vert_dist):
     """
     This algorithm uses the C++ library 'Blossom V' to perform the 
     perfect matching algorithm, hopefully saving a bit of time on the 
     most expensive part of decoding.
     """
-    x_verts = []
-    z_verts = []
+    vert_dist = None #unused
+
+    x_verts = []; z_verts = []
     for point in dual_lattice.points:
         if point.syndrome: #exists
             if any([ltr in point.syndrome for ltr in 'xX']):
@@ -249,10 +251,9 @@ def blossom_matching_alg(primal_lattice, dual_lattice):
 
     pass #This function is secretly a subroutine
 
-def hi_d_matching_alg(primal_lattice, dual_lattice_list):
-    # First, construct a pair of graphs given syndrome data:
-    x_graph = nx.Graph()
-    z_graph = nx.Graph()
+def hi_d_matching_alg(primal_lattice, dual_lattice_list, vert_dist):
+    #First, construct a pair of graphs given syndrome data:
+    x_graph = nx.Graph(); z_graph = nx.Graph()
     
     x_verts, z_verts = hi_d_verts(dual_lattice_list)
 
@@ -264,9 +265,11 @@ def hi_d_matching_alg(primal_lattice, dual_lattice_list):
     # positive:
     size_constant = 2 * len(primal_lattice.size) * \
                 max(primal_lattice.size) + len(dual_lattice_list)
-    
-    height = len(dual_lattice_list)
-    
+
+    if vert_dist is None:
+        #FIXME: CLOSE VERTICAL BOUNDARY CONDITION 
+        vert_dist = lambda n, o_n, s_t: abs(n[-1] - o_n[-1])
+
     for g, synd_type in zip([x_graph, z_graph], ['X', 'Z']):
         for node in g.nodes():
             other_nodes = g.nodes()
@@ -274,8 +277,8 @@ def hi_d_matching_alg(primal_lattice, dual_lattice_list):
             for other_node in other_nodes:
                 # Negative weights are no good for networkx
                 edge_tuple = (node, other_node,
-                    size_constant - dual_lattice_list[0].dist(node, other_node, synd_type)
-                    - addl_dist(node, other_node, height))
+                    size_constant - dual_lattice_list[0].dist(node, other_node, synd_type) 
+                    - vert_dist(node, other_node, synd_type))
                 g.add_weighted_edges_from([edge_tuple])
 
 
@@ -331,7 +334,7 @@ def hi_d_matching_alg(primal_lattice, dual_lattice_list):
 
     pass #Subroutine
 
-def hi_d_blossom_matching_alg(primal_lattice, dual_lattice_list):
+def hi_d_blossom_matching_alg(primal_lattice, dual_lattice_list, vert_dist):
     """
     This algorithm uses the C++ library 'Blossom V' to perform the 
     perfect matching algorithm, hopefully saving a bit of time on the 
@@ -356,18 +359,20 @@ def hi_d_blossom_matching_alg(primal_lattice, dual_lattice_list):
     x_partners = zeros((num_x_verts,), dtype = int16)
     z_partners = zeros((num_z_verts,), dtype = int16)
     
-    # dist = dual_lattice.dist
-    height = len(dual_lattice_list)
+    if vert_dist is None:
+        vert_dist = lambda v, o_v, s_t: abs(v[-1] - o_v[-1])
+
+    #dist = dual_lattice.dist
     dist = lambda v, o_v, s_t : \
         dual_lattice_list[0].dist(v[:-1], o_v[:-1], s_t) + \
-        addl_dist(v, o_v, height)
-    
+            vert_dist(v, o_v, s_t)
+        
     for verts, edges, synd_type in zip([x_verts, z_verts],
                                          [x_edges, z_edges], 'XZ'):
         edge_count = 0
         for vert_idx, vert in enumerate(verts):
             for other_idx, o_vert in enumerate(verts[vert_idx + 1:]):
-                edges[edge_count,:] = vert_idx,\
+                edges[edge_count, :] = vert_idx,\
                                         other_idx + vert_idx + 1, \
                                         dist(vert, o_vert, synd_type)
                 edge_count += 1
@@ -460,9 +465,10 @@ def hi_d_blossom_matching_alg(primal_lattice, dual_lattice_list):
                 # print coord
                 try:
                     primal_lattice[coord].error *= pauli
-                except KeyError: 
+                except KeyError, e: 
                     print pair
                     print coord_set
+                    raise e
 
     pass #This function is secretly a subroutine
 
