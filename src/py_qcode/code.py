@@ -47,7 +47,7 @@ class ErrorCheck(object):
         self.rule = rule
 
         if noise_model is None:
-            noise_model = (0., lambda a: a)
+            noise_model=(0., lambda a: a)
 
         def noise_func(syndrome):
             prob, func = noise_model
@@ -257,12 +257,12 @@ def toric_code(primal_grid, dual_grid, error_rate=None,
     if error_rate and (star_fault_mod or plaq_fault_mod):
         raise NotImplementedError("If error_rate is specified, "
                                     "no fault model can be.")
-    elif not(bool(star_fault_mod) == bool(plaq_fault_mod)):
-        raise NotImplementedError("If one fault model is specified, "
-                                  "they must both be.")
-
-    # The basics: Where to locate the star/plaquette checks
-    star_coords = _even_evens(*dual_grid.size)
+    elif bool(star_fault_mod) != bool(plaq_fault_mod):
+        raise NotImplementedError("If one fault model is specified, " +
+                                    "they must both be.")
+    
+    #The basics: Where to locate the star/plaquette checks
+    star_coords = _even_evens(*dual_grid.size)    
     star_duals = [dual_grid[coord] for coord in star_coords]
     star_primal = [primal_grid.neighbours(coord)
                    for coord in star_coords]
@@ -281,7 +281,11 @@ def toric_code(primal_grid, dual_grid, error_rate=None,
     plaq_fault_mod = plaq_fault_mod if plaq_fault_mod else None
 
     star_check = StabilizerCheck(star_primal, star_duals, 'XXXX',
-                                 star_noise_mod, star_fault_mod,
+                                 star_noise_mod, star_fault_mod, 
+                                 indy_css=True)
+    
+    plaq_check = StabilizerCheck(plaq_primal, plaq_duals, 'ZZZZ', 
+                                 plaq_noise_mod, plaq_fault_mod,
                                  indy_css=True)
 
     plaq_check = StabilizerCheck(plaq_primal, plaq_duals, 'ZZZZ',
