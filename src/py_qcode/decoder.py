@@ -47,7 +47,8 @@ def mwpm_decoder(primal_lattice, dual_lattice, blossom=True):
         return Decoder(matching_alg, primal_lattice, dual_lattice, 
                                         name='Minimum-Weight Matching')
 
-def ft_mwpm_decoder(primal_lattice, dual_lattice_list, blossom=True, vert_dist=None):
+def ft_mwpm_decoder(primal_lattice, dual_lattice_list, blossom=True, 
+                    vert_dist=None):
     """
     Fault-tolerant decoder based on minimum-weight perfect matching 
     using the blossom algorithm, implemented in networkx. This decoder 
@@ -362,7 +363,7 @@ def hi_d_blossom_matching_alg(primal_lattice, dual_lattice_list, vert_dist):
 
     #dist = dual_lattice.dist
     dist = lambda v, o_v, s_t : \
-        dual_lattice_list[0].dist(v[:-1], o_v[:-1], s_t) +\
+        dual_lattice_list[0].dist(v[:-1], o_v[:-1], s_t) + \
             vert_dist(v, o_v, s_t)
         
     
@@ -371,7 +372,7 @@ def hi_d_blossom_matching_alg(primal_lattice, dual_lattice_list, vert_dist):
         edge_count = 0
         for vert_idx, vert in enumerate(verts):
             for other_idx, o_vert in enumerate(verts[vert_idx + 1:]):
-                edges[edge_count,:] = vert_idx,\
+                edges[edge_count, :] = vert_idx,\
                                         other_idx + vert_idx + 1, \
                                         dist(vert, o_vert, synd_type)
                 edge_count += 1
