@@ -25,12 +25,13 @@ __all__.extend(
      'octagon_octagon_dist', 'square_octagon_dist',
      'square_octagon_path', 'square_square_dist',
      'square_square_path', 'appropriate_neighbours', 'nwes_pairs',
-     '_odd_odds', '_odd_evens', '_even_evens', '_even_odds'])
+     '_odd_odds', '_odd_evens', '_even_evens', '_even_odds', 
+     'oct_pairs', 'sq_pairs'])
 #"""
 
-# constants##
+# constants #
 SIDES = ['u', 'd', 'r', 'l', 'f', 'b']
-    # up, down, left, right, front, back
+# up, down, right, left, front, back
 
 
 class Point(object):
