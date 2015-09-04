@@ -1,13 +1,16 @@
 import py_qcode as pq, qecc as q, cPickle as pkl
+from hard_toric_code import SIM_TYPES, _sanitize_sim_type
 
-DRCTNS = 'nwes'
-SIM_TYPES = ['cb', 'pq', 'p']
+#clockwise around center, starting from upper left
+oct_directions = [(-1, 2), (1, 2), (2, 1), (2, -1),
+                    (1, -2), (-1, -2), (-2, -2), (-2, 1)]
 
-class HardCodeToricSim():
+sq_directions = [(-1, 1), (1, 1), (1, -1), (-1, -1)]
+
+class HardCodeSquoctSim():
     """
-    Sandbox for trying to simulate the toric code directly using 
-    Cliffords and small error models. This should really be a subclass
-    of Simulation, but I'll figure that out later.  
+    Sandbox for trying to simulate the square-octagon code directly using 
+    Cliffords and small error models. Copypasta of HardToricCodeSim.  
     """
     def __init__(self, size, p, n_trials):
         self.size = size
@@ -18,31 +21,34 @@ class HardCodeToricSim():
     def run(self, sim_type='cb'):
         #sanitize input
         _sanitize_sim_type(sim_type)
+
         sz = self.size
 
-        lat = pq.SquareLattice((sz, sz))
-        d_lat = pq.SquareLattice((sz, sz), is_dual=True)
+        lat = pq.SquareOctagonLattice((sz, sz))
+        d_lat = pq.UnionJackLattice((sz, sz), is_dual=True)
 
-        d_lat_lst = [pq.SquareLattice((sz, sz), is_dual=True)
-                        for _ in range(sz)]
+        d_lat_lst = [pq.UnionJackLattice((sz, sz), is_dual=True)
+                        for _ in range(sz + 1)]
 
         decoder = pq.ft_mwpm_decoder(lat, d_lat_lst)
 
-        log_ops = pq.toric_log_ops((sz, sz))
+        log_ops = pq.squoct_log_ops(lat.total_size)
         
         x_flip = pq.PauliErrorModel({q.I : 1. - self.p, q.X : self.p})
         z_flip = pq.PauliErrorModel({q.I : 1. - self.p, q.Z : self.p})
+        dep = pq.depolarizing_model(self.p)
         twirl = pq.two_bit_twirl(self.p)
 
-        odd_prs = {drctn : pq.nwes_pairs(lat, d_lat, drctn, 'odd') 
-                    for drctn in DRCTNS}
-        even_prs = {drctn : pq.nwes_pairs(lat, d_lat, drctn, 'even') 
-                    for drctn in DRCTNS}
-        cx = {drctn : pq.Clifford(q.cnot(2,0,1), odd_prs[drctn])
-                for drctn in DRCTNS}
-        xc = {drctn : pq.Clifford(q.cnot(2, 1, 0), even_prs[drctn])
-                for drctn in DRCTNS}
+        z_prs = pq.
+        x_prs = 
+
+        z_oct_cx = {drctn : pq.Clifford(q.cnot(2, 0, 1), z_prs[drctn])
+                for drctn in oct_directions}
+        x_oct_xc = {drctn : pq.Clifford(q.cnot(2, 1, 0), x_prs[drctn])
+                for drctn in oct_directions}
         
+        x_sq_xc = {}
+
         x_meas = pq.Measurement(q.X, ['', 'Z'], d_lat.star_centers())
         z_meas = pq.Measurement(q.Z, ['', 'X'], d_lat.plaq_centers())
         
@@ -154,9 +160,3 @@ def meas_cycle(lat, d_lat, x_flip, z_flip, twirl, odd_prs, even_prs,
 
     x_meas.apply()
     z_meas.apply()
-
-def _sanitize_sim_type(sim_type):
-    if sim_type not in SIM_TYPES:
-        raise ValueError("Simulation type (sim_type) must be "
-            "either 'cb' (circuit-based), 'pq' (3D Z2 RPGM), or 'p' "
-            "(no syndrome errors). {} entered.".format(sim_type))
