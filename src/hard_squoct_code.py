@@ -39,8 +39,12 @@ class HardCodeSquoctSim():
         dep = pq.depolarizing_model(self.p)
         twirl = pq.two_bit_twirl(self.p)
 
-        z_prs = pq.
-        x_prs = 
+        z_prs = {shft : pq.oct_pairs(lat, d_lat, shft, oct_type='z')
+                    for shft in oct_directions}
+        x_prs = {shft : pq.oct_pairs(lat, d_lat, shft, oct_type='x')
+                    for shft in oct_directions}
+        sq_prs = {shft : pq.sq_pairs(lat, d_lat, shft)
+                    for shft in sq_directions}
 
         z_oct_cx = {drctn : pq.Clifford(q.cnot(2, 0, 1), z_prs[drctn])
                 for drctn in oct_directions}
