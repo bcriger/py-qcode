@@ -51,12 +51,18 @@ class HardCodeSquoctSim():
         x_oct_xc = {drctn : pq.Clifford(q.cnot(2, 1, 0), x_prs[drctn])
                 for drctn in oct_directions}
         
-        x_sq_xc = {}
+        x_sq_xc = {drctn : pq.Clifford(q.cnot(2, 1, 0), sq_prs[drctn])
+                for drctn in sq_directions}
 
-        x_meas = pq.Measurement(q.X, ['', 'Z'], d_lat.star_centers())
-        z_meas = pq.Measurement(q.Z, ['', 'X'], d_lat.plaq_centers())
+        z_sq_cx = {drctn : pq.Clifford(q.cnot(2, 0, 1), sq_prs[drctn])
+                for drctn in sq_directions}
+
+        x_oct_meas = pq.Measurement(q.X, ['', 'Z'], d_lat.octagon_centers(oct_type='X'))
+        z_oct_meas = pq.Measurement(q.Z, ['', 'X'], d_lat.octagon_centers(oct_type='X'))
+        x_sq_meas = pq.Measurement(q.X, ['', 'Z'], d_lat.square_centers())
+        z_sq_meas = pq.Measurement(q.Z, ['', 'X'], d_lat.square_centers())
         
-        noiseless_code = pq.toric_code(lat, d_lat_lst[-1])
+        noiseless_code = pq.squoct_code(lat, d_lat_lst[-1])
         
         for _ in range(self.n_trials):
             #clear last sim
@@ -73,7 +79,7 @@ class HardCodeSquoctSim():
                             sim_type=sim_type)
                 pq.syndrome_copy(d_lat, d_lat_lst[idx])
 
-            #print d_lat 
+            #noise is now already on the syndrome qubits (including meas. noise)
             noiseless_code.measure()
             #run decoder, with no final lattice check (laaaaater)
             decoder.infer()
@@ -98,12 +104,12 @@ class HardCodeSquoctSim():
 
     def save(self, filename):
         big_dict = {}
-        big_dict['lattice_class'] = 'SquareLattice'
+        big_dict['lattice_class'] = 'SquareOctagonLattice'
         big_dict['lattice_size'] = self.size
         big_dict['dual_lattice_class'] = 'Dual SquareLattice'
         big_dict['dual_lattice_size'] = self.size
         big_dict['error_model'] = 'custom hard-coded'
-        big_dict['code'] = 'Toric Code'
+        big_dict['code'] = 'Square-Octagon Code'
         big_dict['decoder'] = 'FT MWPM'
         big_dict['n_trials'] = self.n_trials
         big_dict['logical_errors'] = self.logical_error
@@ -115,17 +121,18 @@ def meas_cycle(lat, d_lat, x_flip, z_flip, twirl, odd_prs, even_prs,
                 cx, xc, x_meas, z_meas, sim_type):
     
     """
-    Does one cycle of measurement for the toric code on a
-    SquareLattice. If the error model is circuit-based, that's: 
+    Does one cycle of measurement for the square-octagon code on a
+    SquareOctagonLattice. There are three possible error models, these
+    are selected using the input variable `sim_type`. One in
+    which only the data qubits get errors (`sim_type='p'`), one in 
+    which the data and syndrome qubits are subject to independent flip
+    errors (`sim_type='pq'`), and an all-serial circuit-based model
+    (`sim_type='cb'`). The all-serial measurement schedule is as 
+    follows:
+    
     + Flip syndrome qubits with appropriate error type
-    + Apply north-facing CNots
-    + Two-qubit twirl on north links
-    + Apply west-facing CNots
-    + Two-qubit twirl on west links
-    + Apply east-facing CNots
-    + Two-qubit twirl on east links
-    + Apply south-facing CNots
-    + Two-qubit twirl on south links
+    + Apply Z-octagon CNots, alternated with two-qubit twirl
+    + Apply X-octagon CNots, alternated with two-qubit-twirl
     + Flip syndrome qubits with appropriate error type
     + Measure syndrome qubits.
 

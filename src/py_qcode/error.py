@@ -144,7 +144,7 @@ class PauliErrorModel(ErrorModel):
                 _point_iter_apply(self, register)
         
         if hasattr(register, 'points'):            
-            for op in ops:
+            for op in self.ops:
                 if len(op) != 1:
                     raise ValueError("Only weight-1 Paulis may be "+\
                                         "used on whole Lattices")
