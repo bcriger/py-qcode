@@ -278,7 +278,7 @@ def hi_d_matching_alg(primal_lattice, dual_lattice_list, vert_dist):
                 if node != other_node:
                     #Negative weights are no good for networkx
                     edge_tuple = (node, other_node,
-                        size_constant - dual_lattice_list[0].dist(node, other_node, synd_type) 
+                        size_constant - dual_lattice_list[0].dist(node[:-1], other_node[:-1], synd_type) 
                         - vert_dist(node, other_node, synd_type))
                     g.add_weighted_edges_from([edge_tuple])
 
