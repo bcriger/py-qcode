@@ -253,7 +253,8 @@ def blossom_matching_alg(primal_lattice, dual_lattice, vert_dist):
 
 def hi_d_matching_alg(primal_lattice, dual_lattice_list, vert_dist):
     #First, construct a pair of graphs given syndrome data:
-    x_graph = nx.Graph(); z_graph = nx.Graph()
+    x_graph = nx.Graph()
+    z_graph = nx.Graph()
     
     x_verts, z_verts = hi_d_verts(dual_lattice_list)
 

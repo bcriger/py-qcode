@@ -1,4 +1,4 @@
-# import networkx as nx
+import networkx as nx
 from qecc import X, Z
 import pdb
 from scipy import weave
@@ -253,7 +253,8 @@ def blossom_matching_alg(primal_lattice, dual_lattice, vert_dist):
 
 def hi_d_matching_alg(primal_lattice, dual_lattice_list, vert_dist):
     #First, construct a pair of graphs given syndrome data:
-    x_graph = nx.Graph(); z_graph = nx.Graph()
+    x_graph = nx.Graph()
+    z_graph = nx.Graph()
     
     x_verts, z_verts = hi_d_verts(dual_lattice_list)
 
@@ -273,13 +274,13 @@ def hi_d_matching_alg(primal_lattice, dual_lattice_list, vert_dist):
     for g, synd_type in zip([x_graph, z_graph], ['X', 'Z']):
         for node in g.nodes():
             other_nodes = g.nodes()
-            other_nodes.remove(node)
             for other_node in other_nodes:
-                # Negative weights are no good for networkx
-                edge_tuple = (node, other_node,
-                    size_constant - dual_lattice_list[0].dist(node, other_node, synd_type) 
-                    - vert_dist(node, other_node, synd_type))
-                g.add_weighted_edges_from([edge_tuple])
+                if node != other_node:
+                    #Negative weights are no good for networkx
+                    edge_tuple = (node, other_node,
+                        size_constant - dual_lattice_list[0].dist(node, other_node, synd_type) 
+                        - vert_dist(node, other_node, synd_type))
+                    g.add_weighted_edges_from([edge_tuple])
 
 
     # print 'primal_lattice' + str(primal_lattice)
