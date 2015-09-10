@@ -25,12 +25,13 @@ __all__.extend(
      'octagon_octagon_dist', 'square_octagon_dist',
      'square_octagon_path', 'square_square_dist',
      'square_square_path', 'appropriate_neighbours', 'nwes_pairs',
-     '_odd_odds', '_odd_evens', '_even_evens', '_even_odds'])
+     '_odd_odds', '_odd_evens', '_even_evens', '_even_odds', 
+     'oct_pairs', 'sq_pairs'])
 #"""
 
-# constants##
+# constants #
 SIDES = ['u', 'd', 'r', 'l', 'f', 'b']
-    # up, down, left, right, front, back
+# up, down, right, left, front, back
 
 
 class Point(object):
@@ -556,6 +557,17 @@ class UnionJackLattice(Lattice):
         self.size = x_len, y_len
         self.total_size = total_size
 
+    def square_centers(self):
+        return map(_squoct_affine_map, skew_coords(*self.size))
+
+    def octagon_centers(self, oct_type='Z'):
+        oct_type = oct_type.upper()
+        if oct_type not in 'XZ':
+            raise ValueError("Only X and Z octagons are supported, you "
+                                "entered {}.".format(oct_type))
+        sq_crd_f = _odd_odds if oct_type == 'Z' else _even_evens
+
+        return map(_squoct_affine_map, sq_crd_f(*self.size))
 
 class CubicLattice(Lattice):
 
@@ -568,7 +580,7 @@ class CubicLattice(Lattice):
         pass
 
 
-# Convenience Functions ##
+# Convenience Functions #
 def check_int_tpl(coords):
     if not all([isinstance(coord, int) for coord in coords]):
         raise ValueError("Input tuple must be nothin' but ints,"
@@ -944,6 +956,50 @@ def nwes_pairs(lattice, dual_lattice, label, odd_even=None):
     output = []
     for crds in dual_coord_set:
         nb_crds = [(crds[k] + shift[k]) % (2 * lattice.size[k])
+                    for k in range(2)]
+        #output order: [primal, dual]
+        output.append([lattice[nb_crds], dual_lattice[crds]])
+
+    return output
+
+def oct_pairs(lattice, dual_lattice, shift, oct_type=None):
+    """
+    Lists the pairs corresponding to compass directions on a primal 
+    and dual square lattice, corresponding to gate/twirl locations for
+    the toric code. 
+    """
+
+    if oct_type:
+        oct_type = oct_type.upper()
+        if odd_even not in 'XZ':
+            raise ValueError("oct_type, if entered, must be X or Z."
+                "{} entered.".format(oct_type))
+    
+        dual_coord_set = _squoct_affine_map(_odd_odds(*dual_lattice.size))
+    else:
+        dual_coord_set = _squoct_affine_map(sym_coords(*dual_lattice.size))
+    
+    output = []
+    for crds in dual_coord_set:
+        nb_crds = [(crds[k] + shift[k]) % (lattice.total_size[k])
+                    for k in range(2)]
+        #output order: [primal, dual]
+        output.append([lattice[nb_crds], dual_lattice[crds]])
+
+    return output
+
+def sq_pairs(lattice, dual_lattice, shift, oct_type=None):
+    """
+    Lists the pairs corresponding to compass directions on a primal 
+    and dual square lattice, corresponding to gate/twirl locations for
+    the toric code. 
+    """
+
+    dual_coord_set = _squoct_affine_map(skew_coords(*dual_lattice.size))
+    
+    output = []
+    for crds in dual_coord_set:
+        nb_crds = [(crds[k] + shift[k]) % (lattice.total_size[k])
                     for k in range(2)]
         #output order: [primal, dual]
         output.append([lattice[nb_crds], dual_lattice[crds]])

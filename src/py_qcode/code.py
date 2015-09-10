@@ -342,27 +342,35 @@ def noisy_squoct_code(primal_grid, dual_grid, error_rate):
     toric/[[4,2,2]] code on a set of square lattices.
     """
     nx, ny = primal_grid.size
+    
+    #error_rate can be an iterable of the form (square_rate, oct_rate)
+    #or float:
+    if hasattr(error_rate, '__len__'):
+        square_rate, oct_rate = error_rate
+    else:
+        square_rate = error_rate
+        oct_rate = error_rate
 
     sq_coords = _squoct_affine_map(skew_coords(nx, ny))
     sq_duals = [dual_grid[coord] for coord in sq_coords]
     sq_primal = primal_grid.squares()
     sq_check_X = StabilizerCheck(sq_primal, sq_duals, 'XXXX',
-                                (error_rate, z_flip), indy_css=True)
+                                (square_rate, z_flip), indy_css=True)
 
     sq_check_Z = StabilizerCheck(sq_primal, sq_duals, 'ZZZZ',
-                                (error_rate, x_flip), indy_css=True)
+                                (square_rate, x_flip), indy_css=True)
 
     x_oct_coords = _squoct_affine_map(_even_evens(nx, ny))
     x_oct_duals = [dual_grid[coord] for coord in x_oct_coords]
     x_oct_primal = primal_grid.x_octagons()
     x_oct_check = StabilizerCheck(x_oct_primal, x_oct_duals,
-                                  'XXXXXXXX', (error_rate, z_flip), indy_css=True)
+                                  'XXXXXXXX', (oct_rate, z_flip), indy_css=True)
 
     z_oct_coords = _squoct_affine_map(_odd_odds(nx, ny))
     z_oct_duals = [dual_grid[coord] for coord in z_oct_coords]
     z_oct_primal = primal_grid.z_octagons()
     z_oct_check = StabilizerCheck(z_oct_primal, z_oct_duals,
-                                  'ZZZZZZZZ', (error_rate, x_flip), indy_css=True)
+                                  'ZZZZZZZZ', (oct_rate, x_flip), indy_css=True)
 
     return ErrorCorrectingCode([sq_check_Z, sq_check_X,
                                 x_oct_check, z_oct_check],
