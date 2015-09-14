@@ -2,10 +2,10 @@ import py_qcode as pq, qecc as q, cPickle as pkl
 from hard_toric_code import SIM_TYPES, _sanitize_sim_type
 
 #clockwise around center, starting from upper left
-oct_directions = [(-1, 2), (1, 2), (2, 1), (2, -1),
+oct_drctns = [(-1, 2), (1, 2), (2, 1), (2, -1),
                     (1, -2), (-1, -2), (-2, -2), (-2, 1)]
 
-sq_directions = [(-1, 1), (1, 1), (1, -1), (-1, -1)]
+sq_drctns = [(-1, 1), (1, 1), (1, -1), (-1, -1)]
 
 class HardCodeSquoctSim():
     """
@@ -40,25 +40,25 @@ class HardCodeSquoctSim():
         twirl = pq.two_bit_twirl(self.p)
 
         z_prs = {shft : pq.oct_pairs(lat, d_lat, shft, oct_type='z')
-                    for shft in oct_directions}
+                    for shft in oct_drctns}
         x_prs = {shft : pq.oct_pairs(lat, d_lat, shft, oct_type='x')
-                    for shft in oct_directions}
+                    for shft in oct_drctns}
         sq_prs = {shft : pq.sq_pairs(lat, d_lat, shft)
-                    for shft in sq_directions}
+                    for shft in sq_drctns}
 
         z_oct_cx = {drctn : pq.Clifford(q.cnot(2, 0, 1), z_prs[drctn])
-                for drctn in oct_directions}
+                for drctn in oct_drctns}
         x_oct_xc = {drctn : pq.Clifford(q.cnot(2, 1, 0), x_prs[drctn])
-                for drctn in oct_directions}
+                for drctn in oct_drctns}
         
         x_sq_xc = {drctn : pq.Clifford(q.cnot(2, 1, 0), sq_prs[drctn])
-                for drctn in sq_directions}
+                for drctn in sq_drctns}
 
         z_sq_cx = {drctn : pq.Clifford(q.cnot(2, 0, 1), sq_prs[drctn])
-                for drctn in sq_directions}
+                for drctn in sq_drctns}
 
         x_oct_meas = pq.Measurement(q.X, ['', 'Z'], d_lat.octagon_centers(oct_type='X'))
-        z_oct_meas = pq.Measurement(q.Z, ['', 'X'], d_lat.octagon_centers(oct_type='X'))
+        z_oct_meas = pq.Measurement(q.Z, ['', 'X'], d_lat.octagon_centers(oct_type='Z'))
         x_sq_meas = pq.Measurement(q.X, ['', 'Z'], d_lat.square_centers())
         z_sq_meas = pq.Measurement(q.Z, ['', 'X'], d_lat.square_centers())
         
@@ -74,9 +74,10 @@ class HardCodeSquoctSim():
             
             #fill d_lat_lst with syndromes by copying
             for idx in range(sz - 1):
-                meas_cycle(lat, d_lat, x_flip, z_flip, twirl, odd_prs,
-                            even_prs, cx, xc, x_meas, z_meas, 
-                            sim_type=sim_type)
+                meas_cycle(lat, d_lat, x_flip, z_flip, dep, twirl, 
+                            z_prs, x_prs, sq_prs, z_oct_cx, x_oct_xc,
+                            z_sq_cx, x_sq_xc, z_oct_meas, x_oct_meas,
+                            z_sq_meas, x_sq_meas, sim_type=sim_type)
                 pq.syndrome_copy(d_lat, d_lat_lst[idx])
 
             #noise is now already on the syndrome qubits (including meas. noise)
@@ -106,7 +107,7 @@ class HardCodeSquoctSim():
         big_dict = {}
         big_dict['lattice_class'] = 'SquareOctagonLattice'
         big_dict['lattice_size'] = self.size
-        big_dict['dual_lattice_class'] = 'Dual SquareLattice'
+        big_dict['dual_lattice_class'] = 'UnionJackLattice'
         big_dict['dual_lattice_size'] = self.size
         big_dict['error_model'] = 'custom hard-coded'
         big_dict['code'] = 'Square-Octagon Code'
@@ -117,8 +118,10 @@ class HardCodeSquoctSim():
         with open(filename, 'w') as phil:
             pkl.dump(big_dict, phil)
 
-def meas_cycle(lat, d_lat, x_flip, z_flip, twirl, odd_prs, even_prs, 
-                cx, xc, x_meas, z_meas, sim_type):
+def meas_cycle(lat, d_lat, x_flip, z_flip, dep, twirl, 
+                z_prs, x_prs, sq_prs, z_oct_cx, x_oct_xc,
+                z_sq_cx, x_sq_xc, z_oct_meas, x_oct_meas,
+                z_sq_meas, x_sq_meas, sim_type):
     
     """
     Does one cycle of measurement for the square-octagon code on a
@@ -131,16 +134,20 @@ def meas_cycle(lat, d_lat, x_flip, z_flip, twirl, odd_prs, even_prs,
     follows:
     
     + Flip syndrome qubits with appropriate error type
-    + Apply Z-octagon CNots, alternated with two-qubit twirl
-    + Apply X-octagon CNots, alternated with two-qubit-twirl
+    + Apply Z-octagon CNots, alternated with two-qubit twirl and
+      depolarization on remaining qubits 
+    + Apply X-octagon CNots, alternated with two-qubit-twirl and
+      depolarization on remaining qubits
+    + Apply Z-square CNots, alternated with two-qubit-twirl and
+      depolarization on remaining qubits
+    + Apply X-square CNots, alternated with two-qubit-twirl and
+      depolarization on remaining qubits
     + Flip syndrome qubits with appropriate error type
     + Measure syndrome qubits.
 
     If the model is an RPGM, that's:
-    + Apply north-facing CNots
-    + Apply west-facing CNots
-    + Apply east-facing CNots
-    + Apply south-facing CNots
+    + Flip data qubits with IIDXZ errors
+    + Apply clean gates in the same sequence as above
     + Flip syndrome qubits with appropriate error type
     + Measure syndrome qubits. 
     """
@@ -148,26 +155,28 @@ def meas_cycle(lat, d_lat, x_flip, z_flip, twirl, odd_prs, even_prs,
     pq.error_fill(d_lat, q.I)
     
     if sim_type == 'cb':
-        x_flip.act_on(d_lat.plaq_centers())
-        z_flip.act_on(d_lat.star_centers())
-    elif sim_type in ['pq', 'p']:
+        x_flip.act_on(d_lat.oct_centers('Z'))
+        x_flip.act_on(d_lat.sq_centers())
+        z_flip.act_on(d_lat.oct_centers('X'))
+        z_flip.act_on(d_lat.sq_centers())
+        
+    if sim_type in ['pq', 'p']:
         x_flip.act_on(lat)
         z_flip.act_on(lat)
 
-    for drctn in DRCTNS:
-        cx[drctn].apply()
-        if sim_type == 'cb':
-            twirl.act_on(odd_prs[drctn])
-        
-        xc[drctn].apply()
-        if sim_type == 'cb':
-            twirl.act_on(even_prs[drctn])
-    
-    if sim_type in ['cb', 'pq']:
-        x_flip.act_on(d_lat.plaq_centers())
-        z_flip.act_on(d_lat.star_centers())
-    elif sim_type == 'p':
-        pass
+    for gate_set, drctns in zip([z_oct_cx, x_oct_xc, z_sq_cx, x_sq_xc],
+                                [oct_drctns, oct_drctns, sq_drctns, sq_drctns])
+        #ALSO ZIP PAIRS
+        for drctn in drctns:
+            gate_set[drctn].apply()
+            if sim_type == 'cb':
+                twirl.act_on(odd_prs[drctn])
+            #DEPOLARIZE COMPLEMENT OF CNOT
+        if sim_type in ['cb', 'pq']:
+            x_flip.act_on(d_lat.plaq_centers())
+            z_flip.act_on(d_lat.star_centers())
+        elif sim_type == 'p':
+            pass
 
     x_meas.apply()
     z_meas.apply()
