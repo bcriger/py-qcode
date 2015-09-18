@@ -291,7 +291,7 @@ def hi_d_matching_alg(primal_lattice, dual_lattice_list, vert_dist):
                     wt = max_wt + 2. - wt
                     g[node][other_node]['weight'] = wt
                     if wt < 1.:
-                        raise ValueError("Graph has weight below one: {}".format(wt))
+                        raise ValueError("Graph has weight below one: {}".format(list(g.edges(data=True))))
 
     # print 'primal_lattice' + str(primal_lattice)
     # print 'dual_lattice_list' + str(dual_lattice_list)
