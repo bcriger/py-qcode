@@ -279,15 +279,17 @@ def hi_d_matching_alg(primal_lattice, dual_lattice_list, vert_dist):
                 if node != other_node:
                     weight = dual_lattice_list[0].dist(node[:-1], other_node[:-1], synd_type)
                     weight += vert_dist(node, other_node, synd_type)
-                    if weight < max_wt:
+                    if weight > max_wt:
                         max_wt = weight
-                    g.add_weighted_edges_from([(node, other_node, -weight)])
+                    g.add_weighted_edges_from([(node, other_node, weight)])
         #Negative weights are no good for networkx
         for node in g.nodes():
             other_nodes = g.nodes()
             for other_node in other_nodes:
                 if node != other_node:
-                    g[node][other_node]['weight'] += 2. - max_wt
+                    wt = g[node][other_node]['weight']
+                    g.remove_edge(node, other_node)
+                    g.add_weighted_edges_from([(node, other_node, max_wt - wt + 1.)])
                     if g[node][other_node]['weight'] < 1.:
                         raise ValueError("Graph has weight below one: {}".format(list(g.edges(data=True))))
 
