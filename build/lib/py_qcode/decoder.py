@@ -262,26 +262,33 @@ def hi_d_matching_alg(primal_lattice, dual_lattice_list, vert_dist):
         for elem in v_list:
             graph.add_node(elem)
 
-    # set an additive constant large enough for all weights to be 
-    # positive:
-    size_constant = 2 * len(primal_lattice.size) * \
-                max(primal_lattice.size) + len(dual_lattice_list)
+    # # set an additive constant large enough for all weights to be 
+    # # positive:
+    # size_constant = 2 * len(primal_lattice.size) * \
+    #             max(primal_lattice.size) + len(dual_lattice_list)
 
     if vert_dist is None:
         #FIXME: CLOSE VERTICAL BOUNDARY CONDITION 
         vert_dist = lambda n, o_n, s_t: abs(n[-1] - o_n[-1])
 
     for g, synd_type in zip([x_graph, z_graph], ['X', 'Z']):
+        max_wt = 0
         for node in g.nodes():
             other_nodes = g.nodes()
             for other_node in other_nodes:
                 if node != other_node:
-                    #Negative weights are no good for networkx
-                    edge_tuple = (node, other_node,
-                        size_constant - dual_lattice_list[0].dist(node[:-1], other_node[:-1], synd_type) 
-                        - vert_dist(node, other_node, synd_type))
-                    g.add_weighted_edges_from([edge_tuple])
-
+                    weight = dual_lattice_list[0].dist(node[:-1], other_node[:-1], synd_type)
+                    weight += vert_dist(node, other_node, synd_type)
+                    if weight > max_wt:
+                        max_wt = weight
+                    g.add_edge(node, other_node, weight=weight)
+        
+        #Negative weights are no good for networkx
+        for node in g.nodes():
+            other_nodes = g.nodes()
+            for other_node in other_nodes:
+                if node != other_node:
+                    g[node][other_node]['weight'] = max_wt + 1 - g[node][other_node]['weight']
 
     # print 'primal_lattice' + str(primal_lattice)
     # print 'dual_lattice_list' + str(dual_lattice_list)

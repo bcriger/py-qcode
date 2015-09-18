@@ -94,6 +94,7 @@ class Simulation():
         + Record the commutation relations of the resulting operator
           with the logical operators.
         """
+        self.logical_error = []
         for idx in range(self.n_trials):
             # Clean up results from previous simulation
             self.lattice.clear()
@@ -190,7 +191,7 @@ class FTSimulation():
         + Measure commutation relations with the logical operators
         + Record the results.
         """
-        
+        self.logical_error = []
         for idx in range(self.n_trials):
             # Clean up results from previous simulation
             self.lattice.clear()
