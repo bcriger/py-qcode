@@ -277,8 +277,8 @@ def hi_d_matching_alg(primal_lattice, dual_lattice_list, vert_dist):
             other_nodes = g.nodes()
             for other_node in other_nodes:
                 if node != other_node:
-                    weight = dual_lattice_list[0].dist(node[:-1], other_node[:-1], synd_type) 
-                        + vert_dist(node, other_node, synd_type)
+                    weight = dual_lattice_list[0].dist(node[:-1], other_node[:-1], synd_type)
+                    weight += vert_dist(node, other_node, synd_type)
                     if weight > max_wt:
                         max_wt = weight
                     g.add_edge(node, other_node, weight=weight)
