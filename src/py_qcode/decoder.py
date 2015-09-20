@@ -299,7 +299,7 @@ def hi_d_matching_alg(primal_lattice, dual_lattice_list, vert_dist):
     # print 'z_graph = ' + str(z_graph.adj)    
     
     x_mate_dict, z_mate_dict = \
-    map(nx.max_weight_matching, (x_graph, z_graph))
+    map(lambda grph: nx.max_weight_matching(grph, maxcardinality=True), (x_graph, z_graph))
     x_mate_temps = x_mate_dict.items()
     z_mate_temps = z_mate_dict.items()
 
