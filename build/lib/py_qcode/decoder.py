@@ -84,7 +84,6 @@ def matching_alg(primal_lattice, dual_lattice, vert_dist):
     #appropriate graph and weighted edges connecting it to 
     #every prior vertex.
 
-
     for point in dual_lattice.points:
         if point.syndrome: #exists
             if any([ltr in point.syndrome for ltr in 'xX']):
@@ -92,21 +91,16 @@ def matching_alg(primal_lattice, dual_lattice, vert_dist):
             if any([ltr in point.syndrome for ltr in 'zZ']):
                 z_graph.add_node(point.coords)
 
-    # set an additive constant large enough for all weights to be positive:
-    size_constant = 2 * len(primal_lattice.size) * max(primal_lattice.size)
-
     for g, synd_type in zip([x_graph, z_graph], ['X', 'Z']):
         for node in g.nodes():
-            other_nodes = g.nodes()
-            other_nodes.remove(node)
-            for other_node in other_nodes:
-                # Negative weights are no good for networkx
-                edge_tuple = (node, other_node,
-                    size_constant - dual_lattice.dist(node, other_node, synd_type))
-                g.add_weighted_edges_from([edge_tuple])
+            for other_node in g.nodes():
+                if node != other_node:
+                    edge_tuple = (node, other_node,
+                        -dual_lattice.dist(node, other_node, synd_type))
+                    g.add_weighted_edges_from([edge_tuple])
 
     x_mate_dict, z_mate_dict = \
-    map(nx.max_weight_matching, (x_graph, z_graph))
+    map(lambda grp: nx.max_weight_matching(grp, maxcardinality=True), (x_graph, z_graph))
     x_mate_tuples = x_mate_dict.items()
     z_mate_tuples = z_mate_dict.items()
 
