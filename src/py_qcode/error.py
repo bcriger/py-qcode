@@ -143,31 +143,6 @@ class PauliErrorModel(ErrorModel):
             if isinstance(register[0], Point):
                 _point_iter_apply(self, register)
         
-        if hasattr(register, 'points'):            
-            for op in self.ops:
-                if len(op) != 1:
-                    raise ValueError("Only weight-1 Paulis may be "+\
-                                        "used on whole Lattices")
-            
-            for point in register.points:
-                new_pauli = _action(self, rand())
-                if point.error is None:
-                    point.error = new_pauli
-                else:
-                    if type(point.error) != Pauli:
-                        point.error = Pauli(point.error) * new_pauli
-                    else:
-                        point.error *= new_pauli
-        
-        
-            else:
-                pass #to error below
-        
-        else:
-            raise ValueError("register must be either Lattice or "
-                             "iterable of (iterable of) points, "
-                             "type entered: {}".format(
-                             type(register)))
         pass
 
 
