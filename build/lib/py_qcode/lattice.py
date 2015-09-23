@@ -79,6 +79,13 @@ class Point(object):
         """
         return hash(self.coords)
 
+    def __eq__(self, other):
+        """
+        A hash function for points is necessary to store 
+        :class:`py_qcode.Point`s in sets or dictionaries.
+        """
+        return self.coords == other.coords
+
     def __repr__(self):
         rtrn_str = "Point at " + str(self.coords)
 
