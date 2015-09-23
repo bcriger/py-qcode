@@ -48,6 +48,7 @@ class HardCodeSquoctSim():
 
         z_oct_cx = {drctn : pq.Clifford(q.cnot(2, 0, 1), z_prs[drctn])
                 for drctn in oct_drctns}
+        
         x_oct_xc = {drctn : pq.Clifford(q.cnot(2, 1, 0), x_prs[drctn])
                 for drctn in oct_drctns}
         
