@@ -1,11 +1,21 @@
 import py_qcode as pq, qecc as q, cPickle as pkl
 from hard_toric_code import SIM_TYPES, _sanitize_sim_type
+from itertools import chain
 
 #clockwise around center, starting from upper left
 oct_drctns = [(-1, 2), (1, 2), (2, 1), (2, -1),
                     (1, -2), (-1, -2), (-2, -2), (-2, 1)]
 
 sq_drctns = [(-1, 1), (1, 1), (1, -1), (-1, -1)]
+
+def pair_complements(lat, pair_list):
+    """
+    In order to figure out which qubits to depolarize while twirling a
+    bunch of others, I present a function to determine which points 
+    from a lattice are not in the support of a list of pairs.
+    """
+    pair_support = set(chain.from_iterable(pair_list))
+    return filter()
 
 class HardCodeSquoctSim():
     """
@@ -41,6 +51,7 @@ class HardCodeSquoctSim():
 
         z_prs = {shft : pq.oct_pairs(lat, d_lat, shft, oct_type='z')
                     for shft in oct_drctns}
+        z_deps = {shft : filter(lambda pt: lat.points)}
         x_prs = {shft : pq.oct_pairs(lat, d_lat, shft, oct_type='x')
                     for shft in oct_drctns}
         sq_prs = {shft : pq.sq_pairs(lat, d_lat, shft)
@@ -155,29 +166,23 @@ def meas_cycle(lat, d_lat, x_flip, z_flip, dep, twirl,
     d_lat.clear()
     pq.error_fill(d_lat, q.I)
     
-    if sim_type == 'cb':
-        x_flip.act_on(d_lat.oct_centers('Z'))
-        x_flip.act_on(d_lat.sq_centers())
-        z_flip.act_on(d_lat.oct_centers('X'))
-        z_flip.act_on(d_lat.sq_centers())
-        
     if sim_type in ['pq', 'p']:
         x_flip.act_on(lat)
         z_flip.act_on(lat)
 
-    for gate_set, drctns in zip([z_oct_cx, x_oct_xc, z_sq_cx, x_sq_xc],
-                                [oct_drctns, oct_drctns, sq_drctns, sq_drctns])
-        #ALSO ZIP PAIRS
-        for drctn in drctns:
-            gate_set[drctn].apply()
-            if sim_type == 'cb':
-                twirl.act_on(odd_prs[drctn])
-            #DEPOLARIZE COMPLEMENT OF CNOT
-        if sim_type in ['cb', 'pq']:
-            x_flip.act_on(d_lat.plaq_centers())
-            z_flip.act_on(d_lat.star_centers())
-        elif sim_type == 'p':
-            pass
+    synd_flip = {q.X : z_flip, q.Z : x_flip}
 
-    x_meas.apply()
-    z_meas.apply()
+    if sim_type == 'cb':
+        for gate_set, drctns, meas in zip([z_oct_cx, x_oct_xc, z_sq_cx, x_sq_xc],
+                                    [oct_drctns, oct_drctns, sq_drctns, sq_drctns],
+                                    [z_oct_meas, x_oct_meas, z_sq_meas, x_sq_meas]):
+            synd_flip[meas.pauli].act_on(meas.point_set)
+            for drctn in drctns:
+                gate_set[drctn].apply()
+                twirl.act_on(odd_prs[drctn])
+                #DEPOLARIZE COMPLEMENT OF CNOT
+            if sim_type in ['cb', 'pq']:
+                x_flip.act_on(d_lat.plaq_centers())
+                z_flip.act_on(d_lat.star_centers())
+            elif sim_type == 'p':
+                pass

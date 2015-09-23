@@ -77,8 +77,7 @@ class Point(object):
         A hash function for points is necessary to store 
         :class:`py_qcode.Point`s in sets or dictionaries.
         """
-        return hash((self.coords, self.error, self.syndrome,
-            self.inferred_error))
+        return hash(self.coords)
 
     def __repr__(self):
         rtrn_str = "Point at " + str(self.coords)
