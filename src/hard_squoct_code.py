@@ -89,7 +89,7 @@ class HardCodeSquoctSim():
         x_sq_meas = pq.Measurement(q.X, ['', 'Z'], d_lat_x_sq.square_centers())
         z_sq_meas = pq.Measurement(q.Z, ['', 'X'], d_lat.square_centers())
         
-        noiseless_code = pq.squoct_code(lat, d_lat_lst[-1])
+        noiseless_code = pq.square_octagon_code(lat, d_lat_lst[-1])
         
         for _ in range(self.n_trials):
             #clear last sim

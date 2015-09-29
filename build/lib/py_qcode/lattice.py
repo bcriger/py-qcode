@@ -564,7 +564,7 @@ class UnionJackLattice(Lattice):
         self.total_size = total_size
 
     def square_centers(self):
-        return map(_squoct_affine_map, skew_coords(*self.size))
+        return _squoct_affine_map(skew_coords(*self.size))
 
     def octagon_centers(self, oct_type='Z'):
         oct_type = oct_type.upper()
@@ -573,7 +573,7 @@ class UnionJackLattice(Lattice):
                                 "entered {}.".format(oct_type))
         sq_crd_f = _odd_odds if oct_type == 'Z' else _even_evens
 
-        return map(_squoct_affine_map, sq_crd_f(*self.size))
+        return _squoct_affine_map(sq_crd_f(*self.size))
 
 class CubicLattice(Lattice):
 
