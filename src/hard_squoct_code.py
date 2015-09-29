@@ -122,6 +122,7 @@ class HardCodeSquoctSim():
             # normalizer, chuck an error:
 
             d_lat_lst[-1].clear()
+            pq.syndrome_fill(d_lat_lst[-1], '')
             noiseless_code.measure()
             for point in d_lat_lst[-1].points:
                 if point.syndrome:
