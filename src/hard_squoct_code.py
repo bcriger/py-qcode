@@ -44,7 +44,7 @@ class HardCodeSquoctSim():
         d_lat_lst = [pq.UnionJackLattice((sz, sz), is_dual=True)
                         for _ in range(sz + 1)]
 
-        decoder = pq.ft_mwpm_decoder(lat, d_lat_lst)
+        decoder = pq.ft_mwpm_decoder(lat, d_lat_lst, blossom=False)
 
         log_ops = pq.squoct_log_ops(lat.total_size)
         
@@ -96,8 +96,10 @@ class HardCodeSquoctSim():
             pq.error_fill(lat, q.I)
             d_lat.clear()
             d_lat_x_sq.clear()
+            
             for ltc in d_lat_lst:
                 ltc.clear() #may break
+                
             pq.error_fill(d_lat, q.I)
             
             #fill d_lat_lst with syndromes by copying
@@ -108,8 +110,7 @@ class HardCodeSquoctSim():
                             sq_deps, z_oct_cx, x_oct_xc,
                             z_sq_cx, x_sq_xc, z_oct_meas, x_oct_meas,
                             z_sq_meas, x_sq_meas, sim_type=sim_type)
-                
-                pq.syndrome_fill(d_lat_lst[idx], '')
+                    
                 pq.syndrome_copy(d_lat, d_lat_lst[idx])
                 pq.syndrome_copy(d_lat_x_sq, d_lat_lst[idx], append=True)
 
@@ -190,7 +191,9 @@ def meas_cycle(lat, d_lat, d_lat_x_sq, x_flip, z_flip, dep, twirl,
     d_lat_x_sq.clear()
     pq.error_fill(d_lat, q.I)
     pq.error_fill(d_lat_x_sq, q.I)
-    
+    pq.syndrome_fill(d_lat, '')
+    pq.syndrome_fill(d_lat_x_sq, '')
+            
     if sim_type in ['pq', 'p']:
         x_flip.act_on(lat)
         z_flip.act_on(lat)
