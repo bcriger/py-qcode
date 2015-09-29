@@ -165,7 +165,7 @@ def meas_cycle(lat, d_lat, x_flip, z_flip, dep, twirl,
         z_flip.act_on(lat)
 
     for gate_set, drctns in zip([z_oct_cx, x_oct_xc, z_sq_cx, x_sq_xc],
-                                [oct_drctns, oct_drctns, sq_drctns, sq_drctns])
+                                [oct_drctns, oct_drctns, sq_drctns, sq_drctns]):
         #ALSO ZIP PAIRS
         for drctn in drctns:
             gate_set[drctn].apply()
