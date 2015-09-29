@@ -208,7 +208,7 @@ def meas_cycle(lat, d_lat, d_lat_x_sq, x_flip, z_flip, dep, twirl,
         for drctn in drctns:
             gate_set[drctn].apply()
             if sim_type == 'cb':
-                twirl.act_on(gate_set[drctn].point_set)
+                twirl.act_on(gate_set[drctn].point_sets)
                 dep.act_on(deps[drctn])
     
         if sim_type in ['pq', 'cb']:
