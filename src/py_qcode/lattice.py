@@ -564,16 +564,18 @@ class UnionJackLattice(Lattice):
         self.total_size = total_size
 
     def square_centers(self):
-        return _squoct_affine_map(skew_coords(*self.size))
+        return [self[coord] for coord in 
+                _squoct_affine_map(skew_coords(*self.size))]
 
     def octagon_centers(self, oct_type='Z'):
         oct_type = oct_type.upper()
         if oct_type not in 'XZ':
             raise ValueError("Only X and Z octagons are supported, you "
                                 "entered {}.".format(oct_type))
-        sq_crd_f = _odd_odds if oct_type == 'Z' else _even_evens
+        oct_crd_f = _odd_odds if oct_type == 'Z' else _even_evens
 
-        return _squoct_affine_map(sq_crd_f(*self.size))
+        return [self[coord] for coord in 
+                _squoct_affine_map(oct_crd_f(*self.size))]
 
 class CubicLattice(Lattice):
 
