@@ -26,9 +26,12 @@ def error_copy(lat_1, lat_2):
     for pt in lat_2.points:
         pt.error = lat_1[pt.coords].error
 
-def syndrome_copy(lat_1, lat_2):
+def syndrome_copy(lat_1, lat_2, append=False):
     for pt in lat_2.points:
-        pt.syndrome = lat_1[pt.coords].syndrome
+        if append:
+            pt.syndrome = lat_1[pt.coords].append(syndrome)
+        else:
+            pt.syndrome = lat_1[pt.coords].syndrome
 
 def n_anyons(dual_lattice, anyon_t):
     if anyon_t not in 'xzXZ':

@@ -48,7 +48,6 @@ src/py_qcode/blossom5-v2.04.src/example.cpp
 src/py_qcode/blossom5-v2.04.src/example.o
 src/py_qcode/blossom5-v2.04.src/misc.cpp
 src/py_qcode/blossom5-v2.04.src/misc.o
-src/py_qcode/blossom5-v2.04.src/test_blossom.o
 src/py_qcode/blossom5-v2.04.src/timer.h
 src/py_qcode/blossom5-v2.04.src/GEOM/GPMinit.cpp
 src/py_qcode/blossom5-v2.04.src/GEOM/GPMinit.o
