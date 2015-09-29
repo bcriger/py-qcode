@@ -109,6 +109,7 @@ class HardCodeSquoctSim():
                             z_sq_cx, x_sq_xc, z_oct_meas, x_oct_meas,
                             z_sq_meas, x_sq_meas, sim_type=sim_type)
                 
+                d_lat_lst[idx].syndrome_fill('')
                 pq.syndrome_copy(d_lat, d_lat_lst[idx])
                 pq.syndrome_copy(d_lat_x_sq, d_lat_lst[idx], append=True)
 
