@@ -977,7 +977,7 @@ def oct_pairs(lattice, dual_lattice, shift, oct_type=None):
 
     if oct_type:
         oct_type = oct_type.upper()
-        if odd_even not in 'XZ':
+        if oct_type not in 'XZ':
             raise ValueError("oct_type, if entered, must be X or Z."
                 "{} entered.".format(oct_type))
     

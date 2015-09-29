@@ -55,11 +55,13 @@ class HardCodeSquoctSim():
 
         z_prs = {shft : pq.oct_pairs(lat, d_lat, shft, oct_type='z')
                     for shft in oct_drctns}
-        z_deps = {shft : pair_complements(lat, z_prs[shft])}
+        z_deps = {shft : pair_complements(lat, z_prs[shft])
+                    for shft in oct_drctns}
         
         x_prs = {shft : pq.oct_pairs(lat, d_lat, shft, oct_type='x')
                     for shft in oct_drctns}
-        x_deps = {shft : pair_complements(lat, x_prs[shft])}
+        x_deps = {shft : pair_complements(lat, x_prs[shft])
+                    for shft in oct_drctns}
         
         sq_prs = {shft : pq.sq_pairs(lat, d_lat, shft)
                     for shft in sq_drctns}
@@ -67,7 +69,8 @@ class HardCodeSquoctSim():
         x_sq_prs = {shft : pq.sq_pairs(lat, d_lat_x_sq, shft)
                     for shft in sq_drctns}
         
-        sq_deps = {shft : pair_complements(lat, sq_prs[shft])}
+        sq_deps = {shft : pair_complements(lat, sq_prs[shft])
+                    for shft in sq_drctns}
         
         z_oct_cx = {drctn : pq.Clifford(q.cnot(2, 0, 1), z_prs[drctn])
                 for drctn in oct_drctns}
