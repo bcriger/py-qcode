@@ -29,7 +29,10 @@ def error_copy(lat_1, lat_2):
 def syndrome_copy(lat_1, lat_2, append=False):
     for pt in lat_2.points:
         if append:
-            pt.syndrome += lat_1[pt.coords].syndrome
+            if pt.syndrome:
+                pt.syndrome += lat_1[pt.coords].syndrome
+            else:
+                pt.syndrome = lat_1[pt.coords].syndrome
         else:
             pt.syndrome = lat_1[pt.coords].syndrome
 
