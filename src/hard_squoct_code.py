@@ -4,7 +4,7 @@ from itertools import chain
 
 #clockwise around center, starting from upper left
 oct_drctns = [(-1, 2), (1, 2), (2, 1), (2, -1),
-                    (1, -2), (-1, -2), (-2, -2), (-2, 1)]
+                    (1, -2), (-1, -2), (-2, -1), (-2, 1)]
 
 sq_drctns = [(-1, 1), (1, 1), (1, -1), (-1, -1)]
 
