@@ -3,8 +3,7 @@ from collections import Iterable
 from qecc import I
 # from utils import syndrome_print, error_print
 
-__all__ = ['Simulation', 'FTSimulation', 'DecayTimeSimulation',
-            'FTDecayTimeSimulation']
+__all__ = ['Simulation', 'FTSimulation']
 
 
 class Simulation():
