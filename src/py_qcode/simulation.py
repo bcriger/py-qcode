@@ -3,11 +3,11 @@ from collections import Iterable
 from qecc import I
 # from utils import syndrome_print, error_print
 
-__all__ = ['Simulation', 'FTSimulation']
+__all__ = ['Simulation', 'FTSimulation', 'DecayTimeSimulation',
+            'FTDecayTimeSimulation']
 
 
 class Simulation():
-
     """
     `Simulation` is the top-level class
     for py_qcode, the user is meant to set up, execute and save results
@@ -261,3 +261,14 @@ class FTSimulation():
 
         with open(filename, 'w') as phil:
             pkl.dump(big_dict, phil)
+
+class DecayTimeSimulation(Simulation):
+    """
+    Simulations which count rounds until failure instead of 
+    probability of failure  
+    """
+    def __init__(self, arg):
+        super(DecayTimeSimulation, self).__init__()
+        self.arg = arg
+    
+    def run(self):
