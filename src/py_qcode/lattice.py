@@ -982,8 +982,10 @@ def oct_pairs(lattice, dual_lattice, shift, oct_type=None):
         if oct_type not in 'XZ':
             raise ValueError("oct_type, if entered, must be X or Z."
                 "{} entered.".format(oct_type))
-    
-        dual_coord_set = _squoct_affine_map(_odd_odds(*dual_lattice.size))
+        elif oct_type == 'Z':
+            dual_coord_set = _squoct_affine_map(_odd_odds(*dual_lattice.size))
+        elif oct_type == 'X':
+            dual_coord_set = _squoct_affine_map(_even_evens(*dual_lattice.size))
     else:
         dual_coord_set = _squoct_affine_map(sym_coords(*dual_lattice.size))
     
