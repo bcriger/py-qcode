@@ -4,7 +4,7 @@ from itertools import chain
 
 #clockwise around center, starting from upper left
 oct_drctns = [(-1, 2), (1, 2), (2, 1), (2, -1),
-                    (1, -2), (-1, -2), (-2, -2), (-2, 1)]
+                    (1, -2), (-1, -2), (-2, -1), (-2, 1)]
 
 sq_drctns = [(-1, 1), (1, 1), (1, -1), (-1, -1)]
 
@@ -44,7 +44,7 @@ class HardCodeSquoctSim():
         d_lat_lst = [pq.UnionJackLattice((sz, sz), is_dual=True)
                         for _ in range(sz + 1)]
 
-        decoder = pq.ft_mwpm_decoder(lat, d_lat_lst)
+        decoder = pq.ft_mwpm_decoder(lat, d_lat_lst, blossom=False)
 
         log_ops = pq.squoct_log_ops(lat.total_size)
         
@@ -55,11 +55,13 @@ class HardCodeSquoctSim():
 
         z_prs = {shft : pq.oct_pairs(lat, d_lat, shft, oct_type='z')
                     for shft in oct_drctns}
-        z_deps = {shft : pair_complements(lat, z_prs[shft])}
+        z_deps = {shft : pair_complements(lat, z_prs[shft])
+                    for shft in oct_drctns}
         
         x_prs = {shft : pq.oct_pairs(lat, d_lat, shft, oct_type='x')
                     for shft in oct_drctns}
-        x_deps = {shft : pair_complements(lat, x_prs[shft])}
+        x_deps = {shft : pair_complements(lat, x_prs[shft])
+                    for shft in oct_drctns}
         
         sq_prs = {shft : pq.sq_pairs(lat, d_lat, shft)
                     for shft in sq_drctns}
@@ -67,7 +69,8 @@ class HardCodeSquoctSim():
         x_sq_prs = {shft : pq.sq_pairs(lat, d_lat_x_sq, shft)
                     for shft in sq_drctns}
         
-        sq_deps = {shft : pair_complements(lat, sq_prs[shft])}
+        sq_deps = {shft : pair_complements(lat, sq_prs[shft])
+                    for shft in sq_drctns}
         
         z_oct_cx = {drctn : pq.Clifford(q.cnot(2, 0, 1), z_prs[drctn])
                 for drctn in oct_drctns}
@@ -86,15 +89,17 @@ class HardCodeSquoctSim():
         x_sq_meas = pq.Measurement(q.X, ['', 'Z'], d_lat_x_sq.square_centers())
         z_sq_meas = pq.Measurement(q.Z, ['', 'X'], d_lat.square_centers())
         
-        noiseless_code = pq.squoct_code(lat, d_lat_lst[-1])
+        noiseless_code = pq.square_octagon_code(lat, d_lat_lst[-1])
         
         for _ in range(self.n_trials):
             #clear last sim
             pq.error_fill(lat, q.I)
             d_lat.clear()
             d_lat_x_sq.clear()
+            
             for ltc in d_lat_lst:
                 ltc.clear() #may break
+                
             pq.error_fill(d_lat, q.I)
             
             #fill d_lat_lst with syndromes by copying
@@ -105,7 +110,7 @@ class HardCodeSquoctSim():
                             sq_deps, z_oct_cx, x_oct_xc,
                             z_sq_cx, x_sq_xc, z_oct_meas, x_oct_meas,
                             z_sq_meas, x_sq_meas, sim_type=sim_type)
-                
+                    
                 pq.syndrome_copy(d_lat, d_lat_lst[idx])
                 pq.syndrome_copy(d_lat_x_sq, d_lat_lst[idx], append=True)
 
@@ -118,6 +123,7 @@ class HardCodeSquoctSim():
             # normalizer, chuck an error:
 
             d_lat_lst[-1].clear()
+            pq.syndrome_fill(d_lat_lst[-1], '')
             noiseless_code.measure()
             for point in d_lat_lst[-1].points:
                 if point.syndrome:
@@ -185,7 +191,9 @@ def meas_cycle(lat, d_lat, d_lat_x_sq, x_flip, z_flip, dep, twirl,
     d_lat_x_sq.clear()
     pq.error_fill(d_lat, q.I)
     pq.error_fill(d_lat_x_sq, q.I)
-    
+    pq.syndrome_fill(d_lat, '')
+    pq.syndrome_fill(d_lat_x_sq, '')
+            
     if sim_type in ['pq', 'p']:
         x_flip.act_on(lat)
         z_flip.act_on(lat)
@@ -205,7 +213,7 @@ def meas_cycle(lat, d_lat, d_lat_x_sq, x_flip, z_flip, dep, twirl,
         for drctn in drctns:
             gate_set[drctn].apply()
             if sim_type == 'cb':
-                twirl.act_on(gate_set[drctn].point_set)
+                twirl.act_on(gate_set[drctn].point_sets)
                 dep.act_on(deps[drctn])
     
         if sim_type in ['pq', 'cb']:

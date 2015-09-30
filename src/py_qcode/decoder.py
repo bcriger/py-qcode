@@ -497,8 +497,17 @@ def hi_d_verts(dual_lattice_list):
 #-----------------------------Convenience Functions-------------------#
 
 def str_diff(str1, str2):
-    return ''.join([letter for letter in str1+str2 
+    if str1:
+        if str2:
+            return ''.join([letter for letter in str1+str2 
                         if (str1+str2).count(letter) == 1])
+        else:
+            return str1
+    elif str2:
+        return str2
+    else:
+        return ''
+
 
 def addl_dist(pt_1, pt_2, height):
     """
