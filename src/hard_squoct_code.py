@@ -101,6 +101,7 @@ class HardCodeSquoctSim():
                 ltc.clear() #may break
                 
             pq.error_fill(d_lat, q.I)
+            pq.error_fill(d_lat_x_sq, q.I)
             
             #fill d_lat_lst with syndromes by copying
             for idx in range(sz - 1):
@@ -219,3 +220,4 @@ def meas_cycle(lat, d_lat, d_lat_x_sq, x_flip, z_flip, dep, twirl,
         if sim_type in ['pq', 'cb']:
             synd_flip[meas.pauli].act_on(meas.point_set)
         
+        meas.apply()

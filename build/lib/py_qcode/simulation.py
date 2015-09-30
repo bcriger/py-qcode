@@ -7,7 +7,6 @@ __all__ = ['Simulation', 'FTSimulation']
 
 
 class Simulation():
-
     """
     `Simulation` is the top-level class
     for py_qcode, the user is meant to set up, execute and save results
@@ -261,3 +260,4 @@ class FTSimulation():
 
         with open(filename, 'w') as phil:
             pkl.dump(big_dict, phil)
+
