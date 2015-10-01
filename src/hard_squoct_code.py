@@ -104,7 +104,7 @@ class HardCodeSquoctSim():
             pq.error_fill(d_lat_x_sq, q.I)
             
             #fill d_lat_lst with syndromes by copying
-            for idx in range(sz - 1):
+            for idx in range(len(d_lat_lst) - 1):
                 
                 meas_cycle(lat, d_lat, d_lat_x_sq, x_flip, z_flip, dep, twirl, 
                             z_prs, x_prs, sq_prs, z_deps, x_deps, 
