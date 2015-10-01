@@ -32,7 +32,7 @@ class HardCodeSquoctSim():
         #sanitize input
         _sanitize_sim_type(sim_type)
 
-        sz = self.size
+        sz = int(self.size / 2.)
 
         lat = pq.SquareOctagonLattice((sz, sz))
         d_lat = pq.UnionJackLattice((sz, sz), is_dual=True)
@@ -42,7 +42,7 @@ class HardCodeSquoctSim():
         d_lat_x_sq = pq.UnionJackLattice((sz,sz), is_dual=True)
 
         d_lat_lst = [pq.UnionJackLattice((sz, sz), is_dual=True)
-                        for _ in range(sz + 1)]
+                        for _ in range(self.size + 1)]
 
         decoder = pq.ft_mwpm_decoder(lat, d_lat_lst, blossom=False)
 
