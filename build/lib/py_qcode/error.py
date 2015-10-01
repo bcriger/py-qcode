@@ -619,9 +619,6 @@ def _full_lattice_apply(err_mod, register):
 
 def _point_iter_apply(err_mod, register):
 
-    #TODO: Determine if this is used anywhere, because it looks like 
-    #weird garbage.
-
     # Test register to see that it contains points
     for point in register:
         if not isinstance(point, Point):
@@ -638,14 +635,8 @@ def _point_iter_apply(err_mod, register):
     for pt in register:
         if pt.error is None:
             pt.error = Pauli('I')
+        pt.error *= _action(err_mod, rand())
 
-    error = reduce(lambda a, b: a.tens(b),
-                   [pt.error.op for pt in register])
-
-    error = _action(err_mod, rand()) * error
-
-    for idx, pt in enumerate(register):
-        pt.error = error[idx]
 
 def _point_set_iter_apply(err_mod, register):
     
