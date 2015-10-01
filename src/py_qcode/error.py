@@ -103,7 +103,7 @@ class ErrorModel(dict):
             # TODO: provide support for multi-qubit non-pauli errors
             # TODO: check that all elements of iterable are Points.
             # TODO: check weight of errors == length of register
-            pass
+            _point_iter_apply(self, register)
 
         else:
             raise ValueError("ErrorModel objects must act on a "
@@ -140,10 +140,16 @@ class PauliErrorModel(ErrorModel):
             _full_lattice_apply(self, register)
         
         elif isinstance(register, Iterable):
-            if isinstance(register[0], Point):
-                _point_iter_apply(self, register)
+            for pt in register:
+                if pt.error is None:
+                    pt.error = Pauli('I')
+                pt.error *= _action(self, rand())
+            # if isinstance(register[0], Point):
+            #     _point_iter_apply(self, register)
         
-        pass
+        else:
+            raise ValueError("Could not determine how to act error "
+                "model {} on register {}.".format(self, register))
 
 
 class DensePauliErrorModel(object):
