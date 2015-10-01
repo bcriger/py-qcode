@@ -339,7 +339,7 @@ def square_octagon_code(primal_grid, dual_grid):
 def noisy_squoct_code(primal_grid, dual_grid, error_rate):
     """
     Uses a few convenience functions to produce the concatenated
-    toric/[[4,2,2]] code on a set of square lattices.
+    toric/[[4,2,2]] code on a Square-Octagon/Union Jack lattice pair.
     """
     nx, ny = primal_grid.size
     
