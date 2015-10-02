@@ -135,18 +135,32 @@ class PauliErrorModel(ErrorModel):
         return len(self.ops[0])
 
     def act_on(self, register):
-
+        """
+        Ungodly version of act_on, distinguishes between three cases.
+        Either:
+         + We apply a single-qubit map to the entire lattice, which is
+           passed in as the register.
+         + We apply a single-qubit map to a subset of the lattice, 
+           which is passed in as a list or other iterable.
+         + We apply a multi-qubit map to subsets of the lattice; the 
+           register is an iterable of iterables.
+        """
         if hasattr(register, 'points'):
             _full_lattice_apply(self, register)
         
         elif isinstance(register, Iterable):
-            for pt in register:
-                if pt.error is None:
-                    pt.error = Pauli('I')
-                pt.error *= _action(self, rand())
-            # if isinstance(register[0], Point):
-            #     _point_iter_apply(self, register)
-        
+            if isinstance(register[0], Iterable):    
+                for pt_set in register:
+                    mul_error = _action(err_mod, rand())
+                    for pdx, pt in enumerate(pt_set):
+                        if pt.error is None:
+                            pt.error = I
+                        pt.error *= mul_error[pdx]
+            else:
+                for pt in register:
+                    if pt.error is None:
+                        pt.error = Pauli('I')
+                    pt.error *= _action(self, rand())    
         else:
             raise ValueError("Could not determine how to act error "
                 "model {} on register {}.".format(self, register))
