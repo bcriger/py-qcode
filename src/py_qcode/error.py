@@ -151,7 +151,7 @@ class PauliErrorModel(ErrorModel):
         elif isinstance(register, Iterable):
             if isinstance(register[0], Iterable):    
                 for pt_set in register:
-                    mul_error = _action(err_mod, rand())
+                    mul_error = _action(self, rand())
                     for pdx, pt in enumerate(pt_set):
                         if pt.error is None:
                             pt.error = I
