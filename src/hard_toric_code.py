@@ -26,7 +26,7 @@ class HardCodeToricSim():
         d_lat_lst = [pq.SquareLattice((sz, sz), is_dual=True)
                         for _ in range(sz)]
 
-        decoder = pq.ft_mwpm_decoder(lat, d_lat_lst)
+        decoder = pq.ft_mwpm_decoder(lat, d_lat_lst, blossom=False)
 
         log_ops = pq.toric_log_ops((sz, sz))
         
