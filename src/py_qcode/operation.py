@@ -1,9 +1,11 @@
+from collections import Iterable
 from qecc import Pauli, com
 from qecc import Clifford as clfrd #collision avoidance
 #circular dep below?
 from lattice import Lattice
+from error import depolarizing_model, two_bit_twirl
 
-__all__ = ['Clifford', 'Measurement']
+__all__ = ['Clifford', 'Measurement', 'Timestep']
 
 class Clifford(object):
     """
@@ -29,7 +31,14 @@ class Clifford(object):
         #end sanity checks
         self.gate = gate
         self.point_sets = point_sets
+        self._support = None
 
+    @property
+    def support(self):
+        if self._support == None:
+            self._support = set().union(*map(set, self.point_sets))
+        return self._support
+    
     def apply(self, length=None):
         """
         Transforms a Pauli error on a lattice or pair of lattices. 
@@ -80,6 +89,51 @@ class Measurement():
                 pt.syndrome += symbol
             else:
                 pt.syndrome = symbol
+
+class Timestep():
+    """
+    Wraps a bunch of Cliffords for noisy application in circuit models.
+    This way, I can calculate which qubits to depolarize at 
+    initialization, and running the circuit is just looping over a list
+    of Timesteps.
+    """
+    def __init__(self, cliff_list):
+        #SANITIZE
+        bad_list_err = ValueError("Timestep wraps an iterable of"
+            " py_qcode.Clifford's, you entered: {}".format(cliff_list))
+        
+        if not isinstance(cliff_list, Iterable):
+            raise bad_list_err
+        for cliff in cliff_list:
+            if not isinstance(cliff, Clifford):
+                raise bad_list_err
+
+        self.cliff_list = cliff_list
+        #FIXME: Only works for two-qubit gates
+        self.twirl_support = set().union(*[x.support for x in cliff_list])
+    
+    def noisy_apply(self, dat_lat, anc_lat, p):
+        """
+        Applies the gates in the time step to the data/ancilla qubits, 
+        applying a depolarizing map after one-qubit gates, a two-qubit 
+        twirl after two-qubit gates, and a depolarizing map after all 
+        memory locations.
+        """
+        dep_model = depolarizing_model(p)
+        twirl = two_bit_twirl(p)        
+
+        dep_support = set(dat_lat.points + anc_lat.points)
+        dep_support -= self.twirl_support
+
+        for cliff in self.cliff_list:
+            cliff.apply()
+            if cliff.gate.nq == 2:
+                twirl.act_on(cliff.point_sets)
+
+        if dep_support != set():
+            dep_model.act_on(list(dep_support))
+
+        pass        
 
 #Convenience Functions
 def _check_lengths(coord_sets, length):
