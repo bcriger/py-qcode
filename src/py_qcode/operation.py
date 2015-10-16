@@ -130,6 +130,7 @@ class Timestep():
             if cliff.gate.nq == 2:
                 twirl.act_on(cliff.point_sets)
 
+        #FIXME: This check should be in ErrorModel.act_on()
         if dep_support != set():
             dep_model.act_on(list(dep_support))
 

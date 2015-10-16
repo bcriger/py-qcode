@@ -403,9 +403,9 @@ class SquareOctagonLattice(Lattice):
         num_elems_ahead /= 2  # 0, 1, 2, 3
         return self.points[num_blocks_ahead * sz_y + num_elems_ahead]
 
-    def squares(self):
-        nx, ny = self.size
-        square_centers = _squoct_affine_map(skew_coords(nx, ny))
+    def squares(self, gauge=None):
+        square_centers = _square_centers(self.size, gauge)
+        
         point_list = []
 
         s_x, s_y = self.total_size
@@ -563,9 +563,8 @@ class UnionJackLattice(Lattice):
         self.size = x_len, y_len
         self.total_size = total_size
 
-    def square_centers(self):
-        return [self[coord] for coord in 
-                _squoct_affine_map(skew_coords(*self.size))]
+    def square_centers(self, gauge=None):
+        return [self[x] for x in _square_centers(self.size, gauge)]
 
     def octagon_centers(self, oct_type='Z'):
         oct_type = oct_type.upper()
@@ -685,6 +684,18 @@ def oct2sq(coord):
     else:
         raise ValueError('Invalid co-ordinate: {0}'.format(coord))
 
+def _square_centers(size, gauge=None):
+    nx, ny = size
+    if gauge == None:
+        ctrs = _squoct_affine_map(skew_coords(nx, ny))
+    elif gauge in 'hH':
+        ctrs = _squoct_affine_map(_odd_evens(nx, ny))
+    elif gauge in 'vV':
+        ctrs = _squoct_affine_map(_even_odds(nx, ny))
+    else:
+        raise ValueError("gauge must be h or v, not "
+                            "{}".format(gauge))
+    return ctrs
 
 def is_sq_cent(coord):
     """

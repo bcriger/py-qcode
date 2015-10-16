@@ -3,10 +3,21 @@ from hard_toric_code import SIM_TYPES, _sanitize_sim_type
 from itertools import chain
 
 #clockwise around center, starting from upper left
-oct_drctns = [(-1, 2), (1, 2), (2, 1), (2, -1),
+oct_clck_dirs = [(-1, 2), (1, 2), (2, 1), (2, -1),
                     (1, -2), (-1, -2), (-2, -1), (-2, 1)]
 
-sq_drctns = [(-1, 1), (1, 1), (1, -1), (-1, -1)]
+sq_clck_dirs = [(-1, 1), (1, 1), (1, -1), (-1, -1)]
+
+#directions for interleaved simulation
+z_oct_il_dirs = [(2, 1), (2, -1), (1, -2), (-1, -2), 
+                    (-2, -1), (-2, 1), (-1, 2), (1, 2)]
+
+x_oct_il_dirs = [(2, 1), (2, -1), (1, -2), (1, 2),
+                    (-1, -2), (-2, 1), (-2, -1), (-1, 2)]
+#gates are arranged so that square CNots are always parallel.
+#square measurement is broken up into two rounds
+sq_il_dirs = [[(1, 1), (1, -1), (-1, 1), (-1, -1)][x] 
+                for x in [0, 1, 2, 3, 3, 1, 2, 0]]
 
 def pair_complements(lat, pair_list):
     """
@@ -54,35 +65,35 @@ class HardCodeSquoctSim():
         twirl = pq.two_bit_twirl(self.p)
 
         z_prs = {shft : pq.oct_pairs(lat, d_lat, shft, oct_type='z')
-                    for shft in oct_drctns}
+                    for shft in oct_clck_dirs}
         z_deps = {shft : pair_complements(lat, z_prs[shft])
-                    for shft in oct_drctns}
+                    for shft in oct_clck_dirs}
         
         x_prs = {shft : pq.oct_pairs(lat, d_lat, shft, oct_type='x')
-                    for shft in oct_drctns}
+                    for shft in oct_clck_dirs}
         x_deps = {shft : pair_complements(lat, x_prs[shft])
-                    for shft in oct_drctns}
+                    for shft in oct_clck_dirs}
         
         sq_prs = {shft : pq.sq_pairs(lat, d_lat, shft)
-                    for shft in sq_drctns}
+                    for shft in sq_clck_dirs}
 
         x_sq_prs = {shft : pq.sq_pairs(lat, d_lat_x_sq, shft)
-                    for shft in sq_drctns}
+                    for shft in sq_clck_dirs}
         
         sq_deps = {shft : pair_complements(lat, sq_prs[shft])
-                    for shft in sq_drctns}
+                    for shft in sq_clck_dirs}
         
         z_oct_cx = {drctn : pq.Clifford(q.cnot(2, 0, 1), z_prs[drctn])
-                for drctn in oct_drctns}
+                for drctn in oct_clck_dirs}
         
         x_oct_xc = {drctn : pq.Clifford(q.cnot(2, 1, 0), x_prs[drctn])
-                for drctn in oct_drctns}
+                for drctn in oct_clck_dirs}
         
         x_sq_xc = {drctn : pq.Clifford(q.cnot(2, 1, 0), x_sq_prs[drctn])
-                for drctn in sq_drctns}
+                for drctn in sq_clck_dirs}
 
         z_sq_cx = {drctn : pq.Clifford(q.cnot(2, 0, 1), sq_prs[drctn])
-                for drctn in sq_drctns}
+                for drctn in sq_clck_dirs}
 
         x_oct_meas = pq.Measurement(q.X, ['', 'Z'], d_lat.octagon_centers(oct_type='X'))
         z_oct_meas = pq.Measurement(q.Z, ['', 'X'], d_lat.octagon_centers(oct_type='Z'))
@@ -154,6 +165,40 @@ class HardCodeSquoctSim():
         with open(filename, 'w') as phil:
             pkl.dump(big_dict, phil)
 
+class InterleavedSquoctSim(HardCodeSquoctSim):
+    """
+    Marginally smarter than copypasta, I rewrite the run method for 
+    HardCodeSquoctSim. 
+    """
+    def __init__(self, size, p, n_trials):
+        super(InterleavedSquoctSim, self).__init__()
+    
+    def run(self, sim_type='cb'):
+        #sanitize input
+        _sanitize_sim_type(sim_type)
+
+        sz = int(self.size / 2.)
+
+        lat = pq.SquareOctagonLattice((sz, sz))
+        d_lat = pq.UnionJackLattice((sz, sz), is_dual=True)
+        # We won't be able to measure multiple syndromes on the same
+        # point, so I make a spare dual lattice for the X square 
+        # syndromes:
+        d_lat_x_sq = pq.UnionJackLattice((sz,sz), is_dual=True)
+
+        d_lat_lst = [pq.UnionJackLattice((sz, sz), is_dual=True)
+                        for _ in range(self.size + 1)]
+
+        decoder = pq.ft_mwpm_decoder(lat, d_lat_lst, blossom=False)
+
+        log_ops = pq.squoct_log_ops(lat.total_size)
+        
+        x_flip = pq.PauliErrorModel({q.I : 1. - self.p, q.X : self.p})
+        z_flip = pq.PauliErrorModel({q.I : 1. - self.p, q.Z : self.p})
+        cycle = map(pq.Timestep, [])#TODO
+
+
+
 def meas_cycle(lat, d_lat, d_lat_x_sq, x_flip, z_flip, dep, twirl, 
                 z_prs, x_prs, sq_prs, z_deps, x_deps, 
                 sq_deps, z_oct_cx, x_oct_xc,
@@ -201,8 +246,8 @@ def meas_cycle(lat, d_lat, d_lat_x_sq, x_flip, z_flip, dep, twirl,
 
     synd_flip = {q.X : z_flip, q.Z : x_flip}
 
-    for gate_set, drctns, meas, deps in zip([z_oct_cx, x_oct_xc, z_sq_cx, x_sq_xc],
-                                            [oct_drctns, oct_drctns, sq_drctns, sq_drctns],
+    for gate_set, clck_dirs, meas, deps in zip([z_oct_cx, x_oct_xc, z_sq_cx, x_sq_xc],
+                                            [oct_clck_dirs, oct_clck_dirs, sq_clck_dirs, sq_clck_dirs],
                                             [z_oct_meas, x_oct_meas, z_sq_meas, x_sq_meas],
                                             [z_deps, x_deps, sq_deps, sq_deps]):
         for pt in meas.point_set:
@@ -211,7 +256,7 @@ def meas_cycle(lat, d_lat, d_lat_x_sq, x_flip, z_flip, dep, twirl,
         if sim_type == 'cb':
             synd_flip[meas.pauli].act_on(meas.point_set)
     
-        for drctn in drctns:
+        for drctn in clck_dirs:
             gate_set[drctn].apply()
             if sim_type == 'cb':
                 twirl.act_on(gate_set[drctn].point_sets)
