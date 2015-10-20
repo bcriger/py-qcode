@@ -1009,14 +1009,14 @@ def oct_pairs(lattice, dual_lattice, shift, oct_type=None):
 
     return output
 
-def sq_pairs(lattice, dual_lattice, shift, oct_type=None):
+def sq_pairs(lattice, dual_lattice, shift, gauge=None):
     """
     Lists the pairs corresponding to compass directions on a primal 
     and dual square lattice, corresponding to gate/twirl locations for
     the toric code. 
     """
 
-    dual_coord_set = _squoct_affine_map(skew_coords(*dual_lattice.size))
+    dual_coord_set = _square_centers(dual_lattice.size, gauge=gauge)
     
     output = []
     for crds in dual_coord_set:

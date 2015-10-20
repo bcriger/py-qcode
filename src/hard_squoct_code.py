@@ -195,7 +195,10 @@ class InterleavedSquoctSim(HardCodeSquoctSim):
         
         x_flip = pq.PauliErrorModel({q.I : 1. - self.p, q.X : self.p})
         z_flip = pq.PauliErrorModel({q.I : 1. - self.p, q.Z : self.p})
-        cycle = map(pq.Timestep, [])#TODO
+        
+        vert_x_cnots = [ Clifford for d in sq_il_dirs]
+
+        cycle = map(pq.Timestep, zip([]))#TODO
 
 
 
