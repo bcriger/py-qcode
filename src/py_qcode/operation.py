@@ -112,27 +112,29 @@ class Timestep():
         #FIXME: Only works for two-qubit gates
         self.twirl_support = set().union(*[x.support for x in cliff_list])
     
-    def noisy_apply(self, dat_lat, anc_lat, p):
+    def noisy_apply(self, dat_lat, anc_lat, p, dep=True):
         """
         Applies the gates in the time step to the data/ancilla qubits, 
         applying a depolarizing map after one-qubit gates, a two-qubit 
         twirl after two-qubit gates, and a depolarizing map after all 
         memory locations.
-        """
-        dep_model = depolarizing_model(p)
-        twirl = two_bit_twirl(p)        
 
-        dep_support = set(dat_lat.points + anc_lat.points)
-        dep_support -= self.twirl_support
+        Only depolarizes if dep is set to True.
+        """
+        twirl = two_bit_twirl(p)        
 
         for cliff in self.cliff_list:
             cliff.apply()
             if cliff.gate.nq == 2:
                 twirl.act_on(cliff.point_sets)
 
-        #FIXME: This check should be in ErrorModel.act_on()
-        if dep_support != set():
-            dep_model.act_on(list(dep_support))
+        if dep:
+            dep_model = depolarizing_model(p)
+            dep_support = set(dat_lat.points + anc_lat.points)
+            dep_support -= self.twirl_support
+            #FIXME: This check should be in ErrorModel.act_on()
+            if (dep_support != set()):
+                dep_model.act_on(list(dep_support))
 
         pass        
 

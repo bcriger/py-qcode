@@ -176,7 +176,10 @@ class InterleavedSquoctSim(HardCodeSquoctSim):
     def run(self, sim_type='cb'):
         #sanitize input
         _sanitize_sim_type(sim_type)
-
+        if sim_type != 'cb':
+            raise ValueError("InterleavedSquoctSim only supports "
+                            "sim_type=cb, use HardCodeSquoctSim.")
+        
         sz = int(self.size / 2.)
 
         lat = pq.SquareOctagonLattice((sz, sz))
@@ -193,13 +196,131 @@ class InterleavedSquoctSim(HardCodeSquoctSim):
 
         log_ops = pq.squoct_log_ops(lat.total_size)
         
+        dep = pq.depolarizing_model(self.p)
         x_flip = pq.PauliErrorModel({q.I : 1. - self.p, q.X : self.p})
         z_flip = pq.PauliErrorModel({q.I : 1. - self.p, q.Z : self.p})
+        synd_flip = {q.X : z_flip, q.Z : x_flip}
         
-        vert_x_cnots = [ Clifford for d in sq_il_dirs]
+        v_x_prs = [pq.sq_pairs(lat, d_lat_x_sq, d, 'v') for d in sq_il_dirs[:4]]
+        v_z_prs = [pq.sq_pairs(lat, d_lat, d, 'v') for d in sq_il_dirs[4:]]
+        h_x_prs = [pq.sq_pairs(lat, d_lat_x_sq, d, 'h') for d in sq_il_dirs[4:]]
+        h_z_prs = [pq.sq_pairs(lat, d_lat, d, 'h') for d in sq_il_dirs[:4]]
+        o_x_prs = [pq.sq_pairs(lat, d_lat, d) for d in x_oct_il_dirs]
+        o_z_prs = [pq.sq_pairs(lat, d_lat, d) for d in z_oct_il_dirs]
+        
+        v_x_cnots = [pq.Clifford(q.cnot(2, 1, 0), pr) for pr in v_x_prs]
+        v_z_cnots = [pq.Clifford(q.cnot(2, 0, 1), pr) for pr in v_z_prs]
+        h_x_cnots = [pq.Clifford(q.cnot(2, 1, 0), pr) for pr in h_x_prs]
+        h_z_cnots = [pq.Clifford(q.cnot(2, 0, 1), pr) for pr in h_z_prs]
+        o_x_cnots = [pq.Clifford(q.cnot(2, 1, 0), pr) for pr in o_x_prs]
+        o_z_cnots = [pq.Clifford(q.cnot(2, 0, 1), pr) for pr in o_z_prs]
 
-        cycle = map(pq.Timestep, zip([]))#TODO
+        x_o_meas = pq.Measurement(q.X, ['', 'Z'], d_lat.octagon_centers(oct_type='X'))
+        z_o_meas = pq.Measurement(q.Z, ['', 'X'], d_lat.octagon_centers(oct_type='Z'))
+        x_v_meas = pq.Measurement(q.X, ['', 'Z'], d_lat_x_sq.square_centers('v'))
+        z_v_meas = pq.Measurement(q.Z, ['', 'X'], d_lat.square_centers('v'))
+        x_h_meas = pq.Measurement(q.X, ['', 'Z'], d_lat_x_sq.square_centers('h'))
+        z_h_meas = pq.Measurement(q.Z, ['', 'X'], d_lat.square_centers('h'))
 
+        cycle = map(pq.Timestep, zip(v_x_cnots + v_z_cnots,
+                                        h_z_cnots + h_x_cnots,
+                                        o_x_cnots, o_z_cnots))
+
+        for run in self.n_trials:
+            #clear last sim
+            pq.error_fill(lat, q.I)
+            d_lat.clear()
+            d_lat_x_sq.clear()
+            
+            for ltc in d_lat_lst:
+                ltc.clear() #may break
+                
+            pq.error_fill(d_lat, q.I)
+            pq.error_fill(d_lat_x_sq, q.I)
+            
+            #fill d_lat_lst with syndromes by copying
+            for idx in range(len(d_lat_lst) - 1):
+                d_lat.clear()
+                d_lat_x_sq.clear()
+                pq.error_fill(d_lat, q.I)
+                pq.error_fill(d_lat_x_sq, q.I)
+                pq.syndrome_fill(d_lat, '')
+                pq.syndrome_fill(d_lat_x_sq, '')
+                #flip first round of ancillas
+                for meas in [x_o_meas, z_o_meas, x_v_meas, z_h_meas]:
+                    synd_flip[meas.pauli].act_on(meas.point_set)
+                #first four noisy gates
+                for tdx in range(4):
+                    cycle[tdx].noisy_apply(lat, None, self.p, False)
+                    for pt in lat:
+                        if pt not in cycle[tdx].twirl_support:
+                            dep.act_on(pt)
+                    for pt in d_lat:
+                        if not any([pt in sprt 
+                                    for sprt in map(a: a.support,
+                                        [v_x_cnots[tdx], h_z_cnots[tdx],
+                                         o_x_cnots[tdx], o_z_cnots[tdx]] )]):
+                            dep.act_on(pt)
+
+                #first measurement round
+                for meas in [x_v_meas, z_h_meas]:
+                    synd_flip[meas.pauli].act_on(meas.point_set)
+                    meas.apply()
+                    for pt in meas.point_set:
+                        pt.error = q.I
+                        pt.syndrome = ''
+
+                #depolarisation during measurement
+                dep.act_on(lat)
+                dep.act_on(d_lat.octagon_centers())
+
+                #prep new square measurements
+                for meas in [x_h_meas, z_v_meas]:
+                    synd_flip[meas.pauli].act_on(meas.point_set)
+
+                #next 4 noisy gates
+                for tdx in range(4, 8):
+                    cycle[tdx].noisy_apply(lat, None, self.p, False)
+                    for pt in lat:
+                        if pt not in cycle[tdx].twirl_support:
+                            dep.act_on(pt)
+                    for pt in d_lat:
+                        if not any([pt in sprt 
+                                    for sprt in map(a: a.support,
+                                        [v_z_cnots[tdx - 4], h_x_cnots[tdx - 4],
+                                         o_x_cnots[tdx], o_z_cnots[tdx]] )]):
+                            dep.act_on(pt)
+
+                #flip and measure remaining ancillas
+                for meas in [x_h_meas, z_v_meas, x_oct_meas, z_oct_meas]:
+                    synd_flip[meas.pauli].act_on(meas.point_set)
+                    meas.apply()
+
+                #copy syndromes onto 3D lattice.
+                pq.syndrome_copy(d_lat, d_lat_lst[idx])
+                pq.syndrome_copy(d_lat_x_sq, d_lat_lst[idx])
+
+            #noise is now already on the syndrome qubits (including meas. noise)
+            noiseless_code.measure()
+            #run decoder, with no final lattice check (laaaaater)
+            decoder.infer()
+
+            # Error checking, if the resulting Pauli is not in the
+            # normalizer, chuck an error:
+
+            d_lat_lst[-1].clear()
+            pq.syndrome_fill(d_lat_lst[-1], '')
+            noiseless_code.measure()
+            for point in d_lat_lst[-1].points:
+                if point.syndrome:
+                    raise ValueError('Product of "inferred error"' 
+                                     ' with actual error anticommutes'
+                                     ' with some stabilizers.')
+            
+            com_relation_list = []
+            for operator in log_ops:
+                com_relation_list.append(operator.test(lat))
+            self.logical_error.append(com_relation_list)
 
 
 def meas_cycle(lat, d_lat, d_lat_x_sq, x_flip, z_flip, dep, twirl, 
