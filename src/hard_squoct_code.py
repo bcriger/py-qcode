@@ -257,7 +257,7 @@ class InterleavedSquoctSim(HardCodeSquoctSim):
                             dep.act_on(pt)
                     for pt in d_lat:
                         if not any([pt in sprt 
-                                    for sprt in map(a: a.support,
+                                    for sprt in map(lambda a: a.support,
                                         [v_x_cnots[tdx], h_z_cnots[tdx],
                                          o_x_cnots[tdx], o_z_cnots[tdx]] )]):
                             dep.act_on(pt)
@@ -286,7 +286,7 @@ class InterleavedSquoctSim(HardCodeSquoctSim):
                             dep.act_on(pt)
                     for pt in d_lat:
                         if not any([pt in sprt 
-                                    for sprt in map(a: a.support,
+                                    for sprt in map(lambda a: a.support,
                                         [v_z_cnots[tdx - 4], h_x_cnots[tdx - 4],
                                          o_x_cnots[tdx], o_z_cnots[tdx]] )]):
                             dep.act_on(pt)
