@@ -171,7 +171,7 @@ class InterleavedSquoctSim(HardCodeSquoctSim):
     HardCodeSquoctSim. 
     """
     def __init__(self, size, p, n_trials):
-        super(InterleavedSquoctSim, self).__init__(self, size, p, n_trials)
+        HardCodeSquoctSim.__init__(self, size, p, n_trials)
     
     def run(self, sim_type='cb'):
         #sanitize input
