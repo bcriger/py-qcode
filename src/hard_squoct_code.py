@@ -205,8 +205,8 @@ class InterleavedSquoctSim(HardCodeSquoctSim):
         v_z_prs = [pq.sq_pairs(lat, d_lat, d, 'v') for d in sq_il_dirs[4:]]
         h_x_prs = [pq.sq_pairs(lat, d_lat_x_sq, d, 'h') for d in sq_il_dirs[4:]]
         h_z_prs = [pq.sq_pairs(lat, d_lat, d, 'h') for d in sq_il_dirs[:4]]
-        o_x_prs = [pq.sq_pairs(lat, d_lat, d) for d in x_oct_il_dirs]
-        o_z_prs = [pq.sq_pairs(lat, d_lat, d) for d in z_oct_il_dirs]
+        o_x_prs = [pq.oct_pairs(lat, d_lat, d) for d in x_oct_il_dirs]
+        o_z_prs = [pq.oct_pairs(lat, d_lat, d) for d in z_oct_il_dirs]
         
         v_x_cnots = [pq.Clifford(q.cnot(2, 1, 0), pr) for pr in v_x_prs]
         v_z_cnots = [pq.Clifford(q.cnot(2, 0, 1), pr) for pr in v_z_prs]
