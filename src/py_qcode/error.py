@@ -162,7 +162,7 @@ class PauliErrorModel(ErrorModel):
                         pt.error = Pauli('I')
                     pt.error *= _action(self, rand())    
         
-        elif isinstance(register, pq.Point):
+        elif isinstance(register, Point):
             if pt.error is None:
                 pt.error = Pauli('I')
             pt.error *= _action(self, rand())
