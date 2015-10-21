@@ -292,7 +292,7 @@ class InterleavedSquoctSim(HardCodeSquoctSim):
                             dep.act_on(pt)
 
                 #flip and measure remaining ancillas
-                for meas in [x_h_meas, z_v_meas, x_oct_meas, z_oct_meas]:
+                for meas in [x_h_meas, z_v_meas, x_o_meas, z_o_meas]:
                     synd_flip[meas.pauli].act_on(meas.point_set)
                     meas.apply()
 
