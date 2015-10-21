@@ -193,6 +193,7 @@ class InterleavedSquoctSim(HardCodeSquoctSim):
                         for _ in range(self.size + 1)]
 
         decoder = pq.ft_mwpm_decoder(lat, d_lat_lst, blossom=False)
+        noiseless_code = pq.square_octagon_code(lat, d_lat_lst[-1])
 
         log_ops = pq.squoct_log_ops(lat.total_size)
         
