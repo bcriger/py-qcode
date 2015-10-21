@@ -226,7 +226,7 @@ class InterleavedSquoctSim(HardCodeSquoctSim):
                                         h_z_cnots + h_x_cnots,
                                         o_x_cnots, o_z_cnots))
 
-        for run in self.n_trials:
+        for _ in xrange(self.n_trials):
             #clear last sim
             pq.error_fill(lat, q.I)
             d_lat.clear()
