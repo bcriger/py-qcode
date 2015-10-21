@@ -161,6 +161,12 @@ class PauliErrorModel(ErrorModel):
                     if pt.error is None:
                         pt.error = Pauli('I')
                     pt.error *= _action(self, rand())    
+        
+        elif isinstance(register, pq.Point):
+            if pt.error is None:
+                pt.error = Pauli('I')
+            pt.error *= _action(self, rand())
+        
         else:
             raise ValueError("Could not determine how to act error "
                 "model {} on register {}.".format(self, register))
