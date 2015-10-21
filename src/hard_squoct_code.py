@@ -252,10 +252,10 @@ class InterleavedSquoctSim(HardCodeSquoctSim):
                 #first four noisy gates
                 for tdx in range(4):
                     cycle[tdx].noisy_apply(lat, None, self.p, False)
-                    for pt in lat:
+                    for pt in lat.points:
                         if pt not in cycle[tdx].twirl_support:
                             dep.act_on(pt)
-                    for pt in d_lat:
+                    for pt in d_lat.points:
                         if not any([pt in sprt 
                                     for sprt in map(lambda a: a.support,
                                         [v_x_cnots[tdx], h_z_cnots[tdx],
@@ -281,10 +281,10 @@ class InterleavedSquoctSim(HardCodeSquoctSim):
                 #next 4 noisy gates
                 for tdx in range(4, 8):
                     cycle[tdx].noisy_apply(lat, None, self.p, False)
-                    for pt in lat:
+                    for pt in lat.points:
                         if pt not in cycle[tdx].twirl_support:
                             dep.act_on(pt)
-                    for pt in d_lat:
+                    for pt in d_lat.points:
                         if not any([pt in sprt 
                                     for sprt in map(lambda a: a.support,
                                         [v_z_cnots[tdx - 4], h_x_cnots[tdx - 4],
