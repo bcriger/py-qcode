@@ -256,7 +256,7 @@ class InterleavedSquoctSim(HardCodeSquoctSim):
                     for pt in lat.points:
                         if pt not in cycle[tdx].twirl_support:
                             dep.act_on(pt)
-                    for pt in d_lat.points:
+                    for pt in d_lat.points + d_lat_x_sq.points:
                         if not any([pt in sprt 
                                     for sprt in map(lambda a: a.support,
                                         [v_x_cnots[tdx], h_z_cnots[tdx],
@@ -285,7 +285,7 @@ class InterleavedSquoctSim(HardCodeSquoctSim):
                     for pt in lat.points:
                         if pt not in cycle[tdx].twirl_support:
                             dep.act_on(pt)
-                    for pt in d_lat.points:
+                    for pt in d_lat.points + d_lat_x_sq.points:
                         if not any([pt in sprt 
                                     for sprt in map(lambda a: a.support,
                                         [v_z_cnots[tdx - 4], h_x_cnots[tdx - 4],
@@ -299,7 +299,7 @@ class InterleavedSquoctSim(HardCodeSquoctSim):
 
                 #copy syndromes onto 3D lattice.
                 pq.syndrome_copy(d_lat, d_lat_lst[idx])
-                pq.syndrome_copy(d_lat_x_sq, d_lat_lst[idx])
+                pq.syndrome_copy(d_lat_x_sq, d_lat_lst[idx], append=True)
 
             #noise is now already on the syndrome qubits (including meas. noise)
             noiseless_code.measure()
