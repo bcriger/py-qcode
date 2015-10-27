@@ -9,11 +9,16 @@ oct_clck_dirs = [(-1, 2), (1, 2), (2, 1), (2, -1),
 sq_clck_dirs = [(-1, 1), (1, 1), (1, -1), (-1, -1)]
 
 #directions for interleaved simulation
-z_oct_il_dirs = [(2, 1), (2, -1), (1, -2), (-1, -2), 
-                    (-2, -1), (-2, 1), (-1, 2), (1, 2)]
+# z_oct_il_dirs = [(2, 1), (2, -1), (1, -2), (-1, -2), 
+#                     (-2, -1), (-2, 1), (-1, 2), (1, 2)]
 
-x_oct_il_dirs = [(2, 1), (2, -1), (1, -2), (1, 2),
-                    (-1, -2), (-2, 1), (-2, -1), (-1, 2)]
+# x_oct_il_dirs = [(2, 1), (2, -1), (1, -2), (1, 2),
+#                     (-1, -2), (-2, 1), (-2, -1), (-1, 2)]
+z_oct_il_dirs = [(1, 2), (-1, 2), (-2, 1), (-2, -1),
+                    (2, 1), (1, -2), (2, -1), (-1, -2)]
+
+x_oct_il_dirs = z_oct_il_dirs
+
 #gates are arranged so that square CNots are always parallel.
 #square measurement is broken up into two rounds
 sq_il_dirs = [[(1, 1), (1, -1), (-1, 1), (-1, -1)][x] 
