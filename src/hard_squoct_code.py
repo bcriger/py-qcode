@@ -272,9 +272,13 @@ class InterleavedSquoctSim(HardCodeSquoctSim):
                 for meas in [x_v_meas, z_h_meas]:
                     synd_flip[meas.pauli].act_on(meas.point_set)
                     meas.apply()
-                    for pt in meas.point_set:
-                        pt.error = q.I
-                        pt.syndrome = ''
+                
+                pq.syndrome_copy(d_lat, d_lat_lst[idx])
+                pq.syndrome_copy(d_lat_x_sq, d_lat_lst[idx])
+                
+                for pt in x_v_meas.point_set + z_h_meas.point_set:
+                    pt.error = q.I
+                    pt.syndrome = ''
 
                 #depolarisation during measurement
                 dep.act_on(lat)
@@ -303,7 +307,7 @@ class InterleavedSquoctSim(HardCodeSquoctSim):
                     meas.apply()
 
                 #copy syndromes onto 3D lattice.
-                pq.syndrome_copy(d_lat, d_lat_lst[idx])
+                pq.syndrome_copy(d_lat, d_lat_lst[idx], append=True)
                 pq.syndrome_copy(d_lat_x_sq, d_lat_lst[idx], append=True)
 
             #noise is now already on the syndrome qubits (including meas. noise)
