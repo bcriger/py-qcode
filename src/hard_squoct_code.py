@@ -274,7 +274,7 @@ class InterleavedSquoctSim(HardCodeSquoctSim):
                     meas.apply()
                 
                 pq.syndrome_copy(d_lat, d_lat_lst[idx])
-                pq.syndrome_copy(d_lat_x_sq, d_lat_lst[idx])
+                pq.syndrome_copy(d_lat_x_sq, d_lat_lst[idx], append=True)
                 
                 for pt in x_v_meas.point_set + z_h_meas.point_set:
                     pt.error = q.I
