@@ -26,7 +26,7 @@ __all__.extend(
      'square_octagon_path', 'square_square_dist',
      'square_square_path', 'appropriate_neighbours', 'nwes_pairs',
      '_odd_odds', '_odd_evens', '_even_evens', '_even_odds', 
-     'oct_pairs', 'sq_pairs'])
+     'oct_pairs', 'sq_pairs', '_square_centers'])
 #"""
 
 # constants #
@@ -238,13 +238,14 @@ class SquareLattice(Lattice):
 
     def neighbours(self, location):
         """
-        Returns a list of points which are one unit of distance away from a given location.
-        Convenience method used to define stars and plaquettes below.
+        Returns a list of points which are one unit of distance away 
+        from a given location. Convenience method used to define stars
+        and plaquettes below.
 
         June 6, 2014: Only supports closed_boundary
 
-        TODO: Make this depend on the distance function, so that it can be made
-        a method of Lattice, overridden by SquareLattice.
+        TODO: Make this depend on the distance function, so that it 
+        can be made a method of Lattice, overridden by SquareLattice.
         """
         x, y = location
         x_sz, y_sz = self.size
