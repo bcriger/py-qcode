@@ -236,7 +236,17 @@ class InterleavedSquoctSim(HardCodeSquoctSim):
         cycle = map(pq.Timestep, zip(v_x_cnots + v_z_cnots,
                                         h_z_cnots + h_x_cnots,
                                         o_x_cnots, o_z_cnots))
-        if sim_type == 'stats'
+        if sim_type == 'stats':
+            synd_keys = ['xv', 'zv', 'xh', 'zh', 'xo', 'zo']
+            synd_types = ['Z', 'X', 'Z', 'X', 'Z', 'X']
+            crd_sets = [
+                        pq._square_centers((sz, sz), 'v'),
+                        pq._square_centers((sz, sz), 'v'),
+                        pq._square_centers((sz, sz), 'h'),
+                        pq._square_centers((sz, sz), 'h'),
+                        pq._octagon_centers((sz, sz), 'x'),
+                        pq._octagon_centers((sz, sz), 'z')
+                        ]
 
         for _ in xrange(self.n_trials):
             #clear last sim
@@ -344,13 +354,32 @@ class InterleavedSquoctSim(HardCodeSquoctSim):
                     for point in lat.points:
                         if point.error.op == key:
                             self.data_errors[key] += 1
-                synd_keys = ['xv', 'zv', 'xh', 'zh', 'xo', 'zo']
-                pt_sets = []
-                for synd_key, pt_set in zip(, )
+                #check syndromes
+                for synd_key, synd_type, crd_set in zip(synd_keys,
+                                                        synd_types,
+                                                        crd_sets):
+                    for crd in crd_set:
+                        if (synd_type in d_lat_lst[0][crd].syndrome) != \
+                            (synd_type in d_lat_lst[1][crd].syndrome):
+                            self.syndrome_errors[synd_key] += 1
+                        
     def save(self, filename):
         if self.sim_type == 'cb':
             HardCodeSquoctSim.save(self, filename)
         elif self.sim_type == 'stats':
+            big_dict = {}
+            big_dict['lattice_class'] = 'SquareOctagonLattice'
+            big_dict['lattice_size'] = self.size
+            big_dict['dual_lattice_class'] = 'UnionJackLattice'
+            big_dict['dual_lattice_size'] = self.size
+            big_dict['error_model'] = 'custom hard-coded'
+            big_dict['code'] = 'Square-Octagon Code'
+            big_dict['n_trials'] = self.n_trials
+            big_dict['data_errors'] = self.data_errors
+            big_dict['syndrome_errors'] = self.syndrome_errors
+
+        with open(filename, 'w') as phil:
+            pkl.dump(big_dict, phil)
 
 
 def meas_cycle(lat, d_lat, d_lat_x_sq, x_flip, z_flip, dep, twirl, 

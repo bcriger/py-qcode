@@ -26,7 +26,7 @@ __all__.extend(
      'square_octagon_path', 'square_square_dist',
      'square_square_path', 'appropriate_neighbours', 'nwes_pairs',
      '_odd_odds', '_odd_evens', '_even_evens', '_even_odds', 
-     'oct_pairs', 'sq_pairs', '_square_centers'])
+     'oct_pairs', 'sq_pairs', '_square_centers', '_octagon_centers'])
 #"""
 
 # constants #
@@ -567,15 +567,8 @@ class UnionJackLattice(Lattice):
     def square_centers(self, gauge=None):
         return [self[x] for x in _square_centers(self.size, gauge)]
 
-    def octagon_centers(self, oct_type='Z'):
-        oct_type = oct_type.upper()
-        if oct_type not in 'XZ':
-            raise ValueError("Only X and Z octagons are supported, you "
-                                "entered {}.".format(oct_type))
-        oct_crd_f = _odd_odds if oct_type == 'Z' else _even_evens
-
-        return [self[coord] for coord in 
-                _squoct_affine_map(oct_crd_f(*self.size))]
+    def octagon_centers(self, oct_type=None):
+        return [self[x] for x in _octagon_centers(self.size, oct_type)]
 
 class CubicLattice(Lattice):
 
@@ -697,6 +690,18 @@ def _square_centers(size, gauge=None):
         raise ValueError("gauge must be h or v, not "
                             "{}".format(gauge))
     return ctrs
+
+def _octagon_centers(size, oct_type):
+    if oct_type:
+        oct_type = oct_type.upper()
+        if oct_type not in 'XZ':
+            raise ValueError("Only X and Z octagons are supported, you "
+                                "entered {}.".format(oct_type))
+        oct_crd_f = _odd_odds if oct_type == 'Z' else _even_evens
+    else: 
+        oct_crd_f = sym_coords
+
+    return _squoct_affine_map(oct_crd_f(*size))
 
 def is_sq_cent(coord):
     """
