@@ -175,8 +175,9 @@ class InterleavedSquoctSim(HardCodeSquoctSim):
     Marginally smarter than copypasta, I rewrite the run method for 
     HardCodeSquoctSim. 
     """
-    def __init__(self, size, p, n_trials):
+    def __init__(self, size, p, n_trials, vert_dist=None):
         HardCodeSquoctSim.__init__(self, size, p, n_trials)
+        self.vert_dist = vert_dist
     
     def run(self, sim_type='cb'):
         #sanitize input
