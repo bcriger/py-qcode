@@ -1,7 +1,7 @@
 import py_qcode as pq, qecc as q, cPickle as pkl
 
 DRCTNS = 'nwes'
-SIM_TYPES = ['cb', 'pq', 'p']
+SIM_TYPES = ['cb', 'pq', 'p', 'stats']
 
 class HardCodeToricSim():
     """

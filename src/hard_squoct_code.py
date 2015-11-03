@@ -9,11 +9,6 @@ oct_clck_dirs = [(-1, 2), (1, 2), (2, 1), (2, -1),
 sq_clck_dirs = [(-1, 1), (1, 1), (1, -1), (-1, -1)]
 
 #directions for interleaved simulation
-# z_oct_il_dirs = [(2, 1), (2, -1), (1, -2), (-1, -2), 
-#                     (-2, -1), (-2, 1), (-1, 2), (1, 2)]
-
-# x_oct_il_dirs = [(2, 1), (2, -1), (1, -2), (1, 2),
-#                     (-1, -2), (-2, 1), (-2, -1), (-1, 2)]
 z_oct_il_dirs = [(1, 2), (-1, 2), (-2, 1), (-2, -1),
                     (2, 1), (1, -2), (2, -1), (-1, -2)]
 
@@ -178,14 +173,19 @@ class InterleavedSquoctSim(HardCodeSquoctSim):
     def __init__(self, size, p, n_trials, vert_dist=None):
         HardCodeSquoctSim.__init__(self, size, p, n_trials)
         self.vert_dist = vert_dist
+        self.data_errors = {'X': 0, 'Y': 0, 'Z': 0}
+        self.syndrome_errors = {'xv': 0, 'zv': 0, 'xh': 0, 'zh': 0,
+                                'xo': 0, 'zo': 0}
+        self.sim_type = None
     
     def run(self, sim_type='cb'):
         #sanitize input
         _sanitize_sim_type(sim_type)
-        if sim_type != 'cb':
+        if sim_type not in ['cb', 'stats']:
             raise ValueError("InterleavedSquoctSim only supports "
-                            "sim_type=cb, use HardCodeSquoctSim.")
-        
+                            "sim_type='cb' or 'stats', use"
+                            " HardCodeSquoctSim.")
+        self.sim_type = sim_type
         sz = int(self.size / 2.)
 
         lat = pq.SquareOctagonLattice((sz, sz))
@@ -195,8 +195,13 @@ class InterleavedSquoctSim(HardCodeSquoctSim):
         # syndromes:
         d_lat_x_sq = pq.UnionJackLattice((sz,sz), is_dual=True)
 
-        d_lat_lst = [pq.UnionJackLattice((sz, sz), is_dual=True)
+        if sim_type == 'cb':
+            d_lat_lst = [pq.UnionJackLattice((sz, sz), is_dual=True)
                         for _ in range(self.size + 1)]
+        elif sim_type == 'stats':
+            d_lat_lst = [pq.UnionJackLattice((sz, sz), is_dual=True)
+                        for _ in range(2)]
+        
 
         decoder = pq.ft_mwpm_decoder(lat, d_lat_lst, blossom=False)
         noiseless_code = pq.square_octagon_code(lat, d_lat_lst[-1])
@@ -232,6 +237,17 @@ class InterleavedSquoctSim(HardCodeSquoctSim):
         cycle = map(pq.Timestep, zip(v_x_cnots + v_z_cnots,
                                         h_z_cnots + h_x_cnots,
                                         o_x_cnots, o_z_cnots))
+        if sim_type == 'stats':
+            synd_keys = ['xv', 'zv', 'xh', 'zh', 'xo', 'zo']
+            synd_types = ['Z', 'X', 'Z', 'X', 'Z', 'X']
+            crd_sets = [
+                        pq._square_centers((sz, sz), 'v'),
+                        pq._square_centers((sz, sz), 'v'),
+                        pq._square_centers((sz, sz), 'h'),
+                        pq._square_centers((sz, sz), 'h'),
+                        pq._octagon_centers((sz, sz), 'x'),
+                        pq._octagon_centers((sz, sz), 'z')
+                        ]
 
         for _ in xrange(self.n_trials):
             #clear last sim
@@ -313,25 +329,58 @@ class InterleavedSquoctSim(HardCodeSquoctSim):
 
             #noise is now already on the syndrome qubits (including meas. noise)
             noiseless_code.measure()
-            #run decoder, with no final lattice check (laaaaater)
-            decoder.infer()
+            if sim_type == 'cb':
+                #run decoder, with no final lattice check (laaaaater)
+                decoder.infer()
 
-            # Error checking, if the resulting Pauli is not in the
-            # normalizer, chuck an error:
+                # Error checking, if the resulting Pauli is not in the
+                # normalizer, chuck an error:
 
-            d_lat_lst[-1].clear()
-            pq.syndrome_fill(d_lat_lst[-1], '')
-            noiseless_code.measure()
-            for point in d_lat_lst[-1].points:
-                if point.syndrome:
-                    raise ValueError('Product of "inferred error"' 
-                                     ' with actual error anticommutes'
-                                     ' with some stabilizers.')
-            
-            com_relation_list = []
-            for operator in log_ops:
-                com_relation_list.append(operator.test(lat))
-            self.logical_error.append(com_relation_list)
+                d_lat_lst[-1].clear()
+                pq.syndrome_fill(d_lat_lst[-1], '')
+                noiseless_code.measure()
+                for point in d_lat_lst[-1].points:
+                    if point.syndrome:
+                        raise ValueError('Product of "inferred error"' 
+                                         ' with actual error anticommutes'
+                                         ' with some stabilizers.')
+                
+                com_relation_list = []
+                for operator in log_ops:
+                    com_relation_list.append(operator.test(lat))
+                self.logical_error.append(com_relation_list)
+            elif sim_type == 'stats':
+                
+                for key in self.data_errors.keys():
+                    for point in lat.points:
+                        if point.error.op == key:
+                            self.data_errors[key] += 1
+                #check syndromes
+                for synd_key, synd_type, crd_set in zip(synd_keys,
+                                                        synd_types,
+                                                        crd_sets):
+                    for crd in crd_set:
+                        if (synd_type in d_lat_lst[0][crd].syndrome) != \
+                            (synd_type in d_lat_lst[1][crd].syndrome):
+                            self.syndrome_errors[synd_key] += 1
+                        
+    def save(self, filename):
+        if self.sim_type == 'cb':
+            HardCodeSquoctSim.save(self, filename)
+        elif self.sim_type == 'stats':
+            big_dict = {}
+            big_dict['lattice_class'] = 'SquareOctagonLattice'
+            big_dict['lattice_size'] = self.size
+            big_dict['dual_lattice_class'] = 'UnionJackLattice'
+            big_dict['dual_lattice_size'] = self.size
+            big_dict['error_model'] = 'custom hard-coded'
+            big_dict['code'] = 'Square-Octagon Code'
+            big_dict['n_trials'] = self.n_trials
+            big_dict['data_errors'] = self.data_errors
+            big_dict['syndrome_errors'] = self.syndrome_errors
+
+        with open(filename, 'w') as phil:
+            pkl.dump(big_dict, phil)
 
 
 def meas_cycle(lat, d_lat, d_lat_x_sq, x_flip, z_flip, dep, twirl, 
