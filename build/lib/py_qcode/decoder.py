@@ -21,7 +21,8 @@ class Decoder():
     requires the presence of the dual lattice (where the syndromes are
     stored), the primal lattice (where the real error is stored).
     """
-    def __init__(self, algorithm, primal_lattice, dual_lattice, name='Un-named', vert_dist=None):
+    def __init__(self, algorithm, primal_lattice, dual_lattice,
+                    name='Un-named', vert_dist=None):
         self.algorithm = algorithm
         self.primal_lattice = primal_lattice
         self.dual_lattice = dual_lattice
