@@ -170,8 +170,9 @@ class InterleavedSquoctSim(HardCodeSquoctSim):
     Marginally smarter than copypasta, I rewrite the run method for 
     HardCodeSquoctSim. 
     """
-    def __init__(self, size, p, n_trials):
+    def __init__(self, size, p, n_trials, vert_dist=None):
         HardCodeSquoctSim.__init__(self, size, p, n_trials)
+        self.vert_dist = vert_dist
         self.data_errors = {'X': 0, 'Y': 0, 'Z': 0}
         self.syndrome_errors = {'xv': 0, 'zv': 0, 'xh': 0, 'zh': 0,
                                 'xo': 0, 'zo': 0}
