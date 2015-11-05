@@ -63,8 +63,8 @@ class HardCodeToricSim():
         if sim_type == 'stats':
             synd_keys = ['x', 'z']
             synd_types = ['Z', 'X']
-            crd_sets = [pq._even_evens((sz, sz)), 
-                        pq._odd_odds((sz, sz))]
+            crd_sets = [pq._even_evens(sz, sz), 
+                        pq._odd_odds(sz, sz)]
 
         for _ in range(self.n_trials):
             #clear last sim
@@ -83,13 +83,12 @@ class HardCodeToricSim():
 
             #print d_lat 
             noiseless_code.measure()
-            #run decoder, with no final lattice check (laaaaater)
             if sim_type == 'cb':
+                #run decoder, with no final lattice check (laaaaater)
                 decoder.infer()
 
                 # Error checking, if the resulting Pauli is not in the
                 # normalizer, chuck an error:
-
                 d_lat_lst[-1].clear()
                 noiseless_code.measure()
                 for point in d_lat_lst[-1].points:
@@ -104,6 +103,7 @@ class HardCodeToricSim():
                 self.logical_error.append(com_relation_list)
             elif sim_type == 'stats':
                 for key in self.data_errors.keys():
+                    # raise Exception
                     for point in lat.points:
                         if point.error.op == key:
                             self.data_errors[key] += 1
@@ -166,7 +166,7 @@ def meas_cycle(lat, d_lat, x_flip, z_flip, twirl, odd_prs, even_prs,
     d_lat.clear()
     pq.error_fill(d_lat, q.I)
     
-    if sim_type == 'cb':
+    if sim_type in ['cb', 'stats']:
         x_flip.act_on(d_lat.plaq_centers())
         z_flip.act_on(d_lat.star_centers())
     elif sim_type in ['pq', 'p']:
@@ -175,14 +175,14 @@ def meas_cycle(lat, d_lat, x_flip, z_flip, twirl, odd_prs, even_prs,
 
     for drctn in DRCTNS:
         cx[drctn].apply()
-        if sim_type == 'cb':
+        if sim_type in ['cb', 'stats']:
             twirl.act_on(odd_prs[drctn])
         
         xc[drctn].apply()
-        if sim_type == 'cb':
+        if sim_type in ['cb', 'stats']:
             twirl.act_on(even_prs[drctn])
     
-    if sim_type in ['cb', 'pq']:
+    if sim_type in ['cb', 'pq', 'stats']:
         x_flip.act_on(d_lat.plaq_centers())
         z_flip.act_on(d_lat.star_centers())
     elif sim_type == 'p':
