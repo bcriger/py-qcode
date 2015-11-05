@@ -351,7 +351,6 @@ class InterleavedSquoctSim(HardCodeSquoctSim):
                     com_relation_list.append(operator.test(lat))
                 self.logical_error.append(com_relation_list)
             elif sim_type == 'stats':
-                
                 for key in self.data_errors.keys():
                     for point in lat.points:
                         if point.error.op == key:
