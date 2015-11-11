@@ -346,19 +346,27 @@ def noisy_squoct_code(primal_grid, dual_grid, error_rate):
     #error_rate can be an iterable of the form (square_rate, oct_rate)
     #or float:
     if hasattr(error_rate, '__len__'):
-        square_rate, oct_rate = error_rate
+        if len(error_rate) == 2:
+            square_rate, oct_rate = error_rate
+            sq_rate_1 = square_rate; sq_rate_2 = square_rate
+        elif len(error_rate) == 3:
+            #error rates are higher for early-measured squares:
+            sq_rate_1, sq_rate_2, oct_rate = error_rate
     else:
-        square_rate = error_rate
+        sq_rate_1 = error_rate; sq_rate_2 = error_rate
         oct_rate = error_rate
 
-    sq_coords = _squoct_affine_map(skew_coords(nx, ny))
-    sq_duals = [dual_grid[coord] for coord in sq_coords]
-    sq_primal = primal_grid.squares()
-    sq_check_X = StabilizerCheck(sq_primal, sq_duals, 'XXXX',
-                                (square_rate, z_flip), indy_css=True)
-
-    sq_check_Z = StabilizerCheck(sq_primal, sq_duals, 'ZZZZ',
-                                (square_rate, x_flip), indy_css=True)
+    primal_v_sq, primal_h_sq = [primal_grid.squares(l) for l in 'vh']
+    dual_v_sq, dual_h_sq = [dual_grid.square_centers(l) for l in 'vh']
+    
+    sq_check_xv = StabilizerCheck(primal_v_sq, dual_v_sq, 'XXXX',
+                                (sq_rate_1, z_flip), indy_css=True)
+    sq_check_zv = StabilizerCheck(primal_v_sq, dual_v_sq, 'ZZZZ',
+                                (sq_rate_2, x_flip), indy_css=True)
+    sq_check_xh = StabilizerCheck(primal_h_sq, dual_h_sq, 'XXXX',
+                                (sq_rate_2, z_flip), indy_css=True)
+    sq_check_zh = StabilizerCheck(primal_h_sq, dual_h_sq, 'ZZZZ',
+                                (sq_rate_1, x_flip), indy_css=True)
 
     x_oct_coords = _squoct_affine_map(_even_evens(nx, ny))
     x_oct_duals = [dual_grid[coord] for coord in x_oct_coords]
@@ -372,8 +380,8 @@ def noisy_squoct_code(primal_grid, dual_grid, error_rate):
     z_oct_check = StabilizerCheck(z_oct_primal, z_oct_duals,
                                   'ZZZZZZZZ', (oct_rate, x_flip), indy_css=True)
 
-    return ErrorCorrectingCode([sq_check_Z, sq_check_X,
-                                x_oct_check, z_oct_check],
+    return ErrorCorrectingCode([sq_check_xv, sq_check_xh, sq_check_zv,
+                                sq_check_zh, x_oct_check, z_oct_check],
                                name="Noisy Square-Octagon Code")
 
 

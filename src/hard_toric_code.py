@@ -9,24 +9,36 @@ class HardCodeToricSim():
     Cliffords and small error models. This should really be a subclass
     of Simulation, but I'll figure that out later.  
     """
-    def __init__(self, size, p, n_trials):
+    def __init__(self, size, p, n_trials, vert_dist=None):
         self.size = size
         self.p = p
         self.n_trials = n_trials
         self.logical_error = []
+        self.vert_dist = vert_dist
+        #for stats
+        self.data_errors = {'X': 0, 'Y': 0, 'Z': 0}
+        self.syndrome_errors = {'x': 0, 'z': 0}
+        self.sim_type = None
     
     def run(self, sim_type='cb'):
         #sanitize input
         _sanitize_sim_type(sim_type)
-        sz = self.size
+        self.sim_type = sim_type
 
+        sz = self.size
         lat = pq.SquareLattice((sz, sz))
         d_lat = pq.SquareLattice((sz, sz), is_dual=True)
 
-        d_lat_lst = [pq.SquareLattice((sz, sz), is_dual=True)
+        if sim_type == 'cb':
+            d_lat_lst = [pq.SquareLattice((sz, sz), is_dual=True)
                         for _ in range(sz)]
+        elif sim_type == 'stats':
+            d_lat_lst = [pq.SquareLattice((sz, sz), is_dual=True)
+                        for _ in range(2)]
 
-        decoder = pq.ft_mwpm_decoder(lat, d_lat_lst, blossom=False)
+        
+        decoder = pq.ft_mwpm_decoder(lat, d_lat_lst, blossom=False, 
+                                        vert_dist=self.vert_dist)
 
         log_ops = pq.toric_log_ops((sz, sz))
         
@@ -48,6 +60,12 @@ class HardCodeToricSim():
         
         noiseless_code = pq.toric_code(lat, d_lat_lst[-1])
         
+        if sim_type == 'stats':
+            synd_keys = ['x', 'z']
+            synd_types = ['Z', 'X']
+            crd_sets = [pq._even_evens(sz, sz), 
+                        pq._odd_odds(sz, sz)]
+
         for _ in range(self.n_trials):
             #clear last sim
             pq.error_fill(lat, q.I)
@@ -57,7 +75,7 @@ class HardCodeToricSim():
             pq.error_fill(d_lat, q.I)
             
             #fill d_lat_lst with syndromes by copying
-            for idx in range(sz - 1):
+            for idx in range(len(d_lat_lst) - 1):
                 meas_cycle(lat, d_lat, x_flip, z_flip, twirl, odd_prs,
                             even_prs, cx, xc, x_meas, z_meas, 
                             sim_type=sim_type)
@@ -65,25 +83,38 @@ class HardCodeToricSim():
 
             #print d_lat 
             noiseless_code.measure()
-            #run decoder, with no final lattice check (laaaaater)
-            decoder.infer()
+            if sim_type == 'cb':
+                #run decoder, with no final lattice check (laaaaater)
+                decoder.infer()
 
-            # Error checking, if the resulting Pauli is not in the
-            # normalizer, chuck an error:
-
-            d_lat_lst[-1].clear()
-            noiseless_code.measure()
-            for point in d_lat_lst[-1].points:
-                if point.syndrome:
-                    raise ValueError('Product of "inferred error"' 
-                                     ' with actual error anticommutes'
-                                     ' with some stabilizers.')
-            
-            com_relation_list = []
-            for operator in log_ops:
-                com_relation_list.append(operator.test(lat))
-            self.logical_error.append(com_relation_list)
-
+                # Error checking, if the resulting Pauli is not in the
+                # normalizer, chuck an error:
+                d_lat_lst[-1].clear()
+                noiseless_code.measure()
+                for point in d_lat_lst[-1].points:
+                    if point.syndrome:
+                        raise ValueError('Product of "inferred error"' 
+                                         ' with actual error anticommutes'
+                                         ' with some stabilizers.')
+                
+                com_relation_list = []
+                for operator in log_ops:
+                    com_relation_list.append(operator.test(lat))
+                self.logical_error.append(com_relation_list)
+            elif sim_type == 'stats':
+                for key in self.data_errors.keys():
+                    # raise Exception
+                    for point in lat.points:
+                        if point.error.op == key:
+                            self.data_errors[key] += 1
+                #check syndromes
+                for synd_key, synd_type, crd_set in zip(synd_keys,
+                                                        synd_types,
+                                                        crd_sets):
+                    for crd in crd_set:
+                        if (synd_type in d_lat_lst[0][crd].syndrome) != \
+                            (synd_type in d_lat_lst[1][crd].syndrome):
+                            self.syndrome_errors[synd_key] += 1
         pass
 
     def save(self, filename):
@@ -94,10 +125,15 @@ class HardCodeToricSim():
         big_dict['dual_lattice_size'] = self.size
         big_dict['error_model'] = 'custom hard-coded'
         big_dict['code'] = 'Toric Code'
-        big_dict['decoder'] = 'FT MWPM'
         big_dict['n_trials'] = self.n_trials
-        big_dict['logical_errors'] = self.logical_error
-
+        
+        if self.sim_type == 'cb':
+            big_dict['decoder'] = 'FT MWPM'
+            big_dict['logical_errors'] = self.logical_error    
+        elif self.sim_type == 'stats':
+            big_dict['data_errors'] = self.data_errors
+            big_dict['syndrome_errors'] = self.syndrome_errors
+        
         with open(filename, 'w') as phil:
             pkl.dump(big_dict, phil)
 
@@ -130,7 +166,7 @@ def meas_cycle(lat, d_lat, x_flip, z_flip, twirl, odd_prs, even_prs,
     d_lat.clear()
     pq.error_fill(d_lat, q.I)
     
-    if sim_type == 'cb':
+    if sim_type in ['cb', 'stats']:
         x_flip.act_on(d_lat.plaq_centers())
         z_flip.act_on(d_lat.star_centers())
     elif sim_type in ['pq', 'p']:
@@ -139,14 +175,14 @@ def meas_cycle(lat, d_lat, x_flip, z_flip, twirl, odd_prs, even_prs,
 
     for drctn in DRCTNS:
         cx[drctn].apply()
-        if sim_type == 'cb':
+        if sim_type in ['cb', 'stats']:
             twirl.act_on(odd_prs[drctn])
         
         xc[drctn].apply()
-        if sim_type == 'cb':
+        if sim_type in ['cb', 'stats']:
             twirl.act_on(even_prs[drctn])
     
-    if sim_type in ['cb', 'pq']:
+    if sim_type in ['cb', 'pq', 'stats']:
         x_flip.act_on(d_lat.plaq_centers())
         z_flip.act_on(d_lat.star_centers())
     elif sim_type == 'p':

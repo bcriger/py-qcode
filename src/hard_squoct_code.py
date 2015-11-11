@@ -203,7 +203,7 @@ class InterleavedSquoctSim(HardCodeSquoctSim):
                         for _ in range(2)]
         
 
-        decoder = pq.ft_mwpm_decoder(lat, d_lat_lst, blossom=False,
+        decoder = pq.ft_mwpm_decoder(lat, d_lat_lst, blossom=False, 
                                         vert_dist=self.vert_dist)
         noiseless_code = pq.square_octagon_code(lat, d_lat_lst[-1])
 
@@ -351,7 +351,6 @@ class InterleavedSquoctSim(HardCodeSquoctSim):
                     com_relation_list.append(operator.test(lat))
                 self.logical_error.append(com_relation_list)
             elif sim_type == 'stats':
-                
                 for key in self.data_errors.keys():
                     for point in lat.points:
                         if point.error.op == key:
@@ -380,8 +379,8 @@ class InterleavedSquoctSim(HardCodeSquoctSim):
             big_dict['data_errors'] = self.data_errors
             big_dict['syndrome_errors'] = self.syndrome_errors
 
-        with open(filename, 'w') as phil:
-            pkl.dump(big_dict, phil)
+            with open(filename, 'w') as phil:
+                pkl.dump(big_dict, phil)
 
 
 def meas_cycle(lat, d_lat, d_lat_x_sq, x_flip, z_flip, dep, twirl, 
