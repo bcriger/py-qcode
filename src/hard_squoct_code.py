@@ -163,17 +163,7 @@ class HardCodeSquoctSim():
         pass
 
     def save(self, filename):
-        big_dict = {}
-        big_dict['lattice_class'] = 'SquareOctagonLattice'
-        big_dict['lattice_size'] = self.size
-        big_dict['dual_lattice_class'] = 'UnionJackLattice'
-        big_dict['dual_lattice_size'] = self.size
-        big_dict['error_model'] = 'custom hard-coded'
-        big_dict['code'] = 'Square-Octagon Code'
-        big_dict['decoder'] = 'FT MWPM'
-        big_dict['n_trials'] = self.n_trials
-        big_dict['logical_errors'] = self.logical_error
-
+        big_dict = _save_dict(self)
         with open(filename, 'w') as phil:
             pkl.dump(big_dict, phil)
 
@@ -182,13 +172,14 @@ class InterleavedSquoctSim(HardCodeSquoctSim):
     Marginally smarter than copypasta, I rewrite the run method for 
     HardCodeSquoctSim. 
     """
-    def __init__(self, size, p, n_trials, vert_dist=None):
+    def __init__(self, size, p, n_trials, vert_dist=None, oct_factor=1.):
         HardCodeSquoctSim.__init__(self, size, p, n_trials)
         self.vert_dist = vert_dist
         self.data_errors = {'X': 0, 'Y': 0, 'Z': 0}
         self.syndrome_errors = {'xv': 0, 'zv': 0, 'xh': 0, 'zh': 0,
                                 'xo': 0, 'zo': 0}
         self.sim_type = None
+        self.oct_factor = oct_factor
     
     def run(self, sim_type='cb'):
         #sanitize input
@@ -213,7 +204,6 @@ class InterleavedSquoctSim(HardCodeSquoctSim):
         elif sim_type == 'stats':
             d_lat_lst = [pq.UnionJackLattice((sz, sz), is_dual=True)
                         for _ in range(2)]
-        
 
         decoder = pq.ft_mwpm_decoder(lat, d_lat_lst, blossom=False, 
                                         vert_dist=self.vert_dist)
@@ -255,9 +245,10 @@ class InterleavedSquoctSim(HardCodeSquoctSim):
         x_h_meas = pq.Measurement(q.X, ['', 'Z'], d_lat_x_sq.square_centers('h'))
         z_h_meas = pq.Measurement(q.Z, ['', 'X'], d_lat.square_centers('h'))
 
-        cycle = map(pq.Timestep, zip(v_x_cnots + v_z_cnots,
-                                        h_z_cnots + h_x_cnots,
-                                        o_x_cnots, o_z_cnots))
+        sq_cycle = map(pq.Timestep, zip(v_x_cnots + v_z_cnots,
+                                        h_z_cnots + h_x_cnots))
+        oct_cycle = map(pq.Timestep, zip(o_x_cnots, o_z_cnots))
+
         if sim_type == 'stats':
             synd_keys = ['xv', 'zv', 'xh', 'zh', 'xo', 'zo']
             synd_types = ['Z', 'X', 'Z', 'X', 'Z', 'X']
@@ -295,9 +286,11 @@ class InterleavedSquoctSim(HardCodeSquoctSim):
                     synd_flip['prep'][meas.pauli].act_on(meas.point_set)
                 #first four noisy gates
                 for tdx in range(4):
-                    cycle[tdx].noisy_apply(lat, None, self.p['twirl'], False)
+                    sq_cycle[tdx].noisy_apply(lat, None, self.p['twirl'], False)
+                    oct_cycle[tdx].noisy_apply(lat, None, 
+                            self.octagon_factor * self.p['twirl'], False)
                     for pt in lat.points:
-                        if pt not in cycle[tdx].twirl_support:
+                        if not any([pt in seq.twirl_support for seq in sq_cycle[tdx], oct_cycle[tdx]]):
                             dep.act_on(pt)
                     for pt in d_lat.points + d_lat_x_sq.points:
                         if not any([pt in sprt 
@@ -328,9 +321,11 @@ class InterleavedSquoctSim(HardCodeSquoctSim):
 
                 #next 4 noisy gates
                 for tdx in range(4, 8):
-                    cycle[tdx].noisy_apply(lat, None, self.p['twirl'], False)
+                    sq_cycle[tdx].noisy_apply(lat, None, self.p['twirl'], False)
+                    oct_cycle[tdx].noisy_apply(lat, None, 
+                            self.octagon_factor * self.p['twirl'], False)
                     for pt in lat.points:
-                        if pt not in cycle[tdx].twirl_support:
+                        if not any([pt in seq.twirl_support for seq in sq_cycle[tdx], oct_cycle[tdx]]):
                             dep.act_on(pt)
                     for pt in d_lat.points + d_lat_x_sq.points:
                         if not any([pt in sprt 
@@ -398,6 +393,7 @@ class InterleavedSquoctSim(HardCodeSquoctSim):
             big_dict['n_trials'] = self.n_trials
             big_dict['data_errors'] = self.data_errors
             big_dict['syndrome_errors'] = self.syndrome_errors
+            big_dict['oct_factor'] = self.oct_factor
 
             with open(filename, 'w') as phil:
                 pkl.dump(big_dict, phil)
@@ -472,3 +468,16 @@ def meas_cycle(lat, d_lat, d_lat_x_sq, x_flip, z_flip, dep, twirl,
             synd_flip['meas'][meas.pauli].act_on(meas.point_set)
         
         meas.apply()
+
+def _save_dict(sim):
+    big_dict['lattice_class'] = 'SquareOctagonLattice'
+    big_dict['lattice_size'] = sim.size
+    big_dict['dual_lattice_class'] = 'UnionJackLattice'
+    big_dict['dual_lattice_size'] = sim.size
+    big_dict['error_model'] = 'custom hard-coded'
+    big_dict['code'] = 'Square-Octagon Code'
+    big_dict['decoder'] = 'FT MWPM'
+    big_dict['n_trials'] = sim.n_trials
+    big_dict['logical_errors'] = sim.logical_error
+    big_dict['oct_factor'] = sim.oct_factor
+    return big_dict
