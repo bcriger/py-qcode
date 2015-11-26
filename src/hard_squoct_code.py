@@ -288,7 +288,7 @@ class InterleavedSquoctSim(HardCodeSquoctSim):
                 for tdx in range(4):
                     sq_cycle[tdx].noisy_apply(lat, None, self.p['twirl'], False)
                     oct_cycle[tdx].noisy_apply(lat, None, 
-                            self.octagon_f_factor * self.p['twirl'], False)
+                            self.oct_factor * self.p['twirl'], False)
                     for pt in lat.points:
                         if not any([pt in seq.twirl_support for seq in sq_cycle[tdx], oct_cycle[tdx]]):
                             dep.act_on(pt)
