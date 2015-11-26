@@ -13,7 +13,7 @@ class HardCodeToricSim():
         self.size = size
         #setup dict of probabilities
         
-        if hasattr(p,'items'):
+        if hasattr(p, 'items'):
             self.p = p
         else:
             self.p = {err_type: p for err_type in 
