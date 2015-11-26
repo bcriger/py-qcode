@@ -35,7 +35,13 @@ class HardCodeSquoctSim():
     """
     def __init__(self, size, p, n_trials):
         self.size = size
-        self.p = p
+
+        if hasattr(p, 'items'):
+            self.p = p
+        else:
+            self.p = {err_type: p for err_type in 
+                        ['dep', 'twirl', 'prep', 'meas']}
+        
         self.n_trials = n_trials
         self.logical_error = []
     
@@ -59,10 +65,16 @@ class HardCodeSquoctSim():
 
         log_ops = pq.squoct_log_ops(lat.total_size)
         
-        x_flip = pq.PauliErrorModel({q.I : 1. - self.p, q.X : self.p})
-        z_flip = pq.PauliErrorModel({q.I : 1. - self.p, q.Z : self.p})
-        dep = pq.depolarizing_model(self.p)
-        twirl = pq.two_bit_twirl(self.p)
+        x_flip = {key : pq.PauliErrorModel({q.I : 1. - self.p[key],
+                                            q.X : self.p[key]})
+                                            for key in ['prep', 'meas']
+                                            }
+        z_flip = {key : pq.PauliErrorModel({q.I : 1. - self.p[key],
+                                            q.Z : self.p[key]})
+                                            for key in ['prep', 'meas']
+                                            }
+        dep = pq.depolarizing_model(self.p['dep'])
+        twirl = pq.two_bit_twirl(self.p['twirl'])
 
         z_prs = {shft : pq.oct_pairs(lat, d_lat, shft, oct_type='z')
                     for shft in oct_clck_dirs}
@@ -209,10 +221,18 @@ class InterleavedSquoctSim(HardCodeSquoctSim):
 
         log_ops = pq.squoct_log_ops(lat.total_size)
         
-        dep = pq.depolarizing_model(self.p)
-        x_flip = pq.PauliErrorModel({q.I : 1. - self.p, q.X : self.p})
-        z_flip = pq.PauliErrorModel({q.I : 1. - self.p, q.Z : self.p})
-        synd_flip = {q.X : z_flip, q.Z : x_flip}
+        dep = pq.depolarizing_model(self.p['dep'])
+        x_flip = {key : pq.PauliErrorModel({q.I : 1. - self.p[key],
+                                            q.X : self.p[key]})
+                                            for key in ['prep', 'meas']
+                                            }
+        z_flip = {key : pq.PauliErrorModel({q.I : 1. - self.p[key],
+                                            q.Z : self.p[key]})
+                                            for key in ['prep', 'meas']
+                                            }
+        synd_flip = {}
+        synd_flip['prep'] = {q.X : z_flip['prep'], q.Z : x_flip['prep']}
+        synd_flip['meas'] = {q.X : z_flip['meas'], q.Z : x_flip['meas']}
         
         v_x_prs = [pq.sq_pairs(lat, d_lat_x_sq, d, 'v') for d in sq_il_dirs[:4]]
         v_z_prs = [pq.sq_pairs(lat, d_lat, d, 'v') for d in sq_il_dirs[4:]]
@@ -272,10 +292,10 @@ class InterleavedSquoctSim(HardCodeSquoctSim):
                 pq.syndrome_fill(d_lat_x_sq, '')
                 #flip first round of ancillas
                 for meas in [x_o_meas, z_o_meas, x_v_meas, z_h_meas]:
-                    synd_flip[meas.pauli].act_on(meas.point_set)
+                    synd_flip['prep'][meas.pauli].act_on(meas.point_set)
                 #first four noisy gates
                 for tdx in range(4):
-                    cycle[tdx].noisy_apply(lat, None, self.p, False)
+                    cycle[tdx].noisy_apply(lat, None, self.p['twirl'], False)
                     for pt in lat.points:
                         if pt not in cycle[tdx].twirl_support:
                             dep.act_on(pt)
@@ -288,7 +308,7 @@ class InterleavedSquoctSim(HardCodeSquoctSim):
 
                 #first measurement round
                 for meas in [x_v_meas, z_h_meas]:
-                    synd_flip[meas.pauli].act_on(meas.point_set)
+                    synd_flip['meas'][meas.pauli].act_on(meas.point_set)
                     meas.apply()
                 
                 pq.syndrome_copy(d_lat, d_lat_lst[idx])
@@ -304,11 +324,11 @@ class InterleavedSquoctSim(HardCodeSquoctSim):
 
                 #prep new square measurements
                 for meas in [x_h_meas, z_v_meas]:
-                    synd_flip[meas.pauli].act_on(meas.point_set)
+                    synd_flip['prep'][meas.pauli].act_on(meas.point_set)
 
                 #next 4 noisy gates
                 for tdx in range(4, 8):
-                    cycle[tdx].noisy_apply(lat, None, self.p, False)
+                    cycle[tdx].noisy_apply(lat, None, self.p['twirl'], False)
                     for pt in lat.points:
                         if pt not in cycle[tdx].twirl_support:
                             dep.act_on(pt)
@@ -321,7 +341,7 @@ class InterleavedSquoctSim(HardCodeSquoctSim):
 
                 #flip and measure remaining ancillas
                 for meas in [x_h_meas, z_v_meas, x_o_meas, z_o_meas]:
-                    synd_flip[meas.pauli].act_on(meas.point_set)
+                    synd_flip['meas'][meas.pauli].act_on(meas.point_set)
                     meas.apply()
 
                 #copy syndromes onto 3D lattice.
@@ -425,10 +445,12 @@ def meas_cycle(lat, d_lat, d_lat_x_sq, x_flip, z_flip, dep, twirl,
     pq.syndrome_fill(d_lat_x_sq, '')
             
     if sim_type in ['pq', 'p']:
-        x_flip.act_on(lat)
-        z_flip.act_on(lat)
+        x_flip['prep'].act_on(lat)
+        z_flip['prep'].act_on(lat)
 
-    synd_flip = {q.X : z_flip, q.Z : x_flip}
+    synd_flip = {}
+    synd_flip['prep'] = {q.X : z_flip['prep'], q.Z : x_flip['prep']}
+    synd_flip['meas'] = {q.X : z_flip['meas'], q.Z : x_flip['meas']}
 
     for gate_set, clck_dirs, meas, deps in zip([z_oct_cx, x_oct_xc, z_sq_cx, x_sq_xc],
                                             [oct_clck_dirs, oct_clck_dirs, sq_clck_dirs, sq_clck_dirs],
@@ -438,7 +460,7 @@ def meas_cycle(lat, d_lat, d_lat_x_sq, x_flip, z_flip, dep, twirl,
             pt.syndrome = ''
     
         if sim_type == 'cb':
-            synd_flip[meas.pauli].act_on(meas.point_set)
+            synd_flip['prep'][meas.pauli].act_on(meas.point_set)
     
         for drctn in clck_dirs:
             gate_set[drctn].apply()
@@ -447,6 +469,6 @@ def meas_cycle(lat, d_lat, d_lat_x_sq, x_flip, z_flip, dep, twirl,
                 dep.act_on(deps[drctn])
     
         if sim_type in ['pq', 'cb']:
-            synd_flip[meas.pauli].act_on(meas.point_set)
+            synd_flip['meas'][meas.pauli].act_on(meas.point_set)
         
         meas.apply()
