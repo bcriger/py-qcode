@@ -381,7 +381,8 @@ class InterleavedSquoctSim(HardCodeSquoctSim):
                         
     def save(self, filename):
         if self.sim_type == 'cb':
-            HardCodeSquoctSim.save(self, filename)
+            big_dict = _save_dict(self)
+            big_dict['oct_factor'] = self.oct_factor
         elif self.sim_type == 'stats':
             big_dict = {}
             big_dict['lattice_class'] = 'SquareOctagonLattice'
@@ -470,6 +471,7 @@ def meas_cycle(lat, d_lat, d_lat_x_sq, x_flip, z_flip, dep, twirl,
         meas.apply()
 
 def _save_dict(sim):
+    big_dict = {}
     big_dict['lattice_class'] = 'SquareOctagonLattice'
     big_dict['lattice_size'] = sim.size
     big_dict['dual_lattice_class'] = 'UnionJackLattice'
