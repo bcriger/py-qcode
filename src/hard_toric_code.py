@@ -11,7 +11,14 @@ class HardCodeToricSim():
     """
     def __init__(self, size, p, n_trials, vert_dist=None):
         self.size = size
-        self.p = p
+        #setup dict of probabilities
+        
+        if hasattr(p,'items'):
+            self.p = p
+        else:
+            self.p = {err_type: p for err_type in 
+                        ['dep', 'twirl', 'prep', 'meas']}
+        
         self.n_trials = n_trials
         self.logical_error = []
         self.vert_dist = vert_dist
@@ -42,9 +49,15 @@ class HardCodeToricSim():
 
         log_ops = pq.toric_log_ops((sz, sz))
         
-        x_flip = pq.PauliErrorModel({q.I : 1. - self.p, q.X : self.p})
-        z_flip = pq.PauliErrorModel({q.I : 1. - self.p, q.Z : self.p})
-        twirl = pq.two_bit_twirl(self.p)
+        x_flip = {key : pq.PauliErrorModel({q.I : 1. - self.p[key],
+                                            q.X : self.p[key]})
+                                            for key in ['prep', 'meas']
+                                            }
+        z_flip = {key : pq.PauliErrorModel({q.I : 1. - self.p[key],
+                                            q.Z : self.p[key]})
+                                            for key in ['prep', 'meas']
+                                            }
+        twirl = pq.two_bit_twirl(self.p['twirl'])
 
         odd_prs = {drctn : pq.nwes_pairs(lat, d_lat, drctn, 'odd') 
                     for drctn in DRCTNS}
@@ -167,11 +180,11 @@ def meas_cycle(lat, d_lat, x_flip, z_flip, twirl, odd_prs, even_prs,
     pq.error_fill(d_lat, q.I)
     
     if sim_type in ['cb', 'stats']:
-        x_flip.act_on(d_lat.plaq_centers())
-        z_flip.act_on(d_lat.star_centers())
+        x_flip['prep'].act_on(d_lat.plaq_centers())
+        z_flip['prep'].act_on(d_lat.star_centers())
     elif sim_type in ['pq', 'p']:
-        x_flip.act_on(lat)
-        z_flip.act_on(lat)
+        x_flip['prep'].act_on(lat)
+        z_flip['prep'].act_on(lat)
 
     for drctn in DRCTNS:
         cx[drctn].apply()
@@ -183,8 +196,8 @@ def meas_cycle(lat, d_lat, x_flip, z_flip, twirl, odd_prs, even_prs,
             twirl.act_on(even_prs[drctn])
     
     if sim_type in ['cb', 'pq', 'stats']:
-        x_flip.act_on(d_lat.plaq_centers())
-        z_flip.act_on(d_lat.star_centers())
+        x_flip['meas'].act_on(d_lat.plaq_centers())
+        z_flip['meas'].act_on(d_lat.star_centers())
     elif sim_type == 'p':
         pass
 
