@@ -396,8 +396,8 @@ class InterleavedSquoctSim(HardCodeSquoctSim):
             big_dict['syndrome_errors'] = self.syndrome_errors
             big_dict['oct_factor'] = self.oct_factor
 
-            with open(filename, 'w') as phil:
-                pkl.dump(big_dict, phil)
+        with open(filename, 'w') as phil:
+            pkl.dump(big_dict, phil)
 
 
 def meas_cycle(lat, d_lat, d_lat_x_sq, x_flip, z_flip, dep, twirl, 
