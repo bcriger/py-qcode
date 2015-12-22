@@ -19,6 +19,17 @@ x_oct_il_dirs = z_oct_il_dirs
 sq_il_dirs = [[(1, 1), (1, -1), (-1, 1), (-1, -1)][x] 
                 for x in [0, 1, 2, 3, 3, 1, 2, 0]]
 
+# four step circuit requires two permutations, I repeat them for 
+# clarity:
+sq_perms_4 = {'xv' : [(1, 1), (1, -1), (-1, 1), (-1, -1)], 
+                'zv' : [(-1, 1), (1, 1), (-1, -1), (1, -1)]}
+sq_perms_4['xh'] = sq_perms_4['zv']
+sq_perms_4['zh'] = sq_perms_4['xv']
+
+# separate gate orders to act on components of Bell ancilla
+oct_perms_4 = [[(1, 2), (-1, 2), (1, -2), (-1, -2)],
+                [(2, -1), (2, 1), (-2, -1), (-2, 1)]]
+
 def pair_complements(lat, pair_list):
     """
     In order to figure out which qubits to depolarize while twirling a
@@ -389,7 +400,7 @@ class InterleavedSquoctSim(HardCodeSquoctSim):
             big_dict['lattice_size'] = self.size
             big_dict['dual_lattice_class'] = 'UnionJackLattice'
             big_dict['dual_lattice_size'] = self.size
-            big_dict['error_model'] = 'custom hard-coded'
+            big_dict['error_model'] = self.p
             big_dict['code'] = 'Square-Octagon Code'
             big_dict['n_trials'] = self.n_trials
             big_dict['data_errors'] = self.data_errors
@@ -399,6 +410,217 @@ class InterleavedSquoctSim(HardCodeSquoctSim):
         with open(filename, 'w') as phil:
             pkl.dump(big_dict, phil)
 
+
+class FourStepSquoctSim(HardCodeSquoctSim):
+    """
+    Entire new class for simulations interleaved down to four timesteps
+    with a Bell state being used to measure the octagons (dumb).
+    """
+    def __init__(self, size, p, n_trials, vert_dist=None, oct_factor=1.):
+        HardCodeSquoctSim.__init__(self, size, p, n_trials)
+        self.vert_dist = vert_dist
+        self.data_errors = {'X': 0, 'Y': 0, 'Z': 0}
+        self.syndrome_errors = {'xv': 0, 'zv': 0, 'xh': 0, 'zh': 0,
+                                'xo': 0, 'zo': 0}
+        self.sim_type = None
+        self.oct_factor = oct_factor
+    
+    def run(self, sim_type='cb'):
+        #sanitize input
+        _sanitize_sim_type(sim_type)
+        if sim_type not in ['cb', 'stats']:
+            raise ValueError("FourStepSquoctSim only supports "
+                            "sim_type='cb' or 'stats', use"
+                            " HardCodeSquoctSim.")
+        self.sim_type = sim_type
+        sz = int(self.size / 2.)
+
+        lat = pq.SquareOctagonLattice((sz, sz))
+        # Two ancilla qubits per plaquette are used, we separate these
+        # into two lattices. The first contains the X square bare bit
+        # and the control bit of the octagon bell states. The second 
+        # contains the Z square bare bit and the target bit of the 
+        # Bell states.
+        d_lats = [pq.UnionJackLattice((sz, sz), is_dual=True)
+                    for _ in range(2)]
+        
+        if sim_type == 'cb':
+            d_lat_lst = [pq.UnionJackLattice((sz, sz), is_dual=True)
+                        for _ in range(self.size + 1)]
+        elif sim_type == 'stats':
+            d_lat_lst = [pq.UnionJackLattice((sz, sz), is_dual=True)
+                        for _ in range(2)]
+
+        decoder = pq.ft_mwpm_decoder(lat, d_lat_lst, blossom=False, 
+                                        vert_dist=self.vert_dist)
+        noiseless_code = pq.square_octagon_code(lat, d_lat_lst[-1])
+
+        log_ops = pq.squoct_log_ops(lat.total_size)
+        
+        dep = pq.depolarizing_model(self.p['dep'])
+        x_flip = {key : pq.PauliErrorModel({q.I : 1. - self.p[key],
+                                            q.X : self.p[key]})
+                                            for key in ['prep', 'meas']
+                                            }
+        z_flip = {key : pq.PauliErrorModel({q.I : 1. - self.p[key],
+                                            q.Z : self.p[key]})
+                                            for key in ['prep', 'meas']
+                                            }
+        synd_flip = {}
+        synd_flip['prep'] = {q.X : z_flip['prep'], q.Z : x_flip['prep']}
+        synd_flip['meas'] = {q.X : z_flip['meas'], q.Z : x_flip['meas']}
+        
+        bell_prep_cnots = [pq.Clifford(q.cnot(2, 0, 1),
+                                        (d_lats[0][crd], d_lats[1][crd]))
+                            for crd in pq._octagon_centers((sz, sz))]
+
+        prep_step = pq.Timestep(bell_prep_cnots)
+
+        v_x_prs = [pq.sq_pairs(lat, d_lats[0], d, 'v') for d in sq_perms_4['xv']]
+        v_z_prs = [pq.sq_pairs(lat, d_lats[1], d, 'v') for d in sq_perms_4['zv']]
+        h_x_prs = [pq.sq_pairs(lat, d_lats[0], d, 'h') for d in sq_perms_4['xh']]
+        h_z_prs = [pq.sq_pairs(lat, d_lats[1], d, 'h') for d in sq_perms_4['zh']]
+        o_x_prs = [pq.oct_pairs(lat, d_lat, d, 'x')
+                    for d_lat, d in zip(d_lats, oct_perms_4)]
+        o_z_prs = [pq.oct_pairs(lat, d_lat, d, 'z') 
+                    for d_lat, d in zip(d_lats, oct_perms_4)]
+        
+        v_x_cnots = [pq.Clifford(q.cnot(2, 1, 0), pr) for pr in v_x_prs]
+        v_z_cnots = [pq.Clifford(q.cnot(2, 0, 1), pr) for pr in v_z_prs]
+        h_x_cnots = [pq.Clifford(q.cnot(2, 1, 0), pr) for pr in h_x_prs]
+        h_z_cnots = [pq.Clifford(q.cnot(2, 0, 1), pr) for pr in h_z_prs]
+        o_x_cnots = [pq.Clifford(q.cnot(2, 1, 0), pr) for pr in o_x_prs]
+        o_z_cnots = [pq.Clifford(q.cnot(2, 0, 1), pr) for pr in o_z_prs]
+
+        x_o_meas = [pq.Measurement(q.X, ['', 'Z'], d_lat.octagon_centers(oct_type='X'))
+                    for d_lat in d_lats]
+        z_o_meas = [pq.Measurement(q.Z, ['', 'X'], d_lat.octagon_centers(oct_type='Z'))
+                    for d_lat in d_lats]
+        x_v_meas = pq.Measurement(q.X, ['', 'Z'], d_lat_x_sq.square_centers('v'))
+        z_v_meas = pq.Measurement(q.Z, ['', 'X'], d_lat.square_centers('v'))
+        x_h_meas = pq.Measurement(q.X, ['', 'Z'], d_lat_x_sq.square_centers('h'))
+        z_h_meas = pq.Measurement(q.Z, ['', 'X'], d_lat.square_centers('h'))
+
+        measurements = [x_v_meas, x_h_meas, z_v_meas, z_h_meas] + x_o_meas + z_o_meas
+        
+        cycle = map(pq.Timestep, zip(v_x_cnots, v_z_cnots, h_z_cnots,
+                                        h_x_cnots, o_x_cnots[0],
+                                        o_x_cnots[1], o_z_cnots[0],
+                                        o_z_cnots[1]))
+
+        prep_ancs = [d_lats[0].square_centers(), d_lats[1].square_centers(),
+                    d_lats[0].octagon_centers(), d_lats[1].octagon_centers()]
+        
+        meas_ancs = [d_lats[0].square_centers(), d_lats[0].octagon_centers('x'),
+                    d_lats[1].octagon_centers('x'), d_lats[1].square_centers(),
+                    d_lats[0].octagon_centers('z'), d_lats[1].octagon_centers('z')]
+
+        if sim_type == 'stats':
+            synd_keys = ['xv', 'zv', 'xh', 'zh', 'xo', 'zo']
+            synd_types = ['Z', 'X', 'Z', 'X', 'Z', 'X']
+            crd_sets = [
+                        pq._square_centers((sz, sz), 'v'),
+                        pq._square_centers((sz, sz), 'v'),
+                        pq._square_centers((sz, sz), 'h'),
+                        pq._square_centers((sz, sz), 'h'),
+                        pq._octagon_centers((sz, sz), 'x'),
+                        pq._octagon_centers((sz, sz), 'z')
+                        ]
+
+        for _ in xrange(self.n_trials):
+            #clear last sim
+            pq.error_fill(lat, q.I)
+            for d_lat in d_lats:
+                d_lat.clear()
+                pq.error_fill(d_lat, q.I)
+            
+            for ltc in d_lat_lst:
+                ltc.clear() #may break
+            
+            #fill d_lat_lst with syndromes by copying
+            for idx in range(len(d_lat_lst) - 1):
+                for d_lat in d_lats:
+                    d_lat.clear()
+                    pq.error_fill(d_lat, q.I)
+                    pq.syndrome_fill(d_lat, '')
+                #flip first round of ancillas
+                for pl, pt_set in zip([q.X, q.Z, q.X, q.Z], prep_ancs):
+                    synd_flip['prep'][pl].act_on(pt_set)
+                #Bell state prep CNots
+                prep_step.noisy_apply(None, None, self.p['twirl'], False)
+                # depolarisation during state prep (doesn't affect 
+                # square ancillas, we 'prepare them later')
+                dep.act_on(lat)
+                # 4 noisy gates (twirl only, since all qubits are used)
+                for stp in cycle:
+                    stp.noisy_apply(None, None, self.p['twirl'], False)
+                # flip and measure ancillas
+                for pl, pt_set in zip([q.X, q.X, q.X, q.Z, q.Z, q.Z], meas_ancs):
+                    synd_flip['prep'][pl].act_on(pt_set)
+                
+                for meas in measurements:
+                    meas.apply()
+                # copy syndromes onto 3D lattice.
+                for crd in pq._square_centers((sz, sz)):
+                    d_lat_lst[idx][crd].syndrome = sum([d_lats[_][crd].syndrome for _ in [0, 1]], '')
+                for crd in pq._octagon_centers((sz, sz)):
+                    sum_synd = sum([d_lats[_][crd].syndrome for _ in [0, 1]], '')
+                    d_lat_lst[idx][crd].syndrome = sum_synd if len(sum_synd) == 1 else ''
+
+            noiseless_code.measure()
+            if sim_type == 'cb':
+                #run decoder, with no final lattice check (laaaaater)
+                decoder.infer()
+
+                # Error checking, if the resulting Pauli is not in the
+                # normalizer, chuck an error:
+
+                d_lat_lst[-1].clear()
+                pq.syndrome_fill(d_lat_lst[-1], '')
+                noiseless_code.measure()
+                for point in d_lat_lst[-1].points:
+                    if point.syndrome:
+                        raise ValueError('Product of "inferred error"' 
+                                         ' with actual error anticommutes'
+                                         ' with some stabilizers.')
+                
+                com_relation_list = []
+                for operator in log_ops:
+                    com_relation_list.append(operator.test(lat))
+                self.logical_error.append(com_relation_list)
+            elif sim_type == 'stats':
+                for key in self.data_errors.keys():
+                    for point in lat.points:
+                        if point.error.op == key:
+                            self.data_errors[key] += 1
+                #check syndromes
+                for synd_key, synd_type, crd_set in zip(synd_keys,
+                                                        synd_types,
+                                                        crd_sets):
+                    for crd in crd_set:
+                        if (synd_type in d_lat_lst[0][crd].syndrome) != \
+                            (synd_type in d_lat_lst[1][crd].syndrome):
+                            self.syndrome_errors[synd_key] += 1
+                        
+    def save(self, filename):
+        if self.sim_type == 'cb':
+            big_dict = _save_dict(self)
+            big_dict['oct_factor'] = self.oct_factor
+        elif self.sim_type == 'stats':
+            big_dict = {}
+            big_dict['lattice_class'] = 'SquareOctagonLattice'
+            big_dict['lattice_size'] = self.size
+            big_dict['dual_lattice_class'] = 'UnionJackLattice'
+            big_dict['dual_lattice_size'] = self.size
+            big_dict['error_model'] = self.p
+            big_dict['code'] = 'Square-Octagon Code'
+            big_dict['n_trials'] = self.n_trials
+            big_dict['data_errors'] = self.data_errors
+            big_dict['syndrome_errors'] = self.syndrome_errors
+            big_dict['oct_factor'] = self.oct_factor
+
+        with open(filename, 'w') as phil:
+            pkl.dump(big_dict, phil)
 
 def meas_cycle(lat, d_lat, d_lat_x_sq, x_flip, z_flip, dep, twirl, 
                 z_prs, x_prs, sq_prs, z_deps, x_deps, 
@@ -476,7 +698,7 @@ def _save_dict(sim):
     big_dict['lattice_size'] = sim.size
     big_dict['dual_lattice_class'] = 'UnionJackLattice'
     big_dict['dual_lattice_size'] = sim.size
-    big_dict['error_model'] = 'custom hard-coded'
+    big_dict['error_model'] = self.p
     big_dict['code'] = 'Square-Octagon Code'
     big_dict['decoder'] = 'FT MWPM'
     big_dict['n_trials'] = sim.n_trials
