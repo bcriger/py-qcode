@@ -471,8 +471,9 @@ class FourStepSquoctSim(HardCodeSquoctSim):
         synd_flip['meas'] = {q.X : z_flip['meas'], q.Z : x_flip['meas']}
         
         bell_prep_cnots = [pq.Clifford(q.cnot(2, 0, 1),
-                                        (d_lats[0][crd], d_lats[1][crd]))
-                            for crd in pq._octagon_centers((sz, sz))]
+                                        [(d_lats[0][crd], d_lats[1][crd])
+                                            for crd in pq._octagon_centers((sz, sz))])]
+                            
 
         prep_step = pq.Timestep(bell_prep_cnots)
 
