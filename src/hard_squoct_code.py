@@ -564,9 +564,10 @@ class FourStepSquoctSim(HardCodeSquoctSim):
                     meas.apply()
                 # copy syndromes onto 3D lattice.
                 for crd in pq._square_centers((sz, sz)):
-                    d_lat_lst[idx][crd].syndrome = sum([d_lats[_][crd].syndrome for _ in [0, 1]], '')
+                    d_lat_lst[idx][crd].syndrome = ''.join([d_lats[_][crd].syndrome for _ in [0, 1]])
                 for crd in pq._octagon_centers((sz, sz)):
-                    sum_synd = sum([d_lats[_][crd].syndrome for _ in [0, 1]], '')
+                    sum_synd = ''.join([d_lats[_][crd].syndrome for _ in [0, 1]])
+                    #if there are 2 syndromes indicated, we say there are none
                     d_lat_lst[idx][crd].syndrome = sum_synd if len(sum_synd) == 1 else ''
 
             noiseless_code.measure()
