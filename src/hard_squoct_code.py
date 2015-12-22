@@ -490,19 +490,20 @@ class FourStepSquoctSim(HardCodeSquoctSim):
         v_z_cnots = [pq.Clifford(q.cnot(2, 0, 1), pr) for pr in v_z_prs]
         h_x_cnots = [pq.Clifford(q.cnot(2, 1, 0), pr) for pr in h_x_prs]
         h_z_cnots = [pq.Clifford(q.cnot(2, 0, 1), pr) for pr in h_z_prs]
-        o_x_cnots = [pq.Clifford(q.cnot(2, 1, 0), pr) for pr in o_x_prs]
-        o_z_cnots = [pq.Clifford(q.cnot(2, 0, 1), pr) for pr in o_z_prs]
+        o_x_cnots = [[pq.Clifford(q.cnot(2, 1, 0), pr) 
+                        for pr in pr_set] for pr_set in o_x_prs]
+        o_z_cnots = [[pq.Clifford(q.cnot(2, 0, 1), pr) 
+                        for pr in pr_set] for pr_set in o_x_prs]
 
         x_o_meas = [pq.Measurement(q.X, ['', 'Z'], d_lat.octagon_centers(oct_type='X'))
                     for d_lat in d_lats]
         z_o_meas = [pq.Measurement(q.Z, ['', 'X'], d_lat.octagon_centers(oct_type='Z'))
                     for d_lat in d_lats]
-        x_v_meas = pq.Measurement(q.X, ['', 'Z'], d_lat_x_sq.square_centers('v'))
-        z_v_meas = pq.Measurement(q.Z, ['', 'X'], d_lat.square_centers('v'))
-        x_h_meas = pq.Measurement(q.X, ['', 'Z'], d_lat_x_sq.square_centers('h'))
-        z_h_meas = pq.Measurement(q.Z, ['', 'X'], d_lat.square_centers('h'))
-
-        measurements = [x_v_meas, x_h_meas, z_v_meas, z_h_meas] + x_o_meas + z_o_meas
+        
+        x_sq_meas = pq.Measurement(q.X, ['', 'Z'], d_lats[0].square_centers())
+        z_sq_meas = pq.Measurement(q.Z, ['', 'X'], d_lats[1].square_centers())
+        
+        measurements = [x_sq_meas, x_sq_meas] + x_o_meas + z_o_meas
         
         cycle = map(pq.Timestep, zip(v_x_cnots, v_z_cnots, h_z_cnots,
                                         h_x_cnots, o_x_cnots[0],
