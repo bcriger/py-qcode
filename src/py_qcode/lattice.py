@@ -691,7 +691,7 @@ def _square_centers(size, gauge=None):
                             "{}".format(gauge))
     return ctrs
 
-def _octagon_centers(size, oct_type):
+def _octagon_centers(size, oct_type=None):
     if oct_type:
         oct_type = oct_type.upper()
         if oct_type not in 'XZ':
