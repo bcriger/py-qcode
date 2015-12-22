@@ -481,10 +481,10 @@ class FourStepSquoctSim(HardCodeSquoctSim):
         v_z_prs = [pq.sq_pairs(lat, d_lats[1], d, 'v') for d in sq_perms_4['zv']]
         h_x_prs = [pq.sq_pairs(lat, d_lats[0], d, 'h') for d in sq_perms_4['xh']]
         h_z_prs = [pq.sq_pairs(lat, d_lats[1], d, 'h') for d in sq_perms_4['zh']]
-        o_x_prs = [pq.oct_pairs(lat, d_lat, d, 'x')
-                    for d_lat, d in zip(d_lats, oct_perms_4)]
-        o_z_prs = [pq.oct_pairs(lat, d_lat, d, 'z') 
-                    for d_lat, d in zip(d_lats, oct_perms_4)]
+        o_x_prs = [[pq.oct_pairs(lat, d_lat, d, 'x') for d in perm]
+                    for d_lat, perm in zip(d_lats, oct_perms_4)]
+        o_z_prs = [[pq.oct_pairs(lat, d_lat, d, 'z') for d in perm] 
+                    for d_lat, perm in zip(d_lats, oct_perms_4)]
         
         v_x_cnots = [pq.Clifford(q.cnot(2, 1, 0), pr) for pr in v_x_prs]
         v_z_cnots = [pq.Clifford(q.cnot(2, 0, 1), pr) for pr in v_z_prs]
