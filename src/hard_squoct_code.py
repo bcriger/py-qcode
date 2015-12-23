@@ -701,7 +701,7 @@ def _save_dict(sim):
     big_dict['lattice_size'] = sim.size
     big_dict['dual_lattice_class'] = 'UnionJackLattice'
     big_dict['dual_lattice_size'] = sim.size
-    big_dict['error_model'] = self.p
+    big_dict['error_model'] = sim.p
     big_dict['code'] = 'Square-Octagon Code'
     big_dict['decoder'] = 'FT MWPM'
     big_dict['n_trials'] = sim.n_trials
