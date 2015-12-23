@@ -453,6 +453,7 @@ class FourStepSquoctSim(HardCodeSquoctSim):
 
         decoder = pq.ft_mwpm_decoder(lat, d_lat_lst, blossom=False, 
                                         vert_dist=self.vert_dist)
+        
         noiseless_code = pq.square_octagon_code(lat, d_lat_lst[-1])
 
         log_ops = pq.squoct_log_ops(lat.total_size)
@@ -503,7 +504,7 @@ class FourStepSquoctSim(HardCodeSquoctSim):
         x_sq_meas = pq.Measurement(q.X, ['', 'Z'], d_lats[0].square_centers())
         z_sq_meas = pq.Measurement(q.Z, ['', 'X'], d_lats[1].square_centers())
         
-        measurements = [x_sq_meas, x_sq_meas] + x_o_meas + z_o_meas
+        measurements = [x_sq_meas, z_sq_meas] + x_o_meas + z_o_meas
         
         cycle = map(pq.Timestep, zip(v_x_cnots, v_z_cnots, h_z_cnots,
                                         h_x_cnots, o_x_cnots[0],
@@ -559,7 +560,7 @@ class FourStepSquoctSim(HardCodeSquoctSim):
                     stp.noisy_apply(None, None, self.p['twirl'], False)
                 # flip and measure ancillas
                 for pl, pt_set in zip([q.X, q.X, q.X, q.Z, q.Z, q.Z], meas_ancs):
-                    synd_flip['prep'][pl].act_on(pt_set)
+                    synd_flip['meas'][pl].act_on(pt_set)
                 
                 for meas in measurements:
                     meas.apply()
