@@ -537,7 +537,8 @@ class FourStepSquoctSim(HardCodeSquoctSim):
                 pq.error_fill(d_lat, q.I)
             
             for ltc in d_lat_lst:
-                ltc.clear() #may break
+                ltc.clear() # may break
+                pq.syndrome_fill(ltc, '')
             
             #fill d_lat_lst with syndromes by copying
             for idx in range(len(d_lat_lst) - 1):
@@ -572,12 +573,10 @@ class FourStepSquoctSim(HardCodeSquoctSim):
 
             noiseless_code.measure()
             if sim_type == 'cb':
-                #run decoder, with no final lattice check (laaaaater)
                 decoder.infer()
 
                 # Error checking, if the resulting Pauli is not in the
                 # normalizer, chuck an error:
-
                 d_lat_lst[-1].clear()
                 pq.syndrome_fill(d_lat_lst[-1], '')
                 noiseless_code.measure()
