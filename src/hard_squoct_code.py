@@ -494,7 +494,7 @@ class FourStepSquoctSim(HardCodeSquoctSim):
         o_x_cnots = [[pq.Clifford(q.cnot(2, 1, 0), pr) 
                         for pr in pr_set] for pr_set in o_x_prs]
         o_z_cnots = [[pq.Clifford(q.cnot(2, 0, 1), pr) 
-                        for pr in pr_set] for pr_set in o_x_prs]
+                        for pr in pr_set] for pr_set in o_z_prs]
 
         x_o_meas = [pq.Measurement(q.X, ['', 'Z'], d_lat.octagon_centers(oct_type='X'))
                     for d_lat in d_lats]
