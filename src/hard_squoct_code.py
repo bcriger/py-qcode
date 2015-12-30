@@ -26,9 +26,17 @@ sq_perms_4 = {'xv' : [(1, 1), (1, -1), (-1, 1), (-1, -1)],
 sq_perms_4['xh'] = sq_perms_4['zv']
 sq_perms_4['zh'] = sq_perms_4['xv']
 
+sq_perms_4_perp = {'xv' : [(1, 1), (1, -1), (-1, 1), (-1, -1)], 
+                'zv' : [(1, -1), (-1, -1), (1, 1), (-1, 1)]}
+sq_perms_4_perp['xh'] = sq_perms_4_perp['zv']
+sq_perms_4_perp['zh'] = sq_perms_4_perp['xv']
+
 # separate gate orders to act on components of Bell ancilla
 oct_perms_4 = [[(1, 2), (-1, 2), (1, -2), (-1, -2)],
                 [(2, -1), (2, 1), (-2, -1), (-2, 1)]]
+
+oct_perms_4_perp = [[(2, -1), (2, 1), (-1, 2), (1, 2)],
+                [(-1, -2), (1, -2), (-2, -1), (-2, 1)]]
 
 def pair_complements(lat, pair_list):
     """
@@ -416,7 +424,7 @@ class FourStepSquoctSim(HardCodeSquoctSim):
     Entire new class for simulations interleaved down to four timesteps
     with a Bell state being used to measure the octagons (dumb).
     """
-    def __init__(self, size, p, n_trials, vert_dist=None, oct_factor=1.):
+    def __init__(self, size, p, n_trials, vert_dist=None, oct_factor=1., perp=False):
         HardCodeSquoctSim.__init__(self, size, p, n_trials)
         self.vert_dist = vert_dist
         self.data_errors = {'X': 0, 'Y': 0, 'Z': 0}
@@ -478,14 +486,21 @@ class FourStepSquoctSim(HardCodeSquoctSim):
 
         prep_step = pq.Timestep(bell_prep_cnots)
 
-        v_x_prs = [pq.sq_pairs(lat, d_lats[0], d, 'v') for d in sq_perms_4['xv']]
-        v_z_prs = [pq.sq_pairs(lat, d_lats[1], d, 'v') for d in sq_perms_4['zv']]
-        h_x_prs = [pq.sq_pairs(lat, d_lats[0], d, 'h') for d in sq_perms_4['xh']]
-        h_z_prs = [pq.sq_pairs(lat, d_lats[1], d, 'h') for d in sq_perms_4['zh']]
+        if perp:
+            sq_perms = sq_perms_4_perp
+            oct_perms = oct_perms_4_perp
+        else:
+            sq_perms = sq_perms_4
+            oct_perms = oct_perms_4
+
+        v_x_prs = [pq.sq_pairs(lat, d_lats[0], d, 'v') for d in sq_perms['xv']]
+        v_z_prs = [pq.sq_pairs(lat, d_lats[1], d, 'v') for d in sq_perms['zv']]
+        h_x_prs = [pq.sq_pairs(lat, d_lats[0], d, 'h') for d in sq_perms['xh']]
+        h_z_prs = [pq.sq_pairs(lat, d_lats[1], d, 'h') for d in sq_perms['zh']]
         o_x_prs = [[pq.oct_pairs(lat, d_lat, d, 'x') for d in perm]
-                    for d_lat, perm in zip(d_lats, oct_perms_4)]
+                    for d_lat, perm in zip(d_lats, oct_perms)]
         o_z_prs = [[pq.oct_pairs(lat, d_lat, d, 'z') for d in perm] 
-                    for d_lat, perm in zip(d_lats, oct_perms_4)]
+                    for d_lat, perm in zip(d_lats, oct_perms)]
         
         v_x_cnots = [pq.Clifford(q.cnot(2, 1, 0), pr) for pr in v_x_prs]
         v_z_cnots = [pq.Clifford(q.cnot(2, 0, 1), pr) for pr in v_z_prs]
