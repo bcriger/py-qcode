@@ -432,6 +432,7 @@ class FourStepSquoctSim(HardCodeSquoctSim):
                                 'xo': 0, 'zo': 0}
         self.sim_type = None
         self.oct_factor = oct_factor
+        self.perp = perp
     
     def run(self, sim_type='cb'):
         #sanitize input
@@ -486,7 +487,7 @@ class FourStepSquoctSim(HardCodeSquoctSim):
 
         prep_step = pq.Timestep(bell_prep_cnots)
 
-        if perp:
+        if self.perp:
             sq_perms = sq_perms_4_perp
             oct_perms = oct_perms_4_perp
         else:
