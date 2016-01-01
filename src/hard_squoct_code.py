@@ -424,7 +424,8 @@ class FourStepSquoctSim(HardCodeSquoctSim):
     Entire new class for simulations interleaved down to four timesteps
     with a Bell state being used to measure the octagons (dumb).
     """
-    def __init__(self, size, p, n_trials, vert_dist=None, oct_factor=1., perp=False):
+    def __init__(self, size, p, n_trials, vert_dist=None, oct_factor=1.,
+                    perp=False, gauge=False):
         HardCodeSquoctSim.__init__(self, size, p, n_trials)
         self.vert_dist = vert_dist
         self.data_errors = {'X': 0, 'Y': 0, 'Z': 0}
@@ -433,6 +434,7 @@ class FourStepSquoctSim(HardCodeSquoctSim):
         self.sim_type = None
         self.oct_factor = oct_factor
         self.perp = perp
+        self.gauge = gauge
     
     def run(self, sim_type='cb'):
         #sanitize input
@@ -465,7 +467,7 @@ class FourStepSquoctSim(HardCodeSquoctSim):
         
         noiseless_code = pq.square_octagon_code(lat, d_lat_lst[-1])
 
-        log_ops = pq.squoct_log_ops(lat.total_size)
+        log_ops = pq.squoct_log_ops(lat.total_size, gauge=self.gauge)
         
         dep = pq.depolarizing_model(self.p['dep'])
         x_flip = {key : pq.PauliErrorModel({q.I : 1. - self.p[key],
@@ -624,7 +626,6 @@ class FourStepSquoctSim(HardCodeSquoctSim):
     def save(self, filename):
         if self.sim_type == 'cb':
             big_dict = _save_dict(self)
-            big_dict['oct_factor'] = self.oct_factor
         elif self.sim_type == 'stats':
             big_dict = {}
             big_dict['lattice_class'] = 'SquareOctagonLattice'
@@ -636,7 +637,10 @@ class FourStepSquoctSim(HardCodeSquoctSim):
             big_dict['n_trials'] = self.n_trials
             big_dict['data_errors'] = self.data_errors
             big_dict['syndrome_errors'] = self.syndrome_errors
-            big_dict['oct_factor'] = self.oct_factor
+        
+        big_dict['oct_factor'] = self.oct_factor
+        big_dict['perp'] = self.perp
+        big_dict['gauge'] = self.gauge
 
         with open(filename, 'w') as phil:
             pkl.dump(big_dict, phil)
