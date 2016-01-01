@@ -637,6 +637,7 @@ class FourStepSquoctSim(HardCodeSquoctSim):
             big_dict['n_trials'] = self.n_trials
             big_dict['data_errors'] = self.data_errors
             big_dict['syndrome_errors'] = self.syndrome_errors
+            big_dict['decoder'] = 'FT MWPM'
         
         big_dict['oct_factor'] = self.oct_factor
         big_dict['perp'] = self.perp
