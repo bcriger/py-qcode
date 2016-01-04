@@ -112,7 +112,7 @@ class Timestep():
         #FIXME: Only works for two-qubit gates
         self.twirl_support = set().union(*[x.support for x in cliff_list])
     
-    def noisy_apply(self, dat_lat, anc_lat, p, dep=True):
+    def noisy_apply(self, dat_lat, anc_lat, p_twirl, p_dep, dep=True):
         """
         Applies the gates in the time step to the data/ancilla qubits, 
         applying a depolarizing map after one-qubit gates, a two-qubit 
