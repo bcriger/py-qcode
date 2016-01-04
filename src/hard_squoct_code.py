@@ -635,8 +635,7 @@ class LRSSerialSquoctSim(HardCodeSquoctSim):
             d_lat_lst = [pq.UnionJackLattice((sz, sz), is_dual=True)
                         for _ in range(2)]
 
-        decoder = pq.ft_mwpm_decoder(lat, d_lat_lst, blossom=False, 
-                                        vert_dist=self.vert_dist)
+        decoder = pq.ft_mwpm_decoder(lat, d_lat_lst, blossom=False)
         
         noiseless_code = pq.square_octagon_code(lat, d_lat_lst[-1])
 
