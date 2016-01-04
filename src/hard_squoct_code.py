@@ -824,7 +824,6 @@ def _save_dict(sim):
     big_dict['decoder'] = 'FT MWPM'
     big_dict['n_trials'] = sim.n_trials
     big_dict['logical_errors'] = sim.logical_error
-    big_dict['oct_factor'] = sim.oct_factor
     return big_dict
 
 def _stats_dict(sim):
