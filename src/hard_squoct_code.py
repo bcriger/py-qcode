@@ -656,8 +656,8 @@ class LRSSerialSquoctSim(HardCodeSquoctSim):
         x_sq_meas = pq.Measurement(q.X, ['', 'Z'], d_lat.square_centers())
         z_sq_meas = pq.Measurement(q.Z, ['', 'X'], d_lat.square_centers())
 
-        x_cycle = map(pq.Timestep, zip(sq_x_cnots, oct_x_cnots[:4]) + o_x_cnots[4:])
-        z_cycle = map(pq.Timestep, zip(sq_z_cnots, oct_z_cnots[:4]) + o_z_cnots[4:])
+        x_cycle = map(pq.Timestep, zip(sq_x_cnots, oct_x_cnots[:4]) + oct_x_cnots[4:])
+        z_cycle = map(pq.Timestep, zip(sq_z_cnots, oct_z_cnots[:4]) + oct_z_cnots[4:])
         
         if sim_type == 'stats':
             synd_keys = ['xs', 'zs', 'xo', 'zo']
