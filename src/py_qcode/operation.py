@@ -121,7 +121,7 @@ class Timestep():
 
         Only depolarizes if dep is set to True.
         """
-        twirl = two_bit_twirl(p)        
+        twirl = two_bit_twirl(p_twirl)        
 
         for cliff in self.cliff_list:
             cliff.apply()
@@ -129,7 +129,7 @@ class Timestep():
                 twirl.act_on(cliff.point_sets)
 
         if dep:
-            dep_model = depolarizing_model(p)
+            dep_model = depolarizing_model(p_dep)
             dep_support = set(dat_lat.points + anc_lat.points)
             dep_support -= self.twirl_support
             #FIXME: This check should be in ErrorModel.act_on()
