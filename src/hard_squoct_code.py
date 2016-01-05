@@ -685,7 +685,7 @@ class LRSSerialSquoctSim(HardCodeSquoctSim):
                 
                 for pl, cycle, meas_lst in zip([q.X, q.Z], [x_cycle, z_cycle],
                                                 [[x_sq_meas, x_o_meas],
-                                                [x_sq_meas, x_o_meas]]):
+                                                [z_sq_meas, z_o_meas]]):
                     d_lat.clear()
                     pq.error_fill(d_lat, q.I)
                     pq.syndrome_fill(d_lat, '')
