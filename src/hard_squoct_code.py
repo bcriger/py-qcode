@@ -38,14 +38,14 @@ oct_perms_4 = [[(1, 2), (-1, 2), (1, -2), (-1, -2)],
 oct_perms_4_perp = [[(2, -1), (2, 1), (-1, 2), (1, 2)],
                 [(-1, -2), (1, -2), (-2, -1), (-2, 1)]]
 
-# Orders from Landahl/Rice/Anderson, Serial [Fig. 6] 
-lra_s_sq_dirs = [(-1, 1), (1, 1), (-1, -1), (1, -1)]
-lra_s_oct_dirs = [(-1, 2), (1, 2), (-2, 1), (2, 1),
+# Orders from Landahl/Anderson/Rice, Serial [Fig. 6] 
+lar_sq_dirs = [(-1, 1), (1, 1), (-1, -1), (1, -1)]
+lar_s_oct_dirs = [(-1, 2), (1, 2), (-2, 1), (2, 1),
                     (-2, -1), (2, -1), (-1, -2), (1, -2)]
 
-#Additional octagon orders from parallel simulation [Fig. 7]
-lra_p_x_oct_dirs = lra_s_oct_dirs
-lra_p_z_oct_dirs = [(-2, -1), (2, -1), (-1, -2), (1, -2),
+#Additional orders from parallel simulation [Fig. 7]
+lar_p_x_oct_dirs = lar_s_oct_dirs
+lar_p_z_oct_dirs = [(-2, -1), (2, -1), (-1, -2), (1, -2),
                     (-1, 2), (1, 2), (-2, 1), (2, 1)]
 
 def pair_complements(lat, pair_list):
@@ -599,14 +599,14 @@ class FourStepSquoctSim(HardCodeSquoctSim):
         with open(filename, 'w') as phil:
             pkl.dump(big_dict, phil)
 
-class LRSSerialSquoctSim(HardCodeSquoctSim):
+class LARSerialSquoctSim(HardCodeSquoctSim):
     """
     To compare IP-based colour code decoding to MWPM gauge code 
     decoding, we will simulate the action of the MWPM decoder on the 
     syndromes produced by the Landahl/Anderson/Rice extraction circuit.
 
     We simulate both the serial and parallel circuits from figures 6/7,
-    the parallel circuit being simulated by LRSParallelSquoctSim. 
+    the parallel circuit being simulated by LARParallelSquoctSim. 
     """
     def __init__(self, size, p, n_trials):
         HardCodeSquoctSim.__init__(self, size, p, n_trials)
@@ -643,8 +643,8 @@ class LRSSerialSquoctSim(HardCodeSquoctSim):
         
         x_flip, z_flip, dep, twirl, synd_flip = _err_mods(self)
         
-        sq_prs = [pq.sq_pairs(lat, d_lat, d) for d in lra_s_sq_dirs]
-        oct_prs = [pq.oct_pairs(lat, d_lat, d) for d in lra_s_oct_dirs]
+        sq_prs = [pq.sq_pairs(lat, d_lat, d) for d in lar_sq_dirs]
+        oct_prs = [pq.oct_pairs(lat, d_lat, d) for d in lar_s_oct_dirs]
         
         sq_x_cnots = [pq.Clifford(q.cnot(2, 1, 0), pr) for pr in sq_prs]
         sq_z_cnots = [pq.Clifford(q.cnot(2, 0, 1), pr) for pr in sq_prs]
@@ -737,11 +737,142 @@ class LRSSerialSquoctSim(HardCodeSquoctSim):
                         if (synd_type in d_lat_lst[0][crd].syndrome) != \
                             (synd_type in d_lat_lst[1][crd].syndrome):
                             self.syndrome_errors[synd_key] += 1
+    
     def save(self, filename):
         big_dict = _save_dict(self) if self.sim_type == 'cb' else _stats_dict(self)
         with open(filename, 'w') as phil:
             pkl.dump(big_dict, phil)
 
+class LARParallelSquoctSim(LARSerialSquoctSim):
+    """
+    Identical to LARSerialSquoctSim, but with an interleaved circuit. 
+    """
+    def run(self, sim_type='cb'):
+        #sanitize input
+        _sanitize_sim_type(sim_type)
+        if sim_type not in ['cb', 'stats']:
+            raise ValueError("InterleavedSquoctSim only supports "
+                            "sim_type='cb' or 'stats', use"
+                            " HardCodeSquoctSim.")
+        self.sim_type = sim_type
+        sz = int(self.size / 2.)
+
+        lat = pq.SquareOctagonLattice((sz, sz))
+        #this circuit produces two syndromes at a time -> two d_lats
+        d_lat_x = pq.UnionJackLattice((sz, sz), is_dual=True)
+        d_lat_z = pq.UnionJackLattice((sz, sz), is_dual=True)
+
+        if sim_type == 'cb':
+            d_lat_lst = [pq.UnionJackLattice((sz, sz), is_dual=True)
+                        for _ in range(self.size + 1)]
+        elif sim_type == 'stats':
+            d_lat_lst = [pq.UnionJackLattice((sz, sz), is_dual=True)
+                        for _ in range(2)]
+
+        decoder = pq.ft_mwpm_decoder(lat, d_lat_lst, blossom=False)
+        
+        noiseless_code = pq.square_octagon_code(lat, d_lat_lst[-1])
+
+        log_ops = pq.squoct_log_ops(lat.total_size)
+        
+        x_flip, z_flip, dep, twirl, synd_flip = _err_mods(self)
+        
+        sq_x_prs = [pq.sq_pairs(lat, d_lat_x, d) for d in lar_sq_dirs]
+        oct_x_prs = [pq.oct_pairs(lat, d_lat_x, d) for d in lar_p_x_oct_dirs]
+        sq_z_prs = [pq.sq_pairs(lat, d_lat_z, d) for d in lar_sq_dirs]
+        oct_z_prs = [pq.oct_pairs(lat, d_lat_z, d) for d in lar_p_z_oct_dirs]
+        
+        sq_x_cnots = [pq.Clifford(q.cnot(2, 1, 0), pr) for pr in sq_x_prs]
+        sq_z_cnots = [pq.Clifford(q.cnot(2, 0, 1), pr) for pr in sq_z_prs]
+        oct_x_cnots = [pq.Clifford(q.cnot(2, 1, 0), pr) for pr in oct_x_prs]
+        oct_z_cnots = [pq.Clifford(q.cnot(2, 0, 1), pr) for pr in oct_z_prs]
+        
+        x_o_meas = pq.Measurement(q.X, ['', 'Z'], d_lat_x.octagon_centers('X'))
+        z_o_meas = pq.Measurement(q.Z, ['', 'X'], d_lat_z.octagon_centers('Z'))
+        x_sq_meas = pq.Measurement(q.X, ['', 'Z'], d_lat_x.square_centers())
+        z_sq_meas = pq.Measurement(q.Z, ['', 'X'], d_lat_z.square_centers())
+
+        cycle = map(pq.Timestep, zip(sq_x_cnots + sq_z_cnots, oct_x_cnots, oct_z_cnots))
+        
+        meas_lst = [x_sq_meas, x_o_meas, z_sq_meas, z_o_meas]
+                
+        if sim_type == 'stats':
+            synd_keys = ['xs', 'zs', 'xo', 'zo']
+            synd_types = ['Z', 'X', 'Z', 'X']
+            crd_sets = [
+                        pq._square_centers((sz, sz)),
+                        pq._square_centers((sz, sz)),
+                        pq._octagon_centers((sz, sz), 'x'),
+                        pq._octagon_centers((sz, sz), 'z')
+                        ]
+
+        for _ in xrange(self.n_trials):
+            #clear last sim
+            pq.error_fill(lat, q.I)
+            
+            for ltc in d_lat_lst:
+                ltc.clear() #may break
+                        
+            #fill d_lat_lst with syndromes by copying
+            for idx in range(len(d_lat_lst) - 1):
+                pq.syndrome_fill(d_lat_lst[idx], '')
+                
+                for d_lat in [d_lat_x, d_lat_z]:
+                    d_lat.clear()
+                    pq.error_fill(d_lat, q.I)
+                    pq.syndrome_fill(d_lat, '')
+                
+                for pl, d_lat in [(q.X, d_lat_x), (q.Z, d_lat_z)]:
+                    synd_flip['prep'][pl].act_on(d_lat)
+                
+                for gate in cycle:
+                    gate.noisy_apply(lat, d_lat, self.p['twirl'], self.p['dep'])
+                
+                for pl, d_lat in [(q.X, d_lat_x), (q.Z, d_lat_z)]:
+                    synd_flip['meas'][pl].act_on(d_lat)
+
+                for meas in meas_lst:
+                    meas.apply()
+            
+                for d_lat in [d_lat_x, d_lat_z]:
+                    pq.syndrome_copy(d_lat, d_lat_lst[idx], append=True)
+        
+            #noise is now already on the syndrome qubits (including meas. noise)
+            noiseless_code.measure()
+            if sim_type == 'cb':
+                #run decoder, with no final lattice check (laaaaater)
+                decoder.infer()
+
+                # Error checking, if the resulting Pauli is not in the
+                # normalizer, chuck an error:
+
+                d_lat_lst[-1].clear()
+                pq.syndrome_fill(d_lat_lst[-1], '')
+                noiseless_code.measure()
+                for point in d_lat_lst[-1].points:
+                    if point.syndrome:
+                        raise ValueError('Product of "inferred error"' 
+                                         ' with actual error anticommutes'
+                                         ' with some stabilizers.')
+                
+                com_relation_list = []
+                for operator in log_ops:
+                    com_relation_list.append(operator.test(lat))
+                self.logical_error.append(com_relation_list)
+            elif sim_type == 'stats':
+                for key in self.data_errors.keys():
+                    for point in lat.points:
+                        if point.error.op == key:
+                            self.data_errors[key] += 1
+                #check syndromes
+                for synd_key, synd_type, crd_set in zip(synd_keys,
+                                                        synd_types,
+                                                        crd_sets):
+                    for crd in crd_set:
+                        if (synd_type in d_lat_lst[0][crd].syndrome) != \
+                            (synd_type in d_lat_lst[1][crd].syndrome):
+                            self.syndrome_errors[synd_key] += 1
+        
 
 def meas_cycle(lat, d_lat, d_lat_x_sq, x_flip, z_flip, dep, twirl, 
                 z_prs, x_prs, sq_prs, z_deps, x_deps, 
