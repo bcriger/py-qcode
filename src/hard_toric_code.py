@@ -156,7 +156,7 @@ class BellStateToricSim(HardCodeToricSim):
     the syndrome extraction circuit as long as you measure one syndrome
     type at a time; X or Z.  
     """
-    def run():
+    def run(self):
         #sanitize input
         _sanitize_sim_type(sim_type)
         self.sim_type = sim_type
