@@ -189,15 +189,15 @@ class BellStateToricSim(HardCodeToricSim):
         dep = pq.depolarizing_model(self.p['dep'])
         twirl = pq.two_bit_twirl(self.p['twirl'])
 
-        z_prs = {d : pq.nwes_pairs(lat, d_lat, d) for d in 'EN'}
-        x_prs = {d : pq.nwes_pairs(lat, d_lat, d) for d in 'SW'}
+        z_prs = {d : pq.nwes_pairs(lat, d_lat, d) for d in 'en'}
+        x_prs = {d : pq.nwes_pairs(lat, d_lat, d) for d in 'sw'}
         
         p_prs = zip(d_lat.star_centers(), d_lat.plaq_centers())
 
         z_cycle = map(pq.Timestep, [[pq.Clifford(q.cnot(2, 0, 1), z_prs[d])]
-                for d in 'EN'])
+                for d in 'en'])
         x_cycle = map(pq.Timestep, [[pq.Clifford(q.cnot(2, 1, 0), x_prs[d])]
-                for d in 'SW'])
+                for d in 'sw'])
         
         prep_step = pq.Timestep([pq.Clifford(q.cnot(2, 0, 1), p_prs)])
 
