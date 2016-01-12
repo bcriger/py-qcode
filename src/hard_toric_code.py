@@ -150,6 +150,148 @@ class HardCodeToricSim():
         with open(filename, 'w') as phil:
             pkl.dump(big_dict, phil)
 
+class BellStateToricSim(HardCodeToricSim):
+    """
+    Testing out a hunch from Landahl et al, you're okay to serialize 
+    the syndrome extraction circuit as long as you measure one syndrome
+    type at a time; X or Z.  
+    """
+    def run():
+        #sanitize input
+        _sanitize_sim_type(sim_type)
+        self.sim_type = sim_type
+
+        sz = self.size
+        lat = pq.SquareLattice((sz, sz))
+        d_lat = pq.SquareLattice((sz, sz), is_dual=True)
+
+        if sim_type == 'cb':
+            d_lat_lst = [pq.SquareLattice((sz, sz), is_dual=True)
+                        for _ in range(sz)]
+        elif sim_type == 'stats':
+            d_lat_lst = [pq.SquareLattice((sz, sz), is_dual=True)
+                        for _ in range(2)]
+
+        
+        decoder = pq.ft_mwpm_decoder(lat, d_lat_lst, blossom=False, 
+                                        vert_dist=self.vert_dist)
+
+        log_ops = pq.toric_log_ops((sz, sz))
+        
+        x_flip = {key : pq.PauliErrorModel({q.I : 1. - self.p[key],
+                                            q.X : self.p[key]})
+                                            for key in ['prep', 'meas']
+                                            }
+        z_flip = {key : pq.PauliErrorModel({q.I : 1. - self.p[key],
+                                            q.Z : self.p[key]})
+                                            for key in ['prep', 'meas']
+                                            }
+        dep = pq.depolarizing_model(self.p['dep'])
+        twirl = pq.two_bit_twirl(self.p['twirl'])
+
+        z_prs = {d : pq.nwes_pairs(lat, d_lat, d) for d in 'EN'}
+        x_prs = {d : pq.nwes_pairs(lat, d_lat, d) for d in 'SW'}
+        
+        p_prs = zip(d_lat.star_centers(), d_lat.plaq_centers())
+
+        z_cycle = map(pq.Timestep, [[pq.Clifford(q.cnot(2, 0, 1), z_prs[d])]
+                for d in 'EN'])
+        x_cycle = map(pq.Timestep, [[pq.Clifford(q.cnot(2, 1, 0), x_prs[d])]
+                for d in 'SW'])
+        
+        prep_step = pq.Timestep([pq.Clifford(q.cnot(2, 0, 1), p_prs)])
+
+        x_meas = pq.Measurement(q.X, ['', 'Z'], d_lat.points())
+        z_meas = pq.Measurement(q.Z, ['', 'X'], d_lat.points())
+        
+        noiseless_code = pq.toric_code(lat, d_lat_lst[-1])
+        
+        if sim_type == 'stats':
+            synd_keys = ['x', 'z']
+            synd_types = ['Z', 'X']
+            crd_sets = [pq._even_evens(sz, sz), 
+                        pq._odd_odds(sz, sz)]
+
+        for _ in range(self.n_trials):
+            #clear last sim
+            pq.error_fill(lat, q.I)
+            for ltc in d_lat_lst:
+                ltc.clear() #may break
+            
+            #fill d_lat_lst with syndromes by copying
+            for idx in range(len(d_lat_lst) - 1):
+                d_lat.clear()
+                pq.error_fill(d_lat, q.I)
+                #z stabilisers
+                
+                #flip bell state ancillas
+                x_flip['prep'].act_on(d_lat.star_centers())
+                z_flip['prep'].act_on(d_lat.plaq_centers())
+                prep_step.noisy_apply(None, None, self.p['twirl'], 0., False)
+                dep.act_on(lat)
+                for step in z_cycle:
+                    step.noisy_apply(None, None, self.p['twirl'], 0., False)
+                z_meas.measure()
+                for star, plaq, o_plaq in zip(d_lat.star_centers(),
+                                                d_lat.plaq_centers(),
+                                                d_lat_lst[idx].plaq_centers()):
+                    if star.syndrome != plaq.syndrome:
+                        o_plaq.syndrome = 'X'
+                
+                d_lat.clear()
+                pq.error_fill(d_lat, q.I)
+                #x stabilisers
+                
+                #flip bell state ancillas
+                x_flip['prep'].act_on(d_lat.star_centers())
+                z_flip['prep'].act_on(d_lat.plaq_centers())
+                prep_step.noisy_apply(None, None, self.p['twirl'], 0., False)
+                dep.act_on(lat)
+                for step in x_cycle:
+                    step.noisy_apply(None, None, self.p['twirl'], 0., False)
+                x_meas.measure()
+                for star, plaq, o_star in zip(d_lat.star_centers(),
+                                                d_lat.plaq_centers(),
+                                                d_lat_lst[idx].star_centers()):
+                    if star.syndrome != plaq.syndrome:
+                        o_star.syndrome = 'Z'
+                
+            #print d_lat 
+            noiseless_code.measure()
+            if sim_type == 'cb':
+                #run decoder, with no final lattice check (laaaaater)
+                decoder.infer()
+
+                # Error checking, if the resulting Pauli is not in the
+                # normalizer, chuck an error:
+                d_lat_lst[-1].clear()
+                noiseless_code.measure()
+                for point in d_lat_lst[-1].points:
+                    if point.syndrome:
+                        raise ValueError('Product of "inferred error"' 
+                                         ' with actual error anticommutes'
+                                         ' with some stabilizers.')
+                
+                com_relation_list = []
+                for operator in log_ops:
+                    com_relation_list.append(operator.test(lat))
+                self.logical_error.append(com_relation_list)
+            elif sim_type == 'stats':
+                for key in self.data_errors.keys():
+                    # raise Exception
+                    for point in lat.points:
+                        if point.error.op == key:
+                            self.data_errors[key] += 1
+                #check syndromes
+                for synd_key, synd_type, crd_set in zip(synd_keys,
+                                                        synd_types,
+                                                        crd_sets):
+                    for crd in crd_set:
+                        if (synd_type in d_lat_lst[0][crd].syndrome) != \
+                            (synd_type in d_lat_lst[1][crd].syndrome):
+                            self.syndrome_errors[synd_key] += 1
+        pass
+
 def meas_cycle(lat, d_lat, x_flip, z_flip, twirl, odd_prs, even_prs, 
                 cx, xc, x_meas, z_meas, sim_type):
     

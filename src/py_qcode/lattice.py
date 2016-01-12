@@ -975,8 +975,11 @@ def nwes_pairs(lattice, dual_lattice, label, odd_even=None):
         raise ValueError('label must be n, w, e, or s.'
             ' {} entered.'.format(label))
     
-    shift = {'n': [0, 1], 'w': [-1, 0],
-             'e': [1, 0], 's': [0, -1]}[label]
+    shift = {   
+                            'n': [0, 1], 
+            'w': [-1, 0],                'e': [1, 0], 
+                            's': [0, -1]
+            }[label]
     
     output = []
     for crds in dual_coord_set:
