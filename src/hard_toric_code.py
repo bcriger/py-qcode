@@ -201,8 +201,8 @@ class BellStateToricSim(HardCodeToricSim):
         
         prep_step = pq.Timestep([pq.Clifford(q.cnot(2, 0, 1), p_prs)])
 
-        x_meas = pq.Measurement(q.X, ['', 'Z'], d_lat.points())
-        z_meas = pq.Measurement(q.Z, ['', 'X'], d_lat.points())
+        x_meas = pq.Measurement(q.X, ['', 'Z'], d_lat.points)
+        z_meas = pq.Measurement(q.Z, ['', 'X'], d_lat.points)
         
         noiseless_code = pq.toric_code(lat, d_lat_lst[-1])
         
