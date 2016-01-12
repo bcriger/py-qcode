@@ -231,7 +231,7 @@ class BellStateToricSim(HardCodeToricSim):
                 dep.act_on(lat)
                 for step in z_cycle:
                     step.noisy_apply(None, None, self.p['twirl'], 0., False)
-                z_meas.measure()
+                z_meas.apply()
                 for star, plaq, o_plaq in zip(d_lat.star_centers(),
                                                 d_lat.plaq_centers(),
                                                 d_lat_lst[idx].plaq_centers()):
@@ -249,7 +249,7 @@ class BellStateToricSim(HardCodeToricSim):
                 dep.act_on(lat)
                 for step in x_cycle:
                     step.noisy_apply(None, None, self.p['twirl'], 0., False)
-                x_meas.measure()
+                x_meas.apply()
                 for star, plaq, o_star in zip(d_lat.star_centers(),
                                                 d_lat.plaq_centers(),
                                                 d_lat_lst[idx].star_centers()):
