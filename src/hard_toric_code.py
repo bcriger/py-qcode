@@ -171,6 +171,8 @@ class BellStateToricSim(HardCodeToricSim):
         elif sim_type == 'stats':
             d_lat_lst = [pq.SquareLattice((sz, sz), is_dual=True)
                         for _ in range(2)]
+            #get correct syndrome at z measurement time
+            early_d_lat = pq.SquareLattice((sz, sz), is_dual=True)
 
         
         decoder = pq.ft_mwpm_decoder(lat, d_lat_lst, blossom=False, 
@@ -238,8 +240,11 @@ class BellStateToricSim(HardCodeToricSim):
                                                 d_lat.plaq_centers(),
                                                 d_lat_lst[idx].plaq_centers()):
                     o_plaq.syndrome = 'X' if star.syndrome != plaq.syndrome else ''
-                        
-                
+                if sim_type == 'stats':
+                    noiseless_code.measure()
+                    pq.syndrome_copy(d_lat_lst[-1], early_d_lat)        
+                    d_lat_lst[-1].clear()        
+
                 d_lat.clear()
                 pq.error_fill(d_lat, q.I)
                 #x stabilisers
@@ -289,10 +294,16 @@ class BellStateToricSim(HardCodeToricSim):
                 for synd_key, synd_type, crd_set in zip(synd_keys,
                                                         synd_types,
                                                         crd_sets):
-                    for crd in crd_set:
-                        if (synd_type in d_lat_lst[0][crd].syndrome) != \
-                            (synd_type in d_lat_lst[1][crd].syndrome):
-                            self.syndrome_errors[synd_key] += 1
+                    if synd_key == 'x':
+                        for crd in crd_set:
+                            if (synd_type in d_lat_lst[0][crd].syndrome) != \
+                                (synd_type in d_lat_lst[1][crd].syndrome):
+                                self.syndrome_errors[synd_key] += 1
+                    elif synd_key == 'z':
+                        for crd in crd_set:
+                            if (synd_type in d_lat_lst[0][crd].syndrome) != \
+                                (synd_type in early_d_lat[crd].syndrome):
+                                self.syndrome_errors[synd_key] += 1
         pass
 
 def meas_cycle(lat, d_lat, x_flip, z_flip, twirl, odd_prs, even_prs, 
