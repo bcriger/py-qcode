@@ -199,7 +199,8 @@ class BellStateToricSim(HardCodeToricSim):
         x_cycle = map(pq.Timestep, [[pq.Clifford(q.cnot(2, 1, 0), x_prs[d])]
                 for d in 'sw'])
         
-        prep_step = pq.Timestep([pq.Clifford(q.cnot(2, 0, 1), p_prs)])
+        prep_step_x = pq.Timestep([pq.Clifford(q.cnot(2, 0, 1), p_prs)])
+        prep_step_z = pq.Timestep([pq.Clifford(q.cnot(2, 1, 0), p_prs)])
 
         x_meas = pq.Measurement(q.X, ['', 'Z'], d_lat.points)
         z_meas = pq.Measurement(q.Z, ['', 'X'], d_lat.points)
@@ -225,9 +226,9 @@ class BellStateToricSim(HardCodeToricSim):
                 #z stabilisers
                 
                 #flip bell state ancillas
-                x_flip['prep'].act_on(d_lat.star_centers())
-                z_flip['prep'].act_on(d_lat.plaq_centers())
-                prep_step.noisy_apply(None, None, self.p['twirl'], 0., False)
+                z_flip['prep'].act_on(d_lat.star_centers())
+                x_flip['prep'].act_on(d_lat.plaq_centers())
+                prep_step_z.noisy_apply(None, None, self.p['twirl'], 0., False)
                 dep.act_on(lat)
                 for step in z_cycle:
                     step.noisy_apply(None, None, self.p['twirl'], 0., False)
@@ -246,7 +247,7 @@ class BellStateToricSim(HardCodeToricSim):
                 #flip bell state ancillas
                 x_flip['prep'].act_on(d_lat.star_centers())
                 z_flip['prep'].act_on(d_lat.plaq_centers())
-                prep_step.noisy_apply(None, None, self.p['twirl'], 0., False)
+                prep_step_x.noisy_apply(None, None, self.p['twirl'], 0., False)
                 dep.act_on(lat)
                 for step in x_cycle:
                     step.noisy_apply(None, None, self.p['twirl'], 0., False)
