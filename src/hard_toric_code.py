@@ -231,12 +231,13 @@ class BellStateToricSim(HardCodeToricSim):
                 dep.act_on(lat)
                 for step in z_cycle:
                     step.noisy_apply(None, None, self.p['twirl'], 0., False)
+                z_flip['meas'].act_on(d_lat)
                 z_meas.apply()
                 for star, plaq, o_plaq in zip(d_lat.star_centers(),
                                                 d_lat.plaq_centers(),
                                                 d_lat_lst[idx].plaq_centers()):
-                    if star.syndrome != plaq.syndrome:
-                        o_plaq.syndrome = 'X'
+                    o_plaq.syndrome = 'X' if star.syndrome != plaq.syndrome else ''
+                        
                 
                 d_lat.clear()
                 pq.error_fill(d_lat, q.I)
@@ -249,12 +250,13 @@ class BellStateToricSim(HardCodeToricSim):
                 dep.act_on(lat)
                 for step in x_cycle:
                     step.noisy_apply(None, None, self.p['twirl'], 0., False)
+                x_flip['meas'].act_on(d_lat)
                 x_meas.apply()
                 for star, plaq, o_star in zip(d_lat.star_centers(),
                                                 d_lat.plaq_centers(),
                                                 d_lat_lst[idx].star_centers()):
-                    if star.syndrome != plaq.syndrome:
-                        o_star.syndrome = 'Z'
+                    o_star.syndrome = 'Z' if star.syndrome != plaq.syndrome else ''
+                    
                 
             #print d_lat 
             noiseless_code.measure()
