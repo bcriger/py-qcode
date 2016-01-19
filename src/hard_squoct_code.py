@@ -490,8 +490,8 @@ class FourStepSquoctSim(HardCodeSquoctSim):
             z_o_meas = [pq.Measurement(q.Z, ['', 'X'], d_lat.octagon_centers(oct_type='Z'))
                         for d_lat in d_lats]
         elif self.meas == 'single':
-            x_o_meas = [pq.Measurement(q.X, ['', 'Z'], d_lat[0].octagon_centers())]
-            z_o_meas = [pq.Measurement(q.Z, ['', 'X'], d_lat[1].octagon_centers())]
+            x_o_meas = [pq.Measurement(q.X, ['', 'Z'], d_lats[0].octagon_centers())]
+            z_o_meas = [pq.Measurement(q.Z, ['', 'X'], d_lats[1].octagon_centers())]
         
         x_sq_meas = pq.Measurement(q.X, ['', 'Z'], d_lats[0].square_centers())
         z_sq_meas = pq.Measurement(q.Z, ['', 'X'], d_lats[1].square_centers())
