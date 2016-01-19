@@ -403,7 +403,7 @@ class FourStepSquoctSim(HardCodeSquoctSim):
     with a Bell state being used to measure the octagons (dumb).
     """
     def __init__(self, size, p, n_trials, vert_dist=None, oct_factor=1.,
-                    perp=False, gauge=False):
+                    perp=False, gauge=False, meas='double'):
         HardCodeSquoctSim.__init__(self, size, p, n_trials)
         self.vert_dist = vert_dist
         self.data_errors = {'X': 0, 'Y': 0, 'Z': 0}
@@ -413,6 +413,10 @@ class FourStepSquoctSim(HardCodeSquoctSim):
         self.oct_factor = oct_factor
         self.perp = perp
         self.gauge = gauge
+        if meas not in ['single', 'double']:
+            raise ValueError("Input 'meas' must be 'single' or "
+                                "'double', {} entered.".format(meas))
+        self.meas = meas
     
     def run(self, sim_type='cb'):
         #sanitize input
@@ -480,10 +484,14 @@ class FourStepSquoctSim(HardCodeSquoctSim):
         o_z_cnots = [[pq.Clifford(q.cnot(2, 0, 1), pr) 
                         for pr in pr_set] for pr_set in o_z_prs]
 
-        x_o_meas = [pq.Measurement(q.X, ['', 'Z'], d_lat.octagon_centers(oct_type='X'))
-                    for d_lat in d_lats]
-        z_o_meas = [pq.Measurement(q.Z, ['', 'X'], d_lat.octagon_centers(oct_type='Z'))
-                    for d_lat in d_lats]
+        if self.meas == 'double':
+            x_o_meas = [pq.Measurement(q.X, ['', 'Z'], d_lat.octagon_centers(oct_type='X'))
+                        for d_lat in d_lats]
+            z_o_meas = [pq.Measurement(q.Z, ['', 'X'], d_lat.octagon_centers(oct_type='Z'))
+                        for d_lat in d_lats]
+        elif self.meas == 'single':
+            x_o_meas = [pq.Measurement(q.X, ['', 'Z'], d_lat[0].octagon_centers())]
+            z_o_meas = [pq.Measurement(q.Z, ['', 'X'], d_lat[1].octagon_centers())]
         
         x_sq_meas = pq.Measurement(q.X, ['', 'Z'], d_lats[0].square_centers())
         z_sq_meas = pq.Measurement(q.Z, ['', 'X'], d_lats[1].square_centers())
@@ -498,9 +506,12 @@ class FourStepSquoctSim(HardCodeSquoctSim):
         prep_ancs = [d_lats[0].square_centers(), d_lats[1].square_centers(),
                     d_lats[0].octagon_centers(), d_lats[1].octagon_centers()]
         
-        meas_ancs = [d_lats[0].square_centers(), d_lats[0].octagon_centers('x'),
-                    d_lats[1].octagon_centers('x'), d_lats[1].square_centers(),
-                    d_lats[0].octagon_centers('z'), d_lats[1].octagon_centers('z')]
+        if self.meas == 'double':
+            meas_ancs = [d_lats[0].square_centers(), d_lats[0].octagon_centers('x'),
+                        d_lats[1].octagon_centers('x'), d_lats[1].square_centers(),
+                        d_lats[0].octagon_centers('z'), d_lats[1].octagon_centers('z')]
+        elif self.meas == 'single':
+            meas_ancs = [d_lats[0].points, d_lats[1].points]
 
         if sim_type == 'stats':
             synd_keys = ['xv', 'zv', 'xh', 'zh', 'xo', 'zo']
@@ -543,19 +554,35 @@ class FourStepSquoctSim(HardCodeSquoctSim):
                 for stp in cycle:
                     stp.noisy_apply(None, None, self.p['twirl'], 0., False)
                 # flip and measure ancillas
-                for pl, pt_set in zip([q.X, q.X, q.X, q.Z, q.Z, q.Z], meas_ancs):
-                    synd_flip['meas'][pl].act_on(pt_set)
+                if self.meas == 'double':
+                    for pl, pt_set in zip([q.X, q.X, q.X, q.Z, q.Z, q.Z], meas_ancs):
+                        synd_flip['meas'][pl].act_on(pt_set)
+                elif self.meas == 'single':
+                    prep_step.noisy_apply(None, None, self.p['twirl'], 0., False)
+                    # depolarisation during state prep (doesn't affect 
+                    # square ancillas, we 'measure them earlier')
+                    dep.act_on(lat)
+                    for pl, pt_set in zip([q.X, q.Z], meas_ancs):
+                        synd_flip['meas'][pl].act_on(pt_set)
                 
                 for meas in measurements:
                     meas.apply()
+
                 # copy syndromes onto 3D lattice.
                 for crd in pq._square_centers((sz, sz)):
                     d_lat_lst[idx][crd].syndrome = ''.join([d_lats[_][crd].syndrome for _ in [0, 1]])
-                for crd in pq._octagon_centers((sz, sz)):
-                    sum_synd = ''.join([d_lats[_][crd].syndrome for _ in [0, 1]])
-                    #if there are 2 syndromes indicated, we say there are none
-                    d_lat_lst[idx][crd].syndrome = sum_synd if len(sum_synd) == 1 else ''
-
+                if self.meas == 'double':
+                    for crd in pq._octagon_centers((sz, sz)):
+                        sum_synd = ''.join([d_lats[_][crd].syndrome for _ in [0, 1]])
+                        #if there are 2 syndromes indicated, we say there are none
+                        d_lat_lst[idx][crd].syndrome = sum_synd if len(sum_synd) == 1 else ''
+                elif self.meas == 'single':
+                    for idx, crd_lst in zip([0, 1], pq._octagon_centers((sz, sz), ltr) for ltr in 'xz']):
+                        for crd in crd_lst:
+                            sum_synd = ''.join([d_lats[idx][c].syndrome for c in 
+                                                [crd, (crd[0]-3, crd[1]-3), (crd[0]-3, crd[1]+3)] ])
+                            d_lat_lst[idx][crd].syndrome = sum_synd if len(sum_synd) % 2 == 1 else ''
+            
             noiseless_code.measure()
             if sim_type == 'cb':
                 decoder.infer()
@@ -595,6 +622,7 @@ class FourStepSquoctSim(HardCodeSquoctSim):
         big_dict['oct_factor'] = self.oct_factor
         big_dict['perp'] = self.perp
         big_dict['gauge'] = self.gauge
+        big_dict['meas'] = self.meas
 
         with open(filename, 'w') as phil:
             pkl.dump(big_dict, phil)
