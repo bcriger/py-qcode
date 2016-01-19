@@ -577,7 +577,7 @@ class FourStepSquoctSim(HardCodeSquoctSim):
                         #if there are 2 syndromes indicated, we say there are none
                         d_lat_lst[idx][crd].syndrome = sum_synd if len(sum_synd) == 1 else ''
                 elif self.meas == 'single':
-                    for idx, crd_lst in zip([0, 1], pq._octagon_centers((sz, sz), ltr) for ltr in 'xz']):
+                    for idx, crd_lst in zip([0, 1], [pq._octagon_centers((sz, sz), ltr) for ltr in 'xz']):
                         for crd in crd_lst:
                             sum_synd = ''.join([d_lats[idx][c].syndrome for c in 
                                                 [crd, (crd[0]-3, crd[1]-3), (crd[0]-3, crd[1]+3)] ])
