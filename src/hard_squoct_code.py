@@ -579,8 +579,13 @@ class FourStepSquoctSim(HardCodeSquoctSim):
                 elif self.meas == 'single':
                     for idx, crd_lst in zip([0, 1], [pq._octagon_centers((sz, sz), ltr) for ltr in 'xz']):
                         for crd in crd_lst:
-                            sum_synd = ''.join([d_lats[idx][c].syndrome for c in 
-                                                [crd, (crd[0]-3, crd[1]-3), (crd[0]-3, crd[1]+3)] ])
+                            t_x, t_y = d_lats[0].total_size
+                            sum_cs = [
+                                    crd,
+                                    ((crd[0] - 3) % t_x, (crd[1] - 3) % t_y),
+                                    ((crd[0] - 3) % t_x, (crd[1] + 3) % t_y)
+                                    ]
+                            sum_synd = ''.join([d_lats[idx][c].syndrome for c in sum_cs])
                             d_lat_lst[idx][crd].syndrome = sum_synd if len(sum_synd) % 2 == 1 else ''
             
             noiseless_code.measure()
