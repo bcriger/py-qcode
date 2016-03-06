@@ -36,7 +36,7 @@ class HardCodeToricSim():
         lat = pq.SquareLattice((sz, sz))
         d_lat = pq.SquareLattice((sz, sz), is_dual=True)
 
-        if sim_type == 'cb':
+        if sim_type in ['cb', 'pq']:
             d_lat_lst = [pq.SquareLattice((sz, sz), is_dual=True)
                         for _ in range(sz)]
         elif sim_type == 'stats':
@@ -96,7 +96,7 @@ class HardCodeToricSim():
 
             #print d_lat 
             noiseless_code.measure()
-            if sim_type == 'cb':
+            if sim_type in ['cb', 'pq']:
                 #run decoder, with no final lattice check (laaaaater)
                 decoder.infer()
 
@@ -165,7 +165,7 @@ class BellStateToricSim(HardCodeToricSim):
         lat = pq.SquareLattice((sz, sz))
         d_lat = pq.SquareLattice((sz, sz), is_dual=True)
 
-        if sim_type == 'cb':
+        if sim_type in ['cb', 'pq']:
             d_lat_lst = [pq.SquareLattice((sz, sz), is_dual=True)
                         for _ in range(sz)]
         elif sim_type == 'stats':
@@ -266,7 +266,7 @@ class BellStateToricSim(HardCodeToricSim):
                 
             #print d_lat 
             noiseless_code.measure()
-            if sim_type == 'cb':
+            if sim_type in ['cb', 'pq']:
                 #run decoder, with no final lattice check (laaaaater)
                 decoder.infer()
 
