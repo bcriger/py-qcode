@@ -140,12 +140,13 @@ class HardCodeToricSim():
         big_dict['code'] = 'Toric Code'
         big_dict['n_trials'] = self.n_trials
         
-        if self.sim_type == 'cb':
-            big_dict['decoder'] = 'FT MWPM'
-            big_dict['logical_errors'] = self.logical_error    
-        elif self.sim_type == 'stats':
+        if self.sim_type == 'stats':
             big_dict['data_errors'] = self.data_errors
             big_dict['syndrome_errors'] = self.syndrome_errors
+            if self.sim_type == 'cb':
+        else:
+            big_dict['decoder'] = 'FT MWPM'
+            big_dict['logical_errors'] = self.logical_error
         
         with open(filename, 'w') as phil:
             pkl.dump(big_dict, phil)
