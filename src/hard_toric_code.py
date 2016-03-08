@@ -143,7 +143,6 @@ class HardCodeToricSim():
         if self.sim_type == 'stats':
             big_dict['data_errors'] = self.data_errors
             big_dict['syndrome_errors'] = self.syndrome_errors
-            if self.sim_type == 'cb':
         else:
             big_dict['decoder'] = 'FT MWPM'
             big_dict['logical_errors'] = self.logical_error
