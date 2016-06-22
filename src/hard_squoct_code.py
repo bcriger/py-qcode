@@ -499,7 +499,7 @@ class FourStepSquoctSim(HardCodeSquoctSim):
         measurements = [x_sq_meas, z_sq_meas] + x_o_meas + z_o_meas
         
         sq_cycle = map(pq.Timestep, zip(v_x_cnots, v_z_cnots,
-                                        h_z_cnots, h_x_cnots)
+                                        h_z_cnots, h_x_cnots))
 
         oct_cycle = map(pq.Timestep, zip(o_x_cnots[0], o_x_cnots[1],
                                         o_z_cnots[0], o_z_cnots[1]))
