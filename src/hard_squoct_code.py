@@ -293,6 +293,7 @@ class InterleavedSquoctSim(HardCodeSquoctSim):
                 #flip first round of ancillas
                 for meas in [x_o_meas, z_o_meas, x_v_meas, z_h_meas]:
                     synd_flip['prep'][meas.pauli].act_on(meas.point_set)
+                
                 #first four noisy gates
                 for tdx in range(4):
                     sq_cycle[tdx].noisy_apply(lat, None, self.p['twirl'], 0., False)
@@ -498,11 +499,16 @@ class FourStepSquoctSim(HardCodeSquoctSim):
         
         measurements = [x_sq_meas, z_sq_meas] + x_o_meas + z_o_meas
         
-        sq_cycle = map(pq.Timestep, zip(v_x_cnots, v_z_cnots,
-                                        h_z_cnots, h_x_cnots))
-
-        oct_cycle = map(pq.Timestep, zip(o_x_cnots[0], o_x_cnots[1],
-                                        o_z_cnots[0], o_z_cnots[1]))
+        # sq_cycle = map(pq.Timestep, zip(v_x_cnots, v_z_cnots,
+        #                                 h_z_cnots, h_x_cnots))
+        
+        # oct_cycle = map(pq.Timestep, zip(o_x_cnots[0], o_x_cnots[1],
+        #                                 o_z_cnots[0], o_z_cnots[1]))
+        
+        cycle = map(pq.Timestep, zip(v_x_cnots, v_z_cnots,
+                                    h_z_cnots, h_x_cnots,
+                                    o_x_cnots[0], o_x_cnots[1],
+                                    o_z_cnots[0], o_z_cnots[1]))
 
         prep_ancs = [d_lats[0].square_centers(), d_lats[1].square_centers(),
                     d_lats[0].octagon_centers(), d_lats[1].octagon_centers()]
@@ -552,9 +558,11 @@ class FourStepSquoctSim(HardCodeSquoctSim):
                 # square ancillas, we 'prepare them later')
                 dep.act_on(lat)
                 # 4 noisy gates (twirl only, since all qubits are used)
-                for idx in range(len(sq_cycle)):
-                    sq_cycle[idx].noisy_apply(None, None, self.p['twirl'], 0., False)
-                    oct_cycle[idx].noisy_apply(None, None, self.oct_factor * self.p['twirl'], 0., False)
+                for idx in range(4):
+                    # sq_cycle[idx].noisy_apply(None, None, self.p['twirl'], 0., False)
+                    # oct_cycle[idx].noisy_apply(None, None, self.oct_factor * self.p['twirl'], 0., False)
+                    cycle[idx].noisy_apply(None, None, self.p['twirl'], 0., False)
+                
                 # flip and measure ancillas
                 if self.meas == 'double':
                     for pl, pt_set in zip([q.X, q.X, q.X, q.Z, q.Z, q.Z], meas_ancs):
