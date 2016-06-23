@@ -558,10 +558,10 @@ class FourStepSquoctSim(HardCodeSquoctSim):
                 # square ancillas, we 'prepare them later')
                 dep.act_on(lat)
                 # 4 noisy gates (twirl only, since all qubits are used)
-                for idx in range(4):
+                for tdx in range(4):
                     # sq_cycle[idx].noisy_apply(None, None, self.p['twirl'], 0., False)
                     # oct_cycle[idx].noisy_apply(None, None, self.oct_factor * self.p['twirl'], 0., False)
-                    cycle[idx].noisy_apply(None, None, self.p['twirl'], 0., False)
+                    cycle[tdx].noisy_apply(None, None, self.p['twirl'], 0., False)
                 
                 # flip and measure ancillas
                 if self.meas == 'double':
