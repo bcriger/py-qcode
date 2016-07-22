@@ -43,12 +43,10 @@ src/py_qcode/blossom5-v2.04.src/PerfectMatching_wrap.cxx
 src/py_qcode/blossom5-v2.04.src/README.TXT
 src/py_qcode/blossom5-v2.04.src/USAGE.TXT
 src/py_qcode/blossom5-v2.04.src/block.h
-src/py_qcode/blossom5-v2.04.src/blossom.o
 src/py_qcode/blossom5-v2.04.src/example.cpp
 src/py_qcode/blossom5-v2.04.src/example.o
 src/py_qcode/blossom5-v2.04.src/misc.cpp
 src/py_qcode/blossom5-v2.04.src/misc.o
-src/py_qcode/blossom5-v2.04.src/test_blossom.o
 src/py_qcode/blossom5-v2.04.src/timer.h
 src/py_qcode/blossom5-v2.04.src/GEOM/GPMinit.cpp
 src/py_qcode/blossom5-v2.04.src/GEOM/GPMinit.o
