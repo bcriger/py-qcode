@@ -15,7 +15,7 @@ test_lattice = pq.SquareLattice(size)
 test_dual_lattice = pq.SquareLattice(size, is_dual=True)
 test_model = pq.depolarizing_model(0.05)
 test_code = pq.toric_code(test_lattice, test_dual_lattice)
-test_decoder = pq.mwpm_decoder(test_lattice, test_dual_lattice)
+test_decoder = pq.mwpm_decoder(test_lattice, test_dual_lattice, blossom=False)
 test_logical_ops = pq.toric_log_ops(test_lattice.size)
 '''
 test_lattice = pq.SquareOctagonLattice(size)
